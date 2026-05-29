@@ -1,0 +1,34 @@
+# Loguri
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependențe
+node_modules
+
+# Build
+dist
+dist-ssr
+
+# Fișiere locale
+*.local
+
+# Editoare și IDE-uri
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Variabile de mediu (doar .env.example se comite)
+.env
+.env.*
+!.env.example
