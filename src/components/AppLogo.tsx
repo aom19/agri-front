@@ -8,7 +8,7 @@ type AppLogoProps = {
 
 export default function AppLogo({ color = 'default', compact = false }: AppLogoProps) {
   const textColor = color === 'white' ? '#ffffff' : '#0d1f17'
-  const mutedColor = color === 'white' ? 'rgba(255,255,255,0.7)' : '#6b7c74'
+  const mutedColor = color === 'white' ? 'rgba(255,255,255,0.75)' : '#4a5e54'
 
   return (
     <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>

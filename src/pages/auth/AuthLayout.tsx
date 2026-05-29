@@ -112,6 +112,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
 
       {/* Right form panel */}
       <Box
+        component="main"
         sx={{
           flex: 1,
           display: 'flex',
@@ -130,7 +131,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
           elevation={0}
           sx={{
             width: '100%',
-            maxWidth: 420,
+            maxWidth: 600,
             p: { xs: 3, sm: 5 },
             borderRadius: '16px',
             boxShadow: '0 8px 40px rgba(10,30,20,0.10)',
@@ -153,7 +154,7 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
             {title}
           </Typography>
           {subtitle && (
-            <Typography sx={{ color: '#6b7c74', fontSize: '0.875rem', mb: 3 }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 3 }}>
               {subtitle}
             </Typography>
           )}

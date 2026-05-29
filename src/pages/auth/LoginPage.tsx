@@ -57,7 +57,7 @@ export default function LoginPage() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailOutlined sx={{ color: '#6b7c74', fontSize: 20 }} />
+                    <EmailOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },
@@ -75,7 +75,7 @@ export default function LoginPage() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlined sx={{ color: '#6b7c74', fontSize: 20 }} />
+                    <LockOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },
@@ -87,7 +87,7 @@ export default function LoginPage() {
             <FormControlLabel
               control={<Checkbox size="small" />}
               label={
-                <Typography sx={{ fontSize: '0.8rem', color: '#6b7c74' }}>
+                <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
                   Ține-mă conectat
                 </Typography>
               }
@@ -122,7 +122,9 @@ export default function LoginPage() {
             Conectare
           </Button>
 
-          <Typography sx={{ textAlign: 'center', color: '#6b7c74', fontSize: '0.8rem', mt: 1 }}>
+          <Typography
+            sx={{ textAlign: 'center', color: 'text.secondary', fontSize: '0.8rem', mt: 1 }}
+          >
             Nu ai un cont?{' '}
             <Button
               component={Link}

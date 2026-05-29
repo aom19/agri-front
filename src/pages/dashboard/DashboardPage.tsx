@@ -39,9 +39,9 @@ const kpis = [
     value: '18',
     icon: CheckCircleOutlined,
     iconBg: '#d1fae5',
-    iconColor: '#10b981',
+    iconColor: '#059669',
     progress: 85,
-    progressColor: '#10b981',
+    progressColor: '#059669',
     trend: '+2',
     delay: '100ms',
   },
@@ -50,9 +50,9 @@ const kpis = [
     value: '47',
     icon: PeopleOutlined,
     iconBg: '#e8f0ff',
-    iconColor: '#3b82f6',
+    iconColor: '#1d4ed8',
     progress: 60,
-    progressColor: '#3b82f6',
+    progressColor: '#1d4ed8',
     trend: '+5',
     delay: '200ms',
   },
@@ -61,9 +61,9 @@ const kpis = [
     value: '12',
     icon: AssignmentOutlined,
     iconBg: '#fef3c7',
-    iconColor: '#d97706',
+    iconColor: '#b45309',
     progress: 45,
-    progressColor: '#d97706',
+    progressColor: '#b45309',
     trend: '+1',
     delay: '300ms',
   },
@@ -71,17 +71,17 @@ const kpis = [
 
 const recentActivity = [
   { text: 'Tractorul John Deere 8R alocat lui Ion Popescu', time: 'acum 5 min', color: '#1a5c38' },
-  { text: 'Combina a finalizat câmpul B-12', time: 'acum 23 min', color: '#10b981' },
-  { text: 'Operator nou Maria Ionescu înregistrat', time: 'acum 1h', color: '#3b82f6' },
-  { text: 'Mentenanță sistem irigații programată', time: 'acum 2h', color: '#d97706' },
-  { text: 'Raport combustibil depus pentru secțiunea A', time: 'acum 3h', color: '#6b7c74' },
+  { text: 'Combina a finalizat câmpul B-12', time: 'acum 23 min', color: '#059669' },
+  { text: 'Operator nou Maria Ionescu înregistrat', time: 'acum 1h', color: '#1d4ed8' },
+  { text: 'Mentenanță sistem irigații programată', time: 'acum 2h', color: '#b45309' },
+  { text: 'Raport combustibil depus pentru secțiunea A', time: 'acum 3h', color: '#4a5e54' },
 ]
 
 const quickStats = [
-  { label: 'Câmpuri active', value: '12 / 18', color: '#10b981' },
+  { label: 'Câmpuri active', value: '12 / 18', color: '#059669' },
   { label: 'Eficiență combustibil', value: '87%', color: '#1a5c38' },
   { label: 'Sarcini întârziate', value: '2', color: '#dc2626' },
-  { label: 'Mentenanță necesară', value: '4 unități', color: '#d97706' },
+  { label: 'Mentenanță necesară', value: '4 unități', color: '#b45309' },
 ]
 
 export default function DashboardPage() {
@@ -103,7 +103,7 @@ export default function DashboardPage() {
         <Typography sx={{ fontWeight: 700, fontSize: '1.5rem', color: '#0d1f17' }}>
           {greeting}, {user?.email?.split('@')[0] || 'User'} 👋
         </Typography>
-        <Typography sx={{ color: '#6b7c74', fontSize: '0.875rem' }}>
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
           Iată ce se întâmplă pe câmpurile tale astăzi.
         </Typography>
       </Box>
@@ -142,15 +142,16 @@ export default function DashboardPage() {
           <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '1.25rem', mb: 0.5 }}>
             3 alocări active astăzi
           </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', mb: 2 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.875rem', mb: 2 }}>
             Distribuite pe 5 mașini și 8 operatori
           </Typography>
           <Button
             variant="outlined"
             size="small"
+            aria-label="Vezi toate alocările active"
             sx={{
               color: '#ffffff',
-              borderColor: 'rgba(255,255,255,0.5)',
+              borderColor: 'rgba(255,255,255,0.85)',
               width: 'fit-content',
               fontSize: '0.75rem',
               '&:hover': { borderColor: '#ffffff', bgcolor: 'rgba(255,255,255,0.1)' },
@@ -166,6 +167,8 @@ export default function DashboardPage() {
         {kpis.map((kpi) => (
           <Grid key={kpi.label} size={{ xs: 12, sm: 6, lg: 3 }}>
             <Card
+              component="article"
+              aria-label={`${kpi.label}: ${kpi.value}, tendință ${kpi.trend}`}
               sx={{
                 p: 2.5,
                 animation: `fadeInUp 0.5s ease-out ${kpi.delay} both`,
@@ -176,6 +179,7 @@ export default function DashboardPage() {
                 sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
               >
                 <Box
+                  aria-hidden="true"
                   sx={{
                     width: 40,
                     height: 40,
@@ -188,24 +192,27 @@ export default function DashboardPage() {
                 >
                   <kpi.icon sx={{ fontSize: 20, color: kpi.iconColor }} />
                 </Box>
-                <Stack direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
-                  <TrendingUp sx={{ fontSize: 14, color: '#10b981' }} />
-                  <Typography sx={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 600 }}>
+                <Stack aria-hidden="true" direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
+                  <TrendingUp sx={{ fontSize: 14, color: '#059669' }} />
+                  <Typography sx={{ fontSize: '0.7rem', color: '#056849', fontWeight: 600 }}>
                     {kpi.trend}
                   </Typography>
                 </Stack>
               </Stack>
-              <Typography
-                sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}
-              >
-                {kpi.value}
-              </Typography>
-              <Typography sx={{ fontSize: '0.8rem', color: '#6b7c74', mb: 1.5 }}>
-                {kpi.label}
-              </Typography>
+              <Box aria-hidden="true">
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}
+                >
+                  {kpi.value}
+                </Typography>
+                <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', mb: 1.5 }}>
+                  {kpi.label}
+                </Typography>
+              </Box>
               <LinearProgress
                 variant="determinate"
                 value={kpi.progress}
+                aria-label={`Progres ${kpi.label}: ${kpi.progress}%`}
                 sx={{
                   height: 4,
                   borderRadius: 2,
@@ -235,7 +242,7 @@ export default function DashboardPage() {
                     borderBottom: i < recentActivity.length - 1 ? '1px solid #e0e6e2' : 'none',
                   }}
                 >
-                  <ListItemAvatar>
+                  <ListItemAvatar aria-hidden="true">
                     <Avatar sx={{ width: 32, height: 32, bgcolor: `${item.color}18` }}>
                       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
                     </Avatar>
@@ -245,7 +252,7 @@ export default function DashboardPage() {
                     secondary={item.time}
                     slotProps={{
                       primary: { sx: { fontSize: '0.825rem', color: '#0d1f17' } },
-                      secondary: { sx: { fontSize: '0.7rem', color: '#6b7c74' } },
+                      secondary: { sx: { fontSize: '0.7rem', color: 'text.secondary' } },
                     }}
                   />
                 </ListItem>
@@ -267,8 +274,8 @@ export default function DashboardPage() {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }} />
-                    <Typography sx={{ fontSize: '0.825rem', color: '#6b7c74' }}>
+                    <Box aria-hidden="true" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }} />
+                    <Typography sx={{ fontSize: '0.825rem', color: 'text.secondary' }}>
                       {stat.label}
                     </Typography>
                   </Stack>

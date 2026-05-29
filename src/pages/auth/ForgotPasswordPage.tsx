@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailOutlined sx={{ color: '#6b7c74', fontSize: 20 }} />
+                    <EmailOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },

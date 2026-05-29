@@ -99,7 +99,7 @@ function ResetForm({ token }: { token: string }) {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlined sx={{ color: '#6b7c74', fontSize: 20 }} />
+                    <LockOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },
@@ -139,7 +139,7 @@ function ResetForm({ token }: { token: string }) {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlined sx={{ color: '#6b7c74', fontSize: 20 }} />
+                    <LockOutlined sx={{ color: 'text.secondary', fontSize: 20 }} />
                   </InputAdornment>
                 ),
               },

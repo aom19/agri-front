@@ -19,7 +19,7 @@ const theme = createTheme({
         },
         text: {
             primary: '#0d1f17',
-            secondary: '#6b7c74',
+            secondary: '#4a5e54',
         },
         divider: '#e0e6e2',
         error: {
