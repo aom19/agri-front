@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './pages/auth'
 import { DashboardPage } from './pages/dashboard'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import DashboardLayout from './layouts/DashboardLayout'
 
 export default function App() {
   return (
@@ -17,7 +18,9 @@ export default function App() {
 
         {/* Rute protejate */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route element={<DashboardLayout />}>
+            <Route path="/" element={<DashboardPage />} />
+          </Route>
         </Route>
 
         {/* Fallback */}
