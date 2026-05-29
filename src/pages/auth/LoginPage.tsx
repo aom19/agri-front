@@ -1,9 +1,11 @@
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Stack, TextField } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { PasswordField } from '../../components'
 import { useLogin } from '../../hooks/useAuth'
 import { loginSchema, type LoginForm } from '../../schemas/auth.schema'
+import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import AuthLayout from './AuthLayout'
 
 export default function LoginPage() {
@@ -14,13 +16,11 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   })
 
-  const onSubmit = (data: LoginForm) => {
-    const parsed = loginSchema.safeParse(data)
-    if (parsed.success) mutation.mutate(parsed.data)
-  }
+  const onSubmit = (data: LoginForm) => mutation.mutate(data)
 
   return (
     <AuthLayout title="Autentificare" subtitle="Introdu datele de acces pentru a continua.">
@@ -28,7 +28,7 @@ export default function LoginPage() {
         <Stack spacing={2.5}>
           {mutation.isError && (
             <Alert severity="error">
-              Email sau parolă incorectă.
+              {getApiErrorMessage(mutation.error, 'Email sau parolă incorectă.')}
             </Alert>
           )}
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
             fullWidth
             error={!!errors.email || mutation.isError}
             helperText={errors.email?.message}
-            {...register('email', { required: 'Câmp obligatoriu', minLength: 3 })}
+            {...register('email')}
           />
 
           <PasswordField
@@ -48,7 +48,7 @@ export default function LoginPage() {
             fullWidth
             error={!!errors.password || mutation.isError}
             helperText={errors.password?.message}
-            {...register('password', { required: 'Câmp obligatoriu', minLength: 6 })}
+            {...register('password')}
           />
 
           <Button
@@ -66,7 +66,7 @@ export default function LoginPage() {
               Am uitat parola
             </Button>
             <Button component={Link} to="/register" size="small">
-              Creează cont
+              Crează cont
             </Button>
           </Stack>
         </Stack>

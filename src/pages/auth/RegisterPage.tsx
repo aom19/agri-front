@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Stack, TextField } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { PasswordField } from '../../components'
@@ -15,13 +16,11 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', confirmPassword: '' },
   })
 
-  const onSubmit = (data: RegisterForm) => {
-    const parsed = registerSchema.safeParse(data)
-    if (parsed.success) mutation.mutate(parsed.data)
-  }
+  const onSubmit = (data: RegisterForm) => mutation.mutate(data)
 
   return (
     <AuthLayout title="Înregistrare" subtitle="Creează un cont nou pentru a accesa platforma.">
@@ -34,13 +33,13 @@ export default function RegisterPage() {
           )}
 
           <TextField
-            label="Utilizator"
+            label="Email"
             autoComplete="email"
             autoFocus
             fullWidth
             error={!!errors.email}
             helperText={errors.email?.message}
-            {...register('email', { required: 'Câmp obligatoriu', minLength: 3 })}
+            {...register('email')}
           />
 
           <PasswordField
@@ -49,7 +48,7 @@ export default function RegisterPage() {
             fullWidth
             error={!!errors.password}
             helperText={errors.password?.message}
-            {...register('password', { required: 'Câmp obligatoriu', minLength: 6 })}
+            {...register('password')}
           />
 
           <PasswordField
@@ -58,7 +57,7 @@ export default function RegisterPage() {
             fullWidth
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword?.message}
-            {...register('confirmPassword', { required: 'Câmp obligatoriu' })}
+            {...register('confirmPassword')}
           />
 
           <Button

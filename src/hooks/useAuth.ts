@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
@@ -6,7 +7,7 @@ import type { LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm } f
 
 export function useLogin() {
     const navigate = useNavigate()
-    const { setTokens } = useAuthStore()
+    const setTokens = useAuthStore((s) => s.setTokens)
 
     return useMutation({
         mutationFn: (data: LoginForm) => authApi.login(data),
@@ -19,7 +20,7 @@ export function useLogin() {
 
 export function useRegister() {
     const navigate = useNavigate()
-    const { setTokens } = useAuthStore()
+    const setTokens = useAuthStore((s) => s.setTokens)
 
     return useMutation({
         mutationFn: (data: RegisterForm) =>
@@ -39,6 +40,13 @@ export function useForgotPassword() {
 
 export function useResetPassword(token: string) {
     const navigate = useNavigate()
+    const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [])
 
     return useMutation({
         mutationFn: (data: ResetPasswordForm) =>
@@ -47,7 +55,22 @@ export function useResetPassword(token: string) {
                 confirm_password: data.confirmPassword,
             }),
         onSuccess: () => {
-            setTimeout(() => navigate('/login', { replace: true }), 2000)
+            timerRef.current = setTimeout(() => navigate('/login', { replace: true }), 2000)
         },
     })
+}
+
+export function useLogout() {
+    const logout = useAuthStore((s) => s.logout)
+    const refreshToken = useAuthStore((s) => s.refreshToken)
+
+    return useCallback(async () => {
+        try {
+            if (refreshToken) {
+                await authApi.logout(refreshToken)
+            }
+        } finally {
+            logout()
+        }
+    }, [logout, refreshToken])
 }

@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Stack, TextField } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { useForgotPassword } from '../../hooks/useAuth'
@@ -14,13 +15,11 @@ export default function ForgotPasswordPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordForm>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: '' },
   })
 
-  const onSubmit = (data: ForgotPasswordForm) => {
-    const parsed = forgotPasswordSchema.safeParse(data)
-    if (parsed.success) mutation.mutate(parsed.data)
-  }
+  const onSubmit = (data: ForgotPasswordForm) => mutation.mutate(data)
 
   return (
     <AuthLayout title="Recuperare parolă" subtitle="Introdu adresa de email asociată contului tău.">
@@ -47,7 +46,7 @@ export default function ForgotPasswordPage() {
             disabled={mutation.isSuccess}
             error={!!errors.email}
             helperText={errors.email?.message}
-            {...register('email', { required: 'Câmp obligatoriu' })}
+            {...register('email')}
           />
 
           <Button

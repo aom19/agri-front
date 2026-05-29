@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Alert, Button, Stack } from '@mui/material'
 import { Link, useParams } from 'react-router-dom'
 import { PasswordField } from '../../components'
@@ -32,13 +33,11 @@ function ResetForm({ token }: { token: string }) {
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordForm>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: '', confirmPassword: '' },
   })
 
-  const onSubmit = (data: ResetPasswordForm) => {
-    const parsed = resetPasswordSchema.safeParse(data)
-    if (parsed.success) mutation.mutate(parsed.data)
-  }
+  const onSubmit = (data: ResetPasswordForm) => mutation.mutate(data)
 
   return (
     <AuthLayout title="Resetare parolă" subtitle="Alege o parolă nouă pentru contul tău.">
@@ -64,7 +63,7 @@ function ResetForm({ token }: { token: string }) {
             disabled={mutation.isSuccess}
             error={!!errors.password}
             helperText={errors.password?.message}
-            {...register('password', { required: 'Câmp obligatoriu', minLength: 6 })}
+            {...register('password')}
           />
 
           <PasswordField
@@ -74,7 +73,7 @@ function ResetForm({ token }: { token: string }) {
             disabled={mutation.isSuccess}
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword?.message}
-            {...register('confirmPassword', { required: 'Câmp obligatoriu' })}
+            {...register('confirmPassword')}
           />
 
           <Button

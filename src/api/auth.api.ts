@@ -34,5 +34,5 @@ export const authApi = {
     resetPassword: (token: string, data: ResetPasswordRequest) =>
         api.post(`/auth/reset-password/${token}`, data),
 
-    logout: () => api.post('/auth/logout'),
+    logout: (refreshToken: string) => api.post('/auth/logout', { refresh_token: refreshToken }),
 }
