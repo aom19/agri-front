@@ -21,6 +21,7 @@ import {
   TrendingUp,
 } from '@mui/icons-material'
 import { useAuthStore } from '../../store/auth.store'
+import { useProfile } from '../../hooks/useProfile'
 
 const kpis = [
   {
@@ -86,8 +87,10 @@ const quickStats = [
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
+  const { data: profile } = useProfile()
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara'
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User'
 
   return (
     <Box
@@ -101,7 +104,7 @@ export default function DashboardPage() {
       {/* Greeting */}
       <Box sx={{ mb: 3 }}>
         <Typography sx={{ fontWeight: 700, fontSize: '1.5rem', color: '#0d1f17' }}>
-          {greeting}, {user?.email?.split('@')[0] || 'User'} 👋
+          {greeting}, {displayName} 👋
         </Typography>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
           Iată ce se întâmplă pe câmpurile tale astăzi.

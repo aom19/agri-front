@@ -139,10 +139,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 whiteSpace: 'nowrap',
               }}
             >
-              {user?.email || 'User'}
+              {profile?.first_name
+                ? `${profile.first_name} ${profile.last_name}`
+                : user?.email || 'User'}
             </Typography>
             <Typography sx={{ color: '#8faaa0', fontSize: '0.65rem', textTransform: 'capitalize' }}>
-              {user?.role || 'operator'}
+              {profile?.role || user?.role || 'operator'}
             </Typography>
           </Box>
           <IconButton
@@ -299,7 +301,9 @@ export default function DashboardLayout() {
                     display: { xs: 'none', sm: 'block' },
                   }}
                 >
-                  {user?.email?.split('@')[0] || 'User'}
+                  {profile?.first_name
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : user?.email?.split('@')[0] || 'User'}
                 </Typography>
                 <KeyboardArrowDown
                   aria-hidden="true"
