@@ -9,6 +9,7 @@ lerna-debug.log*
 
 # Dependențe
 node_modules
+package-lock.json
 
 # Build
 dist
