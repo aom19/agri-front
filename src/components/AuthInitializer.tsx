@@ -12,12 +12,18 @@ export default function AuthInitializer() {
   const refreshToken = useAuthStore((s) => s.refreshToken)
   const setTokens = useAuthStore((s) => s.setTokens)
   const logout = useAuthStore((s) => s.logout)
+  const setInitialized = useAuthStore((s) => s.setInitialized)
   const show = useNotificationStore((s) => s.show)
   const attempted = useRef(false)
 
   useEffect(() => {
-    if (attempted.current || !refreshToken) return
+    if (attempted.current) return
     attempted.current = true
+
+    if (!refreshToken) {
+      setInitialized()
+      return
+    }
 
     axios
       .post(`${import.meta.env.VITE_API_BASE_URL}/auth/refresh`, {
@@ -29,6 +35,9 @@ export default function AuthInitializer() {
       .catch(() => {
         logout()
         show('Sesiunea a expirat. Te-ai deconectat automat.', 'warning')
+      })
+      .finally(() => {
+        setInitialized()
       })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

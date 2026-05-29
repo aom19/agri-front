@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from './pages/auth'
 import { DashboardPage } from './pages/dashboard'
+import { ProfilePage } from './pages/profile/ProfilePage'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import DashboardLayout from './layouts/DashboardLayout'
 import AuthInitializer from './components/AuthInitializer'
@@ -24,6 +25,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Route>
 

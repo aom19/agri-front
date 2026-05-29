@@ -34,6 +34,7 @@ import {
 import AppLogo from '../components/AppLogo'
 import { useAuthStore } from '../store/auth.store'
 import { useLogout } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
 
 const SIDEBAR_WIDTH = 240
 
@@ -49,6 +50,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useLogout()
+  const { data: profile } = useProfile()
 
   const handleNav = (path: string) => {
     navigate(path)
@@ -92,7 +94,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: isActive ? 600 : 400 } } }}
+                slotProps={{
+                  primary: { sx: { fontSize: '0.875rem', fontWeight: isActive ? 600 : 400 } },
+                }}
               />
             </ListItemButton>
           )
@@ -103,7 +107,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Box sx={{ px: 2, pb: 1.5 }}>
         <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '10px', px: 2, py: 1.5 }}>
           <Typography sx={{ color: '#a8bdb4', fontSize: '0.7rem' }}>
-            🌤  24°C  •  Condiții favorabile
+            🌤 24°C • Condiții favorabile
           </Typography>
         </Box>
       </Box>
@@ -112,18 +116,34 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <Box sx={{ px: 2, pb: 2, pt: 1 }}>
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mb: 1.5 }} />
         <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
-          <Avatar sx={{ width: 32, height: 32, bgcolor: '#2d8653', fontSize: '0.8rem' }}>
-            {user?.email?.charAt(0).toUpperCase() || 'U'}
+          <Avatar
+            src={profile?.profile_photo || undefined}
+            sx={{ width: 32, height: 32, bgcolor: '#2d8653', fontSize: '0.8rem' }}
+          >
+            {profile?.first_name?.[0]?.toUpperCase() ?? user?.email?.charAt(0).toUpperCase() ?? 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Typography
+              sx={{
+                color: '#ffffff',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {user?.email || 'User'}
             </Typography>
             <Typography sx={{ color: '#6b7c74', fontSize: '0.65rem', textTransform: 'capitalize' }}>
               {user?.role || 'operator'}
             </Typography>
           </Box>
-          <IconButton size="small" onClick={() => logout()} sx={{ color: '#6b7c74', '&:hover': { color: '#dc2626' } }}>
+          <IconButton
+            size="small"
+            onClick={() => logout()}
+            sx={{ color: '#6b7c74', '&:hover': { color: '#dc2626' } }}
+          >
             <LogoutOutlined sx={{ fontSize: 18 }} />
           </IconButton>
         </Stack>
@@ -134,15 +154,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function DashboardLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const logout = useLogout()
+  const { data: profile } = useProfile()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
   const currentNav = navItems.find((item) => item.path === location.pathname)
-  const pageTitle = currentNav?.label || 'Tablou de bord'
+  const pageTitle =
+    currentNav?.label ?? (location.pathname === '/profile' ? 'Profil' : 'Tablou de bord')
 
   const drawerSx = {
     '& .MuiDrawer-paper': {
@@ -157,7 +180,12 @@ export default function DashboardLayout() {
       {/* Desktop: permanent sidebar */}
       <Drawer
         variant="permanent"
-        sx={{ width: SIDEBAR_WIDTH, flexShrink: 0, display: { xs: 'none', md: 'block' }, ...drawerSx }}
+        sx={{
+          width: SIDEBAR_WIDTH,
+          flexShrink: 0,
+          display: { xs: 'none', md: 'block' },
+          ...drawerSx,
+        }}
       >
         <SidebarContent />
       </Drawer>
@@ -174,7 +202,15 @@ export default function DashboardLayout() {
       </Drawer>
 
       {/* Main content */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: { md: `calc(100% - ${SIDEBAR_WIDTH}px)` } }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          width: { md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
+        }}
+      >
         {/* Topbar */}
         <AppBar
           position="sticky"
@@ -208,7 +244,11 @@ export default function DashboardLayout() {
                 </Badge>
               </IconButton>
 
-              <Divider orientation="vertical" flexItem sx={{ mx: 1, height: 20, alignSelf: 'center' }} />
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ mx: 1, height: 20, alignSelf: 'center' }}
+              />
 
               <Box
                 onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -223,10 +263,22 @@ export default function DashboardLayout() {
                   '&:hover': { bgcolor: '#f0f2f0' },
                 }}
               >
-                <Avatar sx={{ width: 28, height: 28, bgcolor: '#1a5c38', fontSize: '0.75rem' }}>
-                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                <Avatar
+                  src={profile?.profile_photo || undefined}
+                  sx={{ width: 28, height: 28, bgcolor: '#1a5c38', fontSize: '0.75rem' }}
+                >
+                  {profile?.first_name?.[0]?.toUpperCase() ??
+                    user?.email?.charAt(0).toUpperCase() ??
+                    'U'}
                 </Avatar>
-                <Typography sx={{ fontSize: '0.8rem', color: '#0d1f17', fontWeight: 500, display: { xs: 'none', sm: 'block' } }}>
+                <Typography
+                  sx={{
+                    fontSize: '0.8rem',
+                    color: '#0d1f17',
+                    fontWeight: 500,
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
                   {user?.email?.split('@')[0] || 'User'}
                 </Typography>
                 <KeyboardArrowDown sx={{ fontSize: 16, color: '#6b7c74' }} />
@@ -239,10 +291,24 @@ export default function DashboardLayout() {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               >
-                <MenuItem onClick={() => setAnchorEl(null)}>Profil</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setAnchorEl(null)
+                    navigate('/profile')
+                  }}
+                >
+                  Profil
+                </MenuItem>
                 <MenuItem onClick={() => setAnchorEl(null)}>Setări</MenuItem>
                 <Divider />
-                <MenuItem onClick={() => { setAnchorEl(null); logout() }}>Deconectare</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setAnchorEl(null)
+                    logout()
+                  }}
+                >
+                  Deconectare
+                </MenuItem>
               </Menu>
             </Stack>
           </Toolbar>
