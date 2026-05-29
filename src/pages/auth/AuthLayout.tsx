@@ -88,22 +88,24 @@ export default function AuthLayout({ title, subtitle, children }: AuthLayoutProp
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {['🌾 Programare inteligentă', '📊 Analiză în timp real', '🚜 Gestiunea flotei'].map((label) => (
-              <Chip
-                key={label}
-                label={label}
-                size="small"
-                sx={{
-                  color: '#ffffff',
-                  bgcolor: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  fontSize: '0.75rem',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-2px)' },
-                }}
-              />
-            ))}
+            {['🌾 Programare inteligentă', '📊 Analiză în timp real', '🚜 Gestiunea flotei'].map(
+              (label) => (
+                <Chip
+                  key={label}
+                  label={label}
+                  size="small"
+                  sx={{
+                    color: '#ffffff',
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontSize: '0.75rem',
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'translateY(-2px)' },
+                  }}
+                />
+              )
+            )}
           </Box>
         </Box>
       </Box>

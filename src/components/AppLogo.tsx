@@ -12,12 +12,7 @@ export default function AppLogo({ color = 'default', compact = false }: AppLogoP
 
   return (
     <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
-      <Box
-        component="img"
-        src={logoUrl}
-        alt="AgriERP"
-        sx={{ width: 36, height: 36 }}
-      />
+      <Box component="img" src={logoUrl} alt="AgriERP" sx={{ width: 36, height: 36 }} />
       {!compact && (
         <Box>
           <Typography

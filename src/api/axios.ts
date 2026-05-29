@@ -1,5 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/auth.store'
+import { useNotificationStore } from '../store/notification.store'
 
 if (!import.meta.env.VITE_API_BASE_URL) {
     throw new Error('VITE_API_BASE_URL nu este definit. Verifică fișierul .env')
@@ -99,6 +100,7 @@ api.interceptors.response.use(
         } catch (err) {
             processQueue(err, null)
             useAuthStore.getState().logout()
+            useNotificationStore.getState().show('Sesiunea a expirat. Te-ai deconectat automat.', 'warning')
             return Promise.reject(err)
         } finally {
             isRefreshing = false

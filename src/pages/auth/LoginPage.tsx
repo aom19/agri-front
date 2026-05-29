@@ -34,7 +34,10 @@ export default function LoginPage() {
   const onSubmit = (data: LoginForm) => mutation.mutate(data)
 
   return (
-    <AuthLayout title="Bun revenit" subtitle="Conectează-te pentru a gestiona operațiunile de pe câmp.">
+    <AuthLayout
+      title="Bun revenit"
+      subtitle="Conectează-te pentru a gestiona operațiunile de pe câmp."
+    >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={2.5}>
           {mutation.isError && (
@@ -83,7 +86,11 @@ export default function LoginPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <FormControlLabel
               control={<Checkbox size="small" />}
-              label={<Typography sx={{ fontSize: '0.8rem', color: '#6b7c74' }}>Ține-mă conectat</Typography>}
+              label={
+                <Typography sx={{ fontSize: '0.8rem', color: '#6b7c74' }}>
+                  Ține-mă conectat
+                </Typography>
+              }
             />
             <Button
               component={Link}
@@ -117,7 +124,12 @@ export default function LoginPage() {
 
           <Typography sx={{ textAlign: 'center', color: '#6b7c74', fontSize: '0.8rem', mt: 1 }}>
             Nu ai un cont?{' '}
-            <Button component={Link} to="/register" size="small" sx={{ fontSize: '0.8rem', p: 0, minWidth: 'auto' }}>
+            <Button
+              component={Link}
+              to="/register"
+              size="small"
+              sx={{ fontSize: '0.8rem', p: 0, minWidth: 'auto' }}
+            >
               Creează cont
             </Button>
           </Typography>

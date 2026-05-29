@@ -129,7 +129,16 @@ export default function DashboardPage() {
             background: 'linear-gradient(90deg, rgba(13,31,23,0.85) 0%, transparent 60%)',
           }}
         />
-        <CardContent sx={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <CardContent
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
           <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '1.25rem', mb: 0.5 }}>
             3 alocări active astăzi
           </Typography>
@@ -162,7 +171,10 @@ export default function DashboardPage() {
                 animation: `fadeInUp 0.5s ease-out ${kpi.delay} both`,
               }}
             >
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+              <Stack
+                direction="row"
+                sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+              >
                 <Box
                   sx={{
                     width: 40,
@@ -183,7 +195,9 @@ export default function DashboardPage() {
                   </Typography>
                 </Stack>
               </Stack>
-              <Typography sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}>
+              <Typography
+                sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}
+              >
                 {kpi.value}
               </Typography>
               <Typography sx={{ fontSize: '0.8rem', color: '#6b7c74', mb: 1.5 }}>
@@ -213,7 +227,14 @@ export default function DashboardPage() {
             </Typography>
             <List disablePadding>
               {recentActivity.map((item, i) => (
-                <ListItem key={i} disablePadding sx={{ py: 1, borderBottom: i < recentActivity.length - 1 ? '1px solid #e0e6e2' : 'none' }}>
+                <ListItem
+                  key={i}
+                  disablePadding
+                  sx={{
+                    py: 1,
+                    borderBottom: i < recentActivity.length - 1 ? '1px solid #e0e6e2' : 'none',
+                  }}
+                >
                   <ListItemAvatar>
                     <Avatar sx={{ width: 32, height: 32, bgcolor: `${item.color}18` }}>
                       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
@@ -240,7 +261,11 @@ export default function DashboardPage() {
             </Typography>
             <Stack spacing={2}>
               {quickStats.map((stat) => (
-                <Stack key={stat.label} direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <Stack
+                  key={stat.label}
+                  direction="row"
+                  sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }} />
                     <Typography sx={{ fontSize: '0.825rem', color: '#6b7c74' }}>

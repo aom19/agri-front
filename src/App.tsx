@@ -3,10 +3,14 @@ import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from '
 import { DashboardPage } from './pages/dashboard'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import DashboardLayout from './layouts/DashboardLayout'
+import AuthInitializer from './components/AuthInitializer'
+import NotificationBar from './components/NotificationBar'
 
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthInitializer />
+      <NotificationBar />
       <Routes>
         {/* Rute publice (doar pentru utilizatori neautentificați) */}
         <Route element={<GuestRoute />}>

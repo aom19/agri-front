@@ -1,6 +1,14 @@
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Box, Button, InputAdornment, LinearProgress, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Button,
+  InputAdornment,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material'
 import { LockOutlined } from '@mui/icons-material'
 import { Link, useParams } from 'react-router-dom'
 import { PasswordField } from '../../components'
@@ -32,7 +40,9 @@ export default function ResetPasswordPage() {
   if (!token) {
     return (
       <AuthLayout title="Link invalid">
-        <Alert severity="error" sx={{ borderRadius: 2 }}>Linkul de resetare este invalid sau a expirat.</Alert>
+        <Alert severity="error" sx={{ borderRadius: 2 }}>
+          Linkul de resetare este invalid sau a expirat.
+        </Alert>
         <Button component={Link} to="/forgot-password" sx={{ mt: 2 }}>
           Solicită un link nou
         </Button>
@@ -110,7 +120,9 @@ function ResetForm({ token }: { token: string }) {
                   '& .MuiLinearProgress-bar': { bgcolor: strength.color, borderRadius: 2 },
                 }}
               />
-              <Typography sx={{ fontSize: '0.7rem', color: strength.color, mt: 0.5, fontWeight: 500 }}>
+              <Typography
+                sx={{ fontSize: '0.7rem', color: strength.color, mt: 0.5, fontWeight: 500 }}
+              >
                 {strength.label}
               </Typography>
             </Box>
