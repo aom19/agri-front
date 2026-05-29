@@ -179,6 +179,7 @@ export default function DashboardLayout() {
       width: SIDEBAR_WIDTH,
       bgcolor: '#0d1f17',
       borderRight: 'none',
+      borderRadius: '0 8px 8px 0',
     },
   }
 
