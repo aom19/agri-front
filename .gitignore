@@ -32,3 +32,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Fișiere de lock
+.package-lock.json
+package-lock.json
