@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   AppBar,
   Avatar,
   Badge,
   Box,
+  Collapse,
   Divider,
   Drawer,
   IconButton,
@@ -20,30 +21,73 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material'
 import {
-  DashboardOutlined,
-  AgricultureOutlined,
-  PeopleOutlined,
-  AssignmentOutlined,
   NotificationsOutlined,
   SearchOutlined,
   LogoutOutlined,
   KeyboardArrowDown,
   MenuOutlined,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material'
 import AppLogo from '../components/AppLogo'
 import { useAuthStore } from '../store/auth.store'
 import { useLogout } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
+import { usePermissions } from '../hooks/usePermissions'
+import { navConfig, findNavLabel, type NavLeaf } from '../routes/routeConfig'
 
 const SIDEBAR_WIDTH = 240
 
-const navItems = [
-  { label: 'Tablou de bord', icon: DashboardOutlined, path: '/' },
-  { label: 'Mașini', icon: AgricultureOutlined, path: '/machines' },
-  { label: 'Operatori', icon: PeopleOutlined, path: '/operators' },
-  { label: 'Alocări', icon: AssignmentOutlined, path: '/assignments' },
-]
+function navItemSx(isActive: boolean): SxProps<Theme> {
+  return {
+    borderRadius: '8px',
+    height: 44,
+    px: 1.5,
+    mb: 0.5,
+    color: isActive ? '#10b981' : '#a8bdb4',
+    bgcolor: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
+    borderLeft: isActive ? '3px solid #10b981' : '3px solid transparent',
+    transition: 'all 0.15s ease',
+    '&:hover': {
+      bgcolor: isActive ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
+      color: '#ffffff',
+    },
+  }
+}
+
+function NavLeafItem({
+  item,
+  isActive,
+  onNavigate,
+  indent = false,
+}: {
+  item: NavLeaf
+  isActive: boolean
+  onNavigate: (path: string) => void
+  indent?: boolean
+}) {
+  return (
+    <ListItemButton
+      onClick={() => onNavigate(item.path)}
+      aria-current={isActive ? 'page' : undefined}
+      sx={[navItemSx(isActive), indent ? { pl: 2.5 } : {}]}
+    >
+      <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+        <item.icon sx={{ fontSize: indent ? 18 : 20 }} />
+      </ListItemIcon>
+      <ListItemText
+        primary={item.label}
+        slotProps={{
+          primary: {
+            sx: { fontSize: indent ? '0.8rem' : '0.875rem', fontWeight: isActive ? 600 : 400 },
+          },
+        }}
+      />
+    </ListItemButton>
+  )
+}
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
@@ -51,6 +95,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAuthStore((s) => s.user)
   const logout = useLogout()
   const { data: profile } = useProfile()
+  const { data: permissions } = usePermissions()
+  const [adminOpen, setAdminOpen] = useState(() => location.pathname.startsWith('/admin'))
+
+  const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
+  const can = (perm?: string) => !perm || permSet.has(perm)
 
   const handleNav = (path: string) => {
     navigate(path)
@@ -68,39 +117,67 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Navigation */}
       <List component="nav" aria-label="Navigare principală" sx={{ px: 1.5, py: 2, flex: 1 }}>
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path
-          return (
-            <ListItemButton
-              key={item.path}
-              onClick={() => handleNav(item.path)}
-              aria-current={isActive ? 'page' : undefined}
-              sx={{
-                borderRadius: '8px',
-                height: 44,
-                px: 1.5,
-                mb: 0.5,
-                color: isActive ? '#10b981' : '#a8bdb4',
-                bgcolor: isActive ? 'rgba(16,185,129,0.15)' : 'transparent',
-                borderLeft: isActive ? '3px solid #10b981' : '3px solid transparent',
-                transition: 'all 0.15s ease',
-                '&:hover': {
-                  bgcolor: isActive ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
-                  color: '#ffffff',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                <item.icon sx={{ fontSize: 20 }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                slotProps={{
-                  primary: { sx: { fontSize: '0.875rem', fontWeight: isActive ? 600 : 400 } },
-                }}
+        {navConfig.map((item) => {
+          if (item.type === 'leaf') {
+            if (!can(item.permission)) return null
+            return (
+              <NavLeafItem
+                key={item.path}
+                item={item}
+                isActive={location.pathname === item.path}
+                onNavigate={handleNav}
               />
-            </ListItemButton>
-          )
+            )
+          }
+
+          if (item.type === 'group') {
+            const visibleChildren = item.children.filter((c) => can(c.permission))
+            if (visibleChildren.length === 0) return null
+            const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
+
+            return (
+              <Box key={item.label}>
+                <ListItemButton
+                  onClick={() => setAdminOpen((o) => !o)}
+                  sx={[navItemSx(isGroupActive), { justifyContent: 'space-between' }]}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                      <item.icon sx={{ fontSize: 20 }} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      slotProps={{
+                        primary: {
+                          sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
+                        },
+                      }}
+                    />
+                  </Box>
+                  {adminOpen ? (
+                    <ExpandLess sx={{ fontSize: 16 }} />
+                  ) : (
+                    <ExpandMore sx={{ fontSize: 16 }} />
+                  )}
+                </ListItemButton>
+                <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    {visibleChildren.map((child) => (
+                      <NavLeafItem
+                        key={child.path}
+                        item={child}
+                        isActive={location.pathname === child.path}
+                        onNavigate={handleNav}
+                        indent
+                      />
+                    ))}
+                  </List>
+                </Collapse>
+              </Box>
+            )
+          }
+
+          return null
         })}
       </List>
 
@@ -172,9 +249,9 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
 
-  const currentNav = navItems.find((item) => item.path === location.pathname)
   const pageTitle =
-    currentNav?.label ?? (location.pathname === '/profile' ? 'Profil' : 'Tablou de bord')
+    findNavLabel(location.pathname) ??
+    (location.pathname === '/profile' ? 'Profil' : 'Tablou de bord')
 
   const drawerSx = {
     '& .MuiDrawer-paper': {
