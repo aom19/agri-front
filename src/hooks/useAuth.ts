@@ -19,16 +19,21 @@ export function useLogin() {
 }
 
 export function useRegister() {
-    const navigate = useNavigate()
-    const setTokens = useAuthStore((s) => s.setTokens)
-
     return useMutation({
         mutationFn: (data: RegisterForm) =>
             authApi.register({ email: data.email, password: data.password }),
-        onSuccess: ({ data }) => {
-            setTokens(data.access_token, data.refresh_token)
-            navigate('/', { replace: true })
-        },
+    })
+}
+
+export function useConfirmEmail() {
+    return useMutation({
+        mutationFn: (token: string) => authApi.confirmEmail(token),
+    })
+}
+
+export function useResendConfirmation() {
+    return useMutation({
+        mutationFn: (email: string) => authApi.resendConfirmation(email),
     })
 }
 

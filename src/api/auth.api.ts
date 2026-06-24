@@ -15,6 +15,11 @@ export type AuthResponse = {
     refresh_token: string
 }
 
+export type MessageResponse = {
+    status?: 'success' | 'error'
+    message: string
+}
+
 export type ForgotPasswordRequest = {
     email: string
 }
@@ -27,12 +32,16 @@ export type ResetPasswordRequest = {
 export const authApi = {
     login: (data: LoginRequest) => api.post<AuthResponse>('/auth/login', data),
 
-    register: (data: RegisterRequest) => api.post<AuthResponse>('/auth/register', data),
+    register: (data: RegisterRequest) => api.post<MessageResponse>('/auth/register', data),
 
-    forgotPassword: (data: ForgotPasswordRequest) => api.post('/auth/forgot-password', data),
+    confirmEmail: (token: string) => api.post<MessageResponse>('/auth/confirm-email', { token }),
+
+    resendConfirmation: (email: string) => api.post<MessageResponse>('/auth/resend-confirmation', { email }),
+
+    forgotPassword: (data: ForgotPasswordRequest) => api.post<MessageResponse>('/auth/forgot-password', data),
 
     resetPassword: (token: string, data: ResetPasswordRequest) =>
-        api.post(`/auth/reset-password/${token}`, data),
+        api.post<MessageResponse>(`/auth/reset-password/${token}`, data),
 
     logout: (refreshToken: string) => api.post('/auth/logout', { refresh_token: refreshToken }),
 }

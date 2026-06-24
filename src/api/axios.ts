@@ -56,7 +56,7 @@ api.interceptors.response.use(
         const originalRequest: InternalAxiosRequestConfig = error.config
 
         // Nu face refresh pentru rutele de auth fără token (login, register, refresh)
-        const noTokenRoutes = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password']
+        const noTokenRoutes = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/confirm-email', '/auth/forgot-password', '/auth/reset-password']
         const isAuthRoute = noTokenRoutes.some((r) => originalRequest.url?.startsWith(r))
         if (error.response?.status !== 401 || originalRequest._retry || isAuthRoute) {
             return Promise.reject(error)

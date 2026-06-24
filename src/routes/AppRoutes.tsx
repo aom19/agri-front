@@ -1,7 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
-import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from '../pages/auth'
+import {
+  LoginPage,
+  RegisterPage,
+  ConfirmEmailPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+} from '../pages/auth'
 import { DashboardPage } from '../pages/dashboard'
 import { ProfilePage } from '../pages/profile/ProfilePage'
 import { GuestRoute, ProtectedRoute } from '../components/RouteGuards'
@@ -38,6 +44,7 @@ export default function AppRoutes() {
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/confirm-email" element={<ConfirmEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         </Route>

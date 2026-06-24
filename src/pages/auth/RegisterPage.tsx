@@ -26,6 +26,13 @@ export default function RegisterPage() {
     <AuthLayout title="Înregistrare" subtitle="Creează un cont nou pentru a accesa platforma.">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={2.5}>
+          {mutation.isSuccess && (
+            <Alert severity="success">
+              {mutation.data?.data.message ??
+                'Cont creat. Verifică emailul pentru link-ul de confirmare înainte de autentificare.'}
+            </Alert>
+          )}
+
           {mutation.isError && (
             <Alert severity="error">
               {getApiErrorMessage(mutation.error, 'Înregistrare eșuată. Încercă din nou.')}
@@ -37,6 +44,7 @@ export default function RegisterPage() {
             autoComplete="email"
             autoFocus
             fullWidth
+            disabled={mutation.isSuccess}
             error={!!errors.email}
             helperText={errors.email?.message}
             {...register('email')}
@@ -46,6 +54,7 @@ export default function RegisterPage() {
             label="Parolă"
             autoComplete="new-password"
             fullWidth
+            disabled={mutation.isSuccess}
             error={!!errors.password}
             helperText={errors.password?.message}
             {...register('password')}
@@ -55,6 +64,7 @@ export default function RegisterPage() {
             label="Confirmă parola"
             autoComplete="new-password"
             fullWidth
+            disabled={mutation.isSuccess}
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword?.message}
             {...register('confirmPassword')}
@@ -65,6 +75,7 @@ export default function RegisterPage() {
             variant="contained"
             size="large"
             fullWidth
+            disabled={mutation.isSuccess}
             loading={mutation.isPending}
           >
             Creează cont
