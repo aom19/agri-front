@@ -72,7 +72,7 @@ function NavLeafItem({
     <ListItemButton
       onClick={() => onNavigate(item.path)}
       aria-current={isActive ? 'page' : undefined}
-      sx={[navItemSx(isActive), indent ? { pl: 2.5 } : {}]}
+      sx={{ ...(navItemSx(isActive) as object), ...(indent ? { pl: 2.5 } : {}) }}
     >
       <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
         <item.icon sx={{ fontSize: indent ? 18 : 20 }} />
@@ -139,7 +139,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <Box key={item.label}>
                 <ListItemButton
                   onClick={() => setAdminOpen((o) => !o)}
-                  sx={[navItemSx(isGroupActive), { justifyContent: 'space-between' }]}
+                  sx={{ ...(navItemSx(isGroupActive) as object), justifyContent: 'space-between' }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                     <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>

@@ -13,6 +13,7 @@ import ForbiddenPage from '../pages/ForbiddenPage'
 
 // ─── Lazy pages ───────────────────────────────────────────────────────────────
 const MachinesPage = lazy(() => import('../pages/machines/MachinesPage'))
+const FieldsPage = lazy(() => import('../pages/fields/FieldsPage'))
 const OperatorsPage = lazy(() => import('../pages/operators/OperatorsPage'))
 const AssignmentsPage = lazy(() => import('../pages/assignments/AssignmentsPage'))
 const UsersPage = lazy(() => import('../pages/admin/users/UsersPage'))
@@ -55,6 +56,16 @@ export default function AppRoutes() {
                 <RequirePermission permission="machines:read">
                   <Suspense fallback={<PageLoader />}>
                     <MachinesPage />
+                  </Suspense>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/fields"
+              element={
+                <RequirePermission permission="fields:read">
+                  <Suspense fallback={<PageLoader />}>
+                    <FieldsPage />
                   </Suspense>
                 </RequirePermission>
               }
