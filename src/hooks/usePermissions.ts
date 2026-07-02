@@ -18,6 +18,34 @@ export function usePermissions() {
   })
 }
 
+export function useAllPermissions() {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: ['all-permissions'],
+    queryFn: permissionsApi.getAllPermissions,
+    enabled: initialized && !!accessToken,
+    staleTime: 5 * 60 * 1000, // 5 min — permissions don't change often
+    gcTime: 10 * 60 * 1000,
+  })
+}
+
+export function usePermissionById(id: string) {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: ['permission', id],
+    queryFn: () => permissionsApi.getPermissionById(id),
+    enabled: initialized && !!accessToken,
+    staleTime: 5 * 60 * 1000, // 5 min — permissions don't change often
+    gcTime: 10 * 60 * 1000,
+  })
+}
+
+
+
 export function usePermissionSet(): Set<string> {
   const { data: permissions } = usePermissions()
   return useMemo(
