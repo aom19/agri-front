@@ -17,6 +17,7 @@ dist-ssr
 
 # Fișiere locale
 *.local
+updates.md
 
 # Editoare și IDE-uri
 .vscode/*

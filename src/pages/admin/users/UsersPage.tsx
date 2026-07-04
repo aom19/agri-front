@@ -1,41 +1,6 @@
 import { useMemo, useState } from 'react'
-import {
-  AddOutlined,
-  DeleteOutlined,
-  EmailOutlined,
-  EditOutlined,
-  SearchOutlined,
-  VisibilityOutlined,
-} from '@mui/icons-material'
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material'
+import { SearchOutlined } from '@mui/icons-material'
+import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import ModalConfirmAction from '../../../components/ModalConfirmAction'
 import { useHasPermission } from '../../../hooks/usePermissions'
 import { useRoles } from '../../../hooks/useRoles'
@@ -44,6 +9,7 @@ import { authApi } from '../../../api/auth.api'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
 import type { User } from '../../../api/users.api'
+import { UserFormModal, UsersPageHeader, UsersTable } from './components'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -216,216 +182,54 @@ export default function UsersPage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' }, mb: 2, gap: 1.5 }}
-      >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Utilizatori
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Administrare conturi de utilizator.
-          </Typography>
+      <UsersPageHeader onCreate={openCreateDialog} canWrite={canWrite} />
+
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          label="Caută utilizator"
+          placeholder="după email sau rol"
+          fullWidth
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlined sx={{ fontSize: 18, color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </Box>
+
+      {isPending ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress size={28} />
         </Box>
+      ) : (
+        <UsersTable
+          users={filteredUsers}
+          isLoading={isPending}
+          canWrite={canWrite}
+          sendingResetForUserId={sendingResetForUserId}
+          onView={openViewDialog}
+          onResetEmail={handleSendResetEmail}
+          onEdit={openEditDialog}
+          onDelete={openDeleteDialog}
+        />
+      )}
 
-        {canWrite && (
-          <Button variant="contained" startIcon={<AddOutlined />} onClick={openCreateDialog}>
-            Utilizator nou
-          </Button>
-        )}
-      </Stack>
-
-      <Card>
-        <CardContent>
-          <TextField
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            label="Caută utilizator"
-            placeholder="după email sau rol"
-            fullWidth
-            sx={{ mb: 2 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlined sx={{ fontSize: 18, color: 'text.secondary' }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-
-          {isPending ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={28} />
-            </Box>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Email</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Rol</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Stare email</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography sx={{ fontWeight: 700 }}>Acțiuni</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={`${user.role} (${user.role_code})`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={user.email_confirmed ? 'Confirmat' : 'Neconfirmat'}
-                        size="small"
-                        color={user.email_confirmed ? 'success' : 'warning'}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Vezi detalii">
-                        <IconButton
-                          size="small"
-                          onClick={() => openViewDialog(user)}
-                          aria-label="Vezi detalii"
-                        >
-                          <VisibilityOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
-                      {canWrite && (
-                        <Tooltip title="Trimite email resetare parolă">
-                          <span>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleSendResetEmail(user)}
-                              aria-label="Trimite email resetare parolă"
-                              disabled={sendingResetForUserId === user.id}
-                            >
-                              <EmailOutlined fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-
-                      {canWrite && (
-                        <Tooltip title="Editează utilizator">
-                          <IconButton
-                            size="small"
-                            onClick={() => openEditDialog(user)}
-                            aria-label="Editează utilizator"
-                          >
-                            <EditOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-
-                      {canWrite && (
-                        <Tooltip title="Șterge utilizator">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => openDeleteDialog(user)}
-                            aria-label="Șterge utilizator"
-                          >
-                            <DeleteOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {filteredUsers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4}>
-                      <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
-                        Nu există utilizatori pentru filtrul curent.
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={formOpen} onClose={closeFormDialog} fullWidth maxWidth="sm">
-        <DialogTitle>
-          {formMode === 'create'
-            ? 'Creează utilizator'
-            : formMode === 'edit'
-              ? 'Editează utilizator'
-              : 'Detalii utilizator'}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 0.5 }}>
-            <TextField
-              label="Email"
-              value={formState.email}
-              onChange={(event) => setFormState((prev) => ({ ...prev, email: event.target.value }))}
-              disabled={submitting || formMode === 'view'}
-              fullWidth
-            />
-
-            <FormControl fullWidth disabled={submitting || formMode === 'view'}>
-              <InputLabel id="role-id-label">Rol</InputLabel>
-              <Select
-                labelId="role-id-label"
-                label="Rol"
-                value={formState.roleId}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, roleId: Number(event.target.value) }))
-                }
-              >
-                {(roles ?? []).map((role) => (
-                  <MenuItem key={role.id} value={role.id}>
-                    {role.name} ({role.code})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formState.emailConfirmed}
-                  onChange={(event) =>
-                    setFormState((prev) => ({ ...prev, emailConfirmed: event.target.checked }))
-                  }
-                  disabled={submitting || formMode === 'view'}
-                />
-              }
-              label="Email confirmat"
-            />
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={closeFormDialog} color="inherit" disabled={submitting}>
-            {formMode === 'view' ? 'Închide' : 'Anulează'}
-          </Button>
-          {formMode !== 'view' && (
-            <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
-              {formMode === 'create' ? 'Creează' : 'Salvează'}
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+      <UserFormModal
+        open={formOpen}
+        mode={formMode}
+        formState={formState}
+        roles={roles}
+        submitting={submitting}
+        onClose={closeFormDialog}
+        onSubmit={handleSubmit}
+        onChange={setFormState}
+      />
 
       <ModalConfirmAction
         open={deleteOpen}
