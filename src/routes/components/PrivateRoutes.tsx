@@ -1,5 +1,4 @@
 import { lazy, Suspense } from 'react'
-import { Box, CircularProgress } from '@mui/material'
 import { Route } from 'react-router-dom'
 import { DashboardPage } from '../../pages/dashboard'
 import { ProfilePage } from '../../pages/profile/ProfilePage'
@@ -7,6 +6,7 @@ import { ProtectedRoute } from '../../components/RouteGuards'
 import { RequirePermission } from '../../components/RequirePermission'
 import DashboardLayout from '../../layouts/DashboardLayout'
 import ForbiddenPage from '../../pages/ForbiddenPage'
+import PageLoader from './PageLoader'
 
 const MachinesPage = lazy(() => import('../../pages/machines/MachinesPage'))
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
@@ -16,15 +16,8 @@ const UsersPage = lazy(() => import('../../pages/admin/users/UsersPage'))
 const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
 const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
 
-function PageLoader() {
-  return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-      <CircularProgress size={32} />
-    </Box>
-  )
-}
-
-export default function PrivateRoutes() {
+// ─── Private Routes ─────────────────────────────────────────────────────────────
+const PrivateRoutes = () => {
   return (
     <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
@@ -106,3 +99,5 @@ export default function PrivateRoutes() {
     </Route>
   )
 }
+
+export default PrivateRoutes

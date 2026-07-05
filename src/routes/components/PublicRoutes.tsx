@@ -8,7 +8,8 @@ import {
 } from '../../pages/auth'
 import { GuestRoute } from '../../components/RouteGuards'
 
-export default function PublicRoutes() {
+// ─── Public Routes ─────────────────────────────────────────────────────────────
+const PublicRoutes = () => {
   return (
     <Route element={<GuestRoute />}>
       <Route path="/login" element={<LoginPage />} />
@@ -19,3 +20,5 @@ export default function PublicRoutes() {
     </Route>
   )
 }
+
+export default PublicRoutes

@@ -9,8 +9,8 @@ export default function AppRoutes() {
       <AuthInitializer />
       <NotificationBar />
       <Routes>
-        <PublicRoutes />
-        <PrivateRoutes />
+        {PublicRoutes()}
+        {PrivateRoutes()}
 
         {/* ─── Fallback ────────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />
