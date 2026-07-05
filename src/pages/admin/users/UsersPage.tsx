@@ -4,7 +4,13 @@ import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import ModalConfirmAction from '../../../components/ModalConfirmAction'
 import { useHasPermission } from '../../../hooks/usePermissions'
 import { useRoles } from '../../../hooks/useRoles'
-import { useCreateUser, useDeleteUser, useUpdateUser, useUsers } from '../../../hooks/useUsers'
+import {
+  useCreateUser,
+  useDisableUsers,
+  useEnableUsers,
+  useUpdateUser,
+  useUsers,
+} from '../../../hooks/useUsers'
 import { authApi } from '../../../api/auth.api'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
@@ -31,21 +37,27 @@ export default function UsersPage() {
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [formState, setFormState] = useState<UserFormState>(initialFormState)
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [userToDelete, setUserToDelete] = useState<User | null>(null)
+  const [disableOpen, setDisableOpen] = useState(false)
+  const [userToDisable, setUserToDisable] = useState<User | null>(null)
+  const [enableOpen, setEnableOpen] = useState(false)
+  const [userToEnable, setUserToEnable] = useState<User | null>(null)
   const [sendingResetForUserId, setSendingResetForUserId] = useState<number | null>(null)
 
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('users:write')
+  const canDisable = useHasPermission('users:disable')
+  const canEnable = useHasPermission('users:enable')
 
   const { data: users, isPending } = useUsers()
   const { data: roles } = useRoles()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
-  const deleteUser = useDeleteUser()
+  const disableUser = useDisableUsers()
+  const enableUser = useEnableUsers()
 
   const submitting = createUser.isPending || updateUser.isPending
-  const deleting = deleteUser.isPending
+  const disabling = disableUser.isPending
+  const enabling = enableUser.isPending
 
   const filteredUsers = useMemo(() => {
     const value = search.trim().toLowerCase()
@@ -96,15 +108,26 @@ export default function UsersPage() {
     setFormOpen(false)
   }
 
-  const openDeleteDialog = (user: User) => {
-    setUserToDelete(user)
-    setDeleteOpen(true)
+  const openDisableDialog = (user: User) => {
+    setUserToDisable(user)
+    setDisableOpen(true)
   }
 
-  const closeDeleteDialog = () => {
-    if (deleting) return
-    setDeleteOpen(false)
-    setUserToDelete(null)
+  const closeDisableDialog = () => {
+    if (disabling) return
+    setDisableOpen(false)
+    setUserToDisable(null)
+  }
+
+  const openEnableDialog = (user: User) => {
+    setUserToEnable(user)
+    setEnableOpen(true)
+  }
+
+  const closeEnableDialog = () => {
+    if (enabling) return
+    setEnableOpen(false)
+    setUserToEnable(null)
   }
 
   const handleSubmit = async () => {
@@ -168,15 +191,27 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return
+  const handleDisableConfirm = async () => {
+    if (!userToDisable) return
 
     try {
-      await deleteUser.mutateAsync(String(userToDelete.id))
-      show('Utilizatorul a fost șters.', 'success')
-      closeDeleteDialog()
+      await disableUser.mutateAsync(String(userToDisable.id))
+      show('Utilizatorul a fost dezactivat.', 'success')
+      closeDisableDialog()
     } catch (error) {
-      show(getApiErrorMessage(error, 'Nu am putut șterge utilizatorul.'), 'error')
+      show(getApiErrorMessage(error, 'Nu am putut dezactiva utilizatorul.'), 'error')
+    }
+  }
+
+  const handleEnableConfirm = async () => {
+    if (!userToEnable) return
+
+    try {
+      await enableUser.mutateAsync(String(userToEnable.id))
+      show('Utilizatorul a fost reactivat.', 'success')
+      closeEnableDialog()
+    } catch (error) {
+      show(getApiErrorMessage(error, 'Nu am putut reactiva utilizatorul.'), 'error')
     }
   }
 
@@ -212,11 +247,14 @@ export default function UsersPage() {
           users={filteredUsers}
           isLoading={isPending}
           canWrite={canWrite}
+          canDisable={canDisable}
+          canEnable={canEnable}
           sendingResetForUserId={sendingResetForUserId}
           onView={openViewDialog}
           onResetEmail={handleSendResetEmail}
           onEdit={openEditDialog}
-          onDelete={openDeleteDialog}
+          onDisable={openDisableDialog}
+          onEnable={openEnableDialog}
         />
       )}
 
@@ -232,15 +270,27 @@ export default function UsersPage() {
       />
 
       <ModalConfirmAction
-        open={deleteOpen}
-        title="Șterge utilizator"
+        open={disableOpen}
+        title="Dezactivează utilizator"
         description={
-          userToDelete ? `Confirmi ștergerea utilizatorului „${userToDelete.email}”?` : ''
+          userToDisable ? `Confirmi dezactivarea utilizatorului „${userToDisable.email}”?` : ''
         }
-        confirmText="Șterge"
-        loading={deleting}
-        onClose={closeDeleteDialog}
-        onConfirm={handleDeleteConfirm}
+        confirmText="Dezactivează"
+        loading={disabling}
+        onClose={closeDisableDialog}
+        onConfirm={handleDisableConfirm}
+      />
+
+      <ModalConfirmAction
+        open={enableOpen}
+        title="Reactivează utilizator"
+        description={
+          userToEnable ? `Confirmi reactivarea utilizatorului „${userToEnable.email}”?` : ''
+        }
+        confirmText="Reactivează"
+        loading={enabling}
+        onClose={closeEnableDialog}
+        onConfirm={handleEnableConfirm}
       />
     </Box>
   )

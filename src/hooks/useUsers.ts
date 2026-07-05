@@ -43,3 +43,21 @@ export function useDeleteUser() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: USERS_KEY }),
   })
 }
+
+export function useDisableUsers() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => usersApi.disableUsers(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: USERS_KEY }),
+  })
+}
+
+export function useEnableUsers() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => usersApi.enableUsers(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: USERS_KEY }),
+  })
+}
