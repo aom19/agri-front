@@ -1,0 +1,108 @@
+import { lazy, Suspense } from 'react'
+import { Box, CircularProgress } from '@mui/material'
+import { Route } from 'react-router-dom'
+import { DashboardPage } from '../../pages/dashboard'
+import { ProfilePage } from '../../pages/profile/ProfilePage'
+import { ProtectedRoute } from '../../components/RouteGuards'
+import { RequirePermission } from '../../components/RequirePermission'
+import DashboardLayout from '../../layouts/DashboardLayout'
+import ForbiddenPage from '../../pages/ForbiddenPage'
+
+const MachinesPage = lazy(() => import('../../pages/machines/MachinesPage'))
+const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
+const OperatorsPage = lazy(() => import('../../pages/operators/OperatorsPage'))
+const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPage'))
+const UsersPage = lazy(() => import('../../pages/admin/users/UsersPage'))
+const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
+const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
+
+function PageLoader() {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+      <CircularProgress size={32} />
+    </Box>
+  )
+}
+
+export default function PrivateRoutes() {
+  return (
+    <Route element={<ProtectedRoute />}>
+      <Route element={<DashboardLayout />}>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/403" element={<ForbiddenPage />} />
+
+        <Route
+          path="/machines"
+          element={
+            <RequirePermission permission="machines:read">
+              <Suspense fallback={<PageLoader />}>
+                <MachinesPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/fields"
+          element={
+            <RequirePermission permission="fields:read">
+              <Suspense fallback={<PageLoader />}>
+                <FieldsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/operators"
+          element={
+            <RequirePermission permission="operators:read">
+              <Suspense fallback={<PageLoader />}>
+                <OperatorsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/assignments"
+          element={
+            <RequirePermission permission="assignments:read">
+              <Suspense fallback={<PageLoader />}>
+                <AssignmentsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequirePermission permission="users:read">
+              <Suspense fallback={<PageLoader />}>
+                <UsersPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/admin/roles"
+          element={
+            <RequirePermission permission="roles:read">
+              <Suspense fallback={<PageLoader />}>
+                <RolesPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/admin/permissions"
+          element={
+            <RequirePermission permission="roles:read">
+              <Suspense fallback={<PageLoader />}>
+                <PermissionsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+      </Route>
+    </Route>
+  )
+}
