@@ -9,6 +9,7 @@ import ForbiddenPage from '../../pages/ForbiddenPage'
 import PageLoader from './PageLoader'
 
 const MachinesPage = lazy(() => import('../../pages/machines/MachinesPage'))
+const ImplementsPage = lazy(() => import('../../pages/implements/ImplementsPage'))
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
 const OperatorsPage = lazy(() => import('../../pages/operators/OperatorsPage'))
 const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPage'))
@@ -33,6 +34,14 @@ const PrivateRoutes = () => {
                 <MachinesPage />
               </Suspense>
             </RequirePermission>
+          }
+        />
+        <Route
+          path="/implements"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <ImplementsPage />
+            </Suspense>
           }
         />
         <Route

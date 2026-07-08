@@ -3,6 +3,7 @@ import type { SvgIconProps } from '@mui/material'
 import {
   DashboardOutlined,
   AgricultureOutlined,
+  PrecisionManufacturingOutlined,
   LandscapeOutlined,
   PeopleOutlined,
   AssignmentOutlined,
@@ -11,9 +12,7 @@ import {
   SecurityOutlined,
   VpnKeyOutlined,
 } from '@mui/icons-material'
-
 type IconComponent = FC<SvgIconProps>
-
 export type NavLeaf = {
   type: 'leaf'
   label: string
@@ -45,6 +44,12 @@ export const navConfig: NavItem[] = [
     path: '/machines',
     icon: AgricultureOutlined,
     permission: 'machines:read',
+  },
+  {
+    type: 'leaf',
+    label: 'Echipament agricol',
+    path: '/implements',
+    icon: PrecisionManufacturingOutlined,
   },
   {
     type: 'leaf',
