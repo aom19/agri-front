@@ -19,6 +19,7 @@ import {
   type OperatorFormErrors,
   type OperatorFormValues,
 } from '../../schemas/operator.schema'
+import type { MachineTypeValue } from '../../schemas/machine.schema'
 import { OperatorFormModal, OperatorsPageHeader, OperatorsTable } from './components'
 
 type FormMode = 'create' | 'edit' | 'view'
@@ -28,6 +29,7 @@ const initialFormState: OperatorFormValues = {
   phone: '',
   email: '',
   notes: '',
+  allowed_machine_types: [],
 }
 
 function mapOperatorToFormState(operator: Operator): OperatorFormValues {
@@ -36,6 +38,7 @@ function mapOperatorToFormState(operator: Operator): OperatorFormValues {
     phone: operator.phone ?? '',
     email: operator.email ?? '',
     notes: operator.notes ?? '',
+    allowed_machine_types: (operator.allowed_machine_types ?? []) as MachineTypeValue[],
   }
 }
 
@@ -142,6 +145,7 @@ export default function OperatorsPage() {
       phone: parsedValues.phone,
       email: parsedValues.email,
       notes: parsedValues.notes,
+      allowed_machine_types: parsedValues.allowed_machine_types,
     }
 
     try {

@@ -7,6 +7,7 @@ export type Operator = {
     email: string
     notes: string
     status: string
+    allowed_machine_types: string[]
 }
 
 export const operatorApi = {

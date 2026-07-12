@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { machineTypeValues } from './machine.schema'
 
 export const operatorStatusValues = ['active', 'inactive'] as const
 
@@ -24,6 +25,7 @@ export const operatorFormSchema = z.object({
             message: 'Adresa de email este invalidă.',
         }),
     notes: z.string().trim(),
+    allowed_machine_types: z.array(z.enum(machineTypeValues)),
 })
 
 export type OperatorFormValues = z.infer<typeof operatorFormSchema>
