@@ -1,38 +1,13 @@
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  Alert,
-  Box,
-  Button,
-  InputAdornment,
-  LinearProgress,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Button, InputAdornment, Stack } from '@mui/material'
 import { LockOutlined } from '@mui/icons-material'
 import { Link, useParams } from 'react-router-dom'
-import { PasswordField } from '../../components'
+import { PasswordField, PasswordRequirements } from '../../components'
 import { useResetPassword } from '../../hooks/useAuth'
 import { resetPasswordSchema, type ResetPasswordForm } from '../../schemas/auth.schema'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import AuthLayout from './AuthLayout'
-
-function getPasswordStrength(password: string): { score: number; label: string; color: string } {
-  let score = 0
-  if (password.length >= 6) score++
-  if (password.length >= 10) score++
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++
-  if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) score++
-  const levels = [
-    { label: 'Slabă', color: '#dc2626' },
-    { label: 'Acceptabilă', color: '#f59e0b' },
-    { label: 'Bună', color: '#2d8653' },
-    { label: 'Excelentă', color: '#10b981' },
-  ]
-  const idx = Math.min(score, 4) - 1
-  const level = levels[Math.max(idx, 0)]
-  return { score, label: level.label, color: level.color }
-}
 
 export default function ResetPasswordPage() {
   const { token } = useParams<{ token: string }>()
@@ -67,7 +42,6 @@ function ResetForm({ token }: { token: string }) {
   })
 
   const password = useWatch({ control, name: 'password' })
-  const strength = getPasswordStrength(password || '')
 
   const onSubmit = (data: ResetPasswordForm) => mutation.mutate(data)
 
@@ -107,26 +81,12 @@ function ResetForm({ token }: { token: string }) {
             {...register('password')}
           />
 
-          {/* Password strength indicator */}
-          {password && (
+          {/* Password requirements */}
+          {password ? (
             <Box>
-              <LinearProgress
-                variant="determinate"
-                value={(strength.score / 4) * 100}
-                sx={{
-                  height: 4,
-                  borderRadius: 2,
-                  bgcolor: '#e0e6e2',
-                  '& .MuiLinearProgress-bar': { bgcolor: strength.color, borderRadius: 2 },
-                }}
-              />
-              <Typography
-                sx={{ fontSize: '0.7rem', color: strength.color, mt: 0.5, fontWeight: 500 }}
-              >
-                {strength.label}
-              </Typography>
+              <PasswordRequirements value={password} />
             </Box>
-          )}
+          ) : null}
 
           <PasswordField
             label="Confirmă parola"

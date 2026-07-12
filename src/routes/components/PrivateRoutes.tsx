@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route } from 'react-router-dom'
 import { DashboardPage } from '../../pages/dashboard'
 import { ProfilePage } from '../../pages/profile/ProfilePage'
+import SettingsPage from '../../pages/settings/SettingsPage'
 import { ProtectedRoute } from '../../components/RouteGuards'
 import { RequirePermission } from '../../components/RequirePermission'
 import DashboardLayout from '../../layouts/DashboardLayout'
@@ -24,6 +25,7 @@ const PrivateRoutes = () => {
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
 
         <Route

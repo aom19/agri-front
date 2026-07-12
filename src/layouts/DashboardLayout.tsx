@@ -403,7 +403,14 @@ export default function DashboardLayout() {
                 >
                   Profil
                 </MenuItem>
-                <MenuItem onClick={() => setAnchorEl(null)}>Setări</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setAnchorEl(null)
+                    navigate('/settings')
+                  }}
+                >
+                  Setări
+                </MenuItem>
                 <Divider />
                 <MenuItem
                   onClick={() => {

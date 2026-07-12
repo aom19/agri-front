@@ -79,3 +79,10 @@ export function useLogout() {
         }
     }, [logout, refreshToken])
 }
+
+export function useChangePassword() {
+    return useMutation({
+        mutationFn: (data: { old_password: string; new_password: string; confirm_password: string }) =>
+            authApi.changePassword(data),
+    })
+}
