@@ -3,6 +3,7 @@ import type { SvgIconProps } from '@mui/material'
 import {
   DashboardOutlined,
   AgricultureOutlined,
+  Inventory2Outlined,
   PrecisionManufacturingOutlined,
   LandscapeOutlined,
   PeopleOutlined,
@@ -11,6 +12,7 @@ import {
   PeopleAltOutlined,
   SecurityOutlined,
   VpnKeyOutlined,
+  CategoryOutlined,
 } from '@mui/icons-material'
 type IconComponent = FC<SvgIconProps>
 export type NavLeaf = {
@@ -47,6 +49,13 @@ export const navConfig: NavItem[] = [
   },
   {
     type: 'leaf',
+    label: 'Resurse',
+    path: '/resources',
+    icon: Inventory2Outlined,
+    permission: 'resources:read',
+  },
+  {
+    type: 'leaf',
     label: 'Echipament agricol',
     path: '/implements',
     icon: PrecisionManufacturingOutlined,
@@ -77,6 +86,13 @@ export const navConfig: NavItem[] = [
     label: 'Administrare',
     icon: AdminPanelSettingsOutlined,
     children: [
+      {
+        type: 'leaf',
+        label: 'Categorii de resurse',
+        path: '/admin/resource-types',
+        icon: CategoryOutlined,
+        permission: 'resources:read',
+      },
       {
         type: 'leaf',
         label: 'Utilizatori',
