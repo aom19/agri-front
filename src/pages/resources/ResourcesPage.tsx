@@ -418,7 +418,6 @@ export default function ResourcesPage() {
                   <FormHelperText>{formErrors.resourceTypeId}</FormHelperText>
                 )}
               </FormControl>
-
             </Stack>
 
             <TextField

@@ -4,6 +4,7 @@ import {
   DashboardOutlined,
   AgricultureOutlined,
   Inventory2Outlined,
+  WarehouseOutlined,
   PrecisionManufacturingOutlined,
   LandscapeOutlined,
   PeopleOutlined,
@@ -53,6 +54,13 @@ export const navConfig: NavItem[] = [
     path: '/resources',
     icon: Inventory2Outlined,
     permission: 'resources:read',
+  },
+  {
+    type: 'leaf',
+    label: 'Stocuri',
+    path: '/stocks',
+    icon: WarehouseOutlined,
+    permission: 'stock.view',
   },
   {
     type: 'leaf',

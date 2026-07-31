@@ -55,7 +55,7 @@ import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 type FormMode = 'create' | 'edit' | 'view'
 
 const categoryLabelByValue = new Map(
-  resourceCategoryOptions.map((option) => [option.value, option.label]),
+  resourceCategoryOptions.map((option) => [option.value, option.label])
 )
 
 const initialFormState: ResourceTypeFormValues = {
@@ -99,7 +99,8 @@ export default function ResourceTypesPage() {
     return [...(resourceTypesData ?? [])]
       .filter((resourceType) => {
         if (!value) return true
-        const categoryLabel = categoryLabelByValue.get(resourceType.category) ?? resourceType.category
+        const categoryLabel =
+          categoryLabelByValue.get(resourceType.category) ?? resourceType.category
         return (
           resourceType.name.toLowerCase().includes(value) ||
           resourceType.category.toLowerCase().includes(value) ||
@@ -198,9 +199,9 @@ export default function ResourceTypesPage() {
       show(
         getApiErrorMessage(
           error,
-          'Nu am putut șterge categoria. Verifică dacă are resurse asociate.',
+          'Nu am putut șterge categoria. Verifică dacă are resurse asociate.'
         ),
-        'error',
+        'error'
       )
     }
   }

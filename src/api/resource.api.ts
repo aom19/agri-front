@@ -29,6 +29,22 @@ export type ResourcePayload = {
   notes: string | null
 }
 
+export type Stock = {
+  id: number
+  resource_id: number
+  resource?: Resource
+  quantity: number
+  minimum_quantity: number
+  created_at: string
+  updated_at: string
+}
+
+export type StockPayload = {
+  resource_id: number
+  quantity: number
+  minimum_quantity: number
+}
+
 export type ResourceTypePayload = {
   name: string
   category: ResourceCategory
@@ -45,6 +61,15 @@ export const resourceApi = {
     api.patch<ResourceType>(`/resource-types/${id}`, payload).then((r) => r.data),
 
   deleteResourceType: (id: string) => api.delete(`/resource-types/${id}`).then((r) => r.data),
+
+  getAllStocks: () => api.get<Stock[]>('/stocks').then((r) => r.data),
+
+  createStock: (payload: StockPayload) => api.post<Stock>('/stocks', payload).then((r) => r.data),
+
+  updateStock: (id: string, payload: StockPayload) =>
+    api.patch<Stock>(`/stocks/${id}`, payload).then((r) => r.data),
+
+  deleteStock: (id: string) => api.delete(`/stocks/${id}`).then((r) => r.data),
 
   getAllResources: () => api.get<Resource[]>('/resources').then((r) => r.data),
 

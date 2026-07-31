@@ -11,6 +11,7 @@ import PageLoader from './PageLoader'
 
 const MachinesPage = lazy(() => import('../../pages/machines/MachinesPage'))
 const ResourcesPage = lazy(() => import('../../pages/resources/ResourcesPage'))
+const StocksPage = lazy(() => import('../../pages/stocks/StocksPage'))
 const ResourceTypesPage = lazy(() => import('../../pages/resource-types/ResourceTypesPage'))
 const ImplementsPage = lazy(() => import('../../pages/implements/ImplementsPage'))
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
@@ -46,6 +47,16 @@ const PrivateRoutes = () => {
             <RequirePermission permission="resources:read">
               <Suspense fallback={<PageLoader />}>
                 <ResourcesPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/stocks"
+          element={
+            <RequirePermission permission="stock.view">
+              <Suspense fallback={<PageLoader />}>
+                <StocksPage />
               </Suspense>
             </RequirePermission>
           }
