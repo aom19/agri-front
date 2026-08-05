@@ -97,6 +97,7 @@ function estimateAreaHa(points: LatLngTuple[]): number {
 
 export default function FieldsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<'edit' | 'view'>('edit')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [mapViewOpen, setMapViewOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -112,6 +113,7 @@ export default function FieldsPage() {
   const [draft, setDraft] = useState<EditableField>({
     id: null,
     name: '',
+    cadastralNumber: '',
     areaHaInput: '',
     points: [],
   })
@@ -225,11 +227,12 @@ export default function FieldsPage() {
   const closeMapView = () => setMapViewOpen(false)
 
   const resetDraft = () => {
-    setDraft({ id: null, name: '', areaHaInput: '', points: [] })
+    setDraft({ id: null, name: '', cadastralNumber: '', areaHaInput: '', points: [] })
   }
 
   const openCreateDialog = () => {
     resetDraft()
+    setDialogMode('edit')
     setDialogOpen(true)
   }
 
@@ -237,9 +240,23 @@ export default function FieldsPage() {
     setDraft({
       id: field.id,
       name: field.name,
+      cadastralNumber: field.cadastral_number ?? '',
       areaHaInput: field.area_ha == null ? '' : String(field.area_ha),
       points: geoJSONToPoints(field.geometry),
     })
+    setDialogMode('edit')
+    setDialogOpen(true)
+  }
+
+  const openViewDialog = (field: Field) => {
+    setDraft({
+      id: field.id,
+      name: field.name,
+      cadastralNumber: field.cadastral_number ?? '',
+      areaHaInput: field.area_ha == null ? '' : String(field.area_ha),
+      points: geoJSONToPoints(field.geometry),
+    })
+    setDialogMode('view')
     setDialogOpen(true)
   }
 
@@ -308,6 +325,7 @@ export default function FieldsPage() {
 
     const payload: UpsertFieldRequest = {
       name: draft.name.trim(),
+      cadastral_number: draft.cadastralNumber.trim() || null,
       area_ha: areaHa,
       geometry: pointsToGeoJSON(draft.points),
     }
@@ -378,9 +396,9 @@ export default function FieldsPage() {
           sortOrder={sortOrder}
           onOpenFilters={openFiltersDialog}
           onSortClick={handleSortClick}
+          onView={openViewDialog}
           onEdit={openEditDialog}
           onDelete={handleDelete}
-          getPointsCount={(field) => geoJSONToPoints(field.geometry).length}
         />
       )}
 
@@ -421,12 +439,16 @@ export default function FieldsPage() {
 
       <FieldFormModal
         open={dialogOpen}
+        mode={dialogMode}
         draft={draft}
         estimatedArea={estimatedArea}
         pending={pending}
         onClose={closeDialog}
         onSave={handleSave}
         onChangeName={(value) => setDraft((prev) => ({ ...prev, name: value }))}
+        onChangeCadastralNumber={(value) =>
+          setDraft((prev) => ({ ...prev, cadastralNumber: value }))
+        }
         onChangeArea={(value) => setDraft((prev) => ({ ...prev, areaHaInput: value }))}
         onAddPoint={(point) => setDraft((prev) => ({ ...prev, points: [...prev.points, point] }))}
         onRemoveLastPoint={removeLastPoint}

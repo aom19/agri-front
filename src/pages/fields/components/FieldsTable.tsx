@@ -2,15 +2,14 @@ import {
   DeleteOutlined,
   EditOutlined,
   FilterAltOutlined,
-  PlaceOutlined,
   ArrowDownwardOutlined,
   ArrowUpwardOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material'
 import {
   Box,
   Card,
   CardContent,
-  Chip,
   IconButton,
   Stack,
   Table,
@@ -32,9 +31,9 @@ type FieldsTableProps = {
   sortOrder: 'asc' | 'desc'
   onOpenFilters: () => void
   onSortClick: (column: 'name' | 'area') => void
+  onView: (field: Field) => void
   onEdit: (field: Field) => void
   onDelete: (id: string) => void
-  getPointsCount: (field: Field) => number
 }
 
 export default function FieldsTable({
@@ -45,9 +44,9 @@ export default function FieldsTable({
   sortOrder,
   onOpenFilters,
   onSortClick,
+  onView,
   onEdit,
   onDelete,
-  getPointsCount,
 }: FieldsTableProps) {
   return (
     <Card>
@@ -77,6 +76,11 @@ export default function FieldsTable({
                 </Stack>
               </TableCell>
               <TableCell>
+                <Typography sx={{ fontSize: 17, fontWeight: 800, letterSpacing: 0.1 }}>
+                  Număr cadastral
+                </Typography>
+              </TableCell>
+              <TableCell>
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                   <Typography sx={{ fontSize: 17, fontWeight: 800, letterSpacing: 0.1 }}>
                     Suprafață (ha)
@@ -97,11 +101,6 @@ export default function FieldsTable({
                   </Tooltip>
                 </Stack>
               </TableCell>
-              <TableCell>
-                <Typography sx={{ fontSize: 17, fontWeight: 800, letterSpacing: 0.1 }}>
-                  Vârfuri
-                </Typography>
-              </TableCell>
               <TableCell align="right">
                 <Typography sx={{ fontSize: 17, fontWeight: 800, letterSpacing: 0.1 }}>
                   Acțiuni
@@ -113,15 +112,14 @@ export default function FieldsTable({
             {fields.map((field) => (
               <TableRow key={field.id} hover>
                 <TableCell>{field.name}</TableCell>
+                <TableCell>{field.cadastral_number || '—'}</TableCell>
                 <TableCell>{field.area_ha == null ? '—' : field.area_ha.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Chip
-                    size="small"
-                    icon={<PlaceOutlined />}
-                    label={`${getPointsCount(field)} puncte`}
-                  />
-                </TableCell>
                 <TableCell align="right">
+                  <Tooltip title="Vizualizează terenul">
+                    <IconButton onClick={() => onView(field)} aria-label="Vizualizează terenul">
+                      <VisibilityOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <IconButton onClick={() => onEdit(field)} aria-label="Editează terenul">
                     <EditOutlined fontSize="small" />
                   </IconButton>
@@ -148,8 +146,9 @@ export default function FieldsTable({
           <TableFooter>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>Total (filtrat)</TableCell>
+              <TableCell />
               <TableCell sx={{ fontWeight: 700 }}>{totalFilteredArea.toFixed(2)} ha</TableCell>
-              <TableCell colSpan={2} />
+              <TableCell />
             </TableRow>
           </TableFooter>
         </Table>

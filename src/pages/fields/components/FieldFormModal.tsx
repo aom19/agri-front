@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   Box,
   Button,
@@ -9,7 +10,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { MapContainer, Polygon, Polyline, TileLayer, useMapEvents } from 'react-leaflet'
+import { MapContainer, Polygon, Polyline, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import type { LatLngTuple } from 'leaflet'
 
 const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
@@ -17,6 +18,7 @@ const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
 export type EditableField = {
   id: string | null
   name: string
+  cadastralNumber: string
   areaHaInput: string
   points: LatLngTuple[]
 }
@@ -30,14 +32,33 @@ function MapClickCapture({ onAddPoint }: { onAddPoint: (point: LatLngTuple) => v
   return null
 }
 
+function FieldMapFocus({ open, points }: { open: boolean; points: LatLngTuple[] }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!open || points.length === 0) return
+
+    if (points.length === 1) {
+      map.setView(points[0], 16)
+      return
+    }
+
+    map.fitBounds(points, { padding: [32, 32], maxZoom: 16 })
+  }, [map, open, points])
+
+  return null
+}
+
 type FieldFormModalProps = {
   open: boolean
+  mode: 'edit' | 'view'
   draft: EditableField
   estimatedArea: number
   pending: boolean
   onClose: () => void
   onSave: () => void
   onChangeName: (value: string) => void
+  onChangeCadastralNumber: (value: string) => void
   onChangeArea: (value: string) => void
   onAddPoint: (point: LatLngTuple) => void
   onRemoveLastPoint: () => void
@@ -46,26 +67,41 @@ type FieldFormModalProps = {
 
 export default function FieldFormModal({
   open,
+  mode,
   draft,
   estimatedArea,
   pending,
   onClose,
   onSave,
   onChangeName,
+  onChangeCadastralNumber,
   onChangeArea,
   onAddPoint,
   onRemoveLastPoint,
   onClearPolygon,
 }: FieldFormModalProps) {
+  const isViewMode = mode === 'view'
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>{draft.id ? 'Editează teren' : 'Creează teren'}</DialogTitle>
+      <DialogTitle>
+        {isViewMode ? 'Vizualizează teren' : draft.id ? 'Editează teren' : 'Creează teren'}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 0.5 }}>
           <TextField
             label="Nume teren"
             value={draft.name}
             onChange={(event) => onChangeName(event.target.value)}
+            slotProps={{ input: { readOnly: isViewMode } }}
+            fullWidth
+          />
+
+          <TextField
+            label="Număr cadastral"
+            value={draft.cadastralNumber}
+            onChange={(event) => onChangeCadastralNumber(event.target.value)}
+            slotProps={{ input: { readOnly: isViewMode } }}
             fullWidth
           />
 
@@ -74,6 +110,7 @@ export default function FieldFormModal({
               label="Suprafață (ha)"
               value={draft.areaHaInput}
               onChange={(event) => onChangeArea(event.target.value)}
+              slotProps={{ input: { readOnly: isViewMode } }}
               helperText={`Estimare din poligon: ${estimatedArea.toFixed(2)} ha`}
               fullWidth
             />
@@ -103,7 +140,8 @@ export default function FieldFormModal({
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <MapClickCapture onAddPoint={onAddPoint} />
+              <FieldMapFocus open={open} points={draft.points} />
+              {!isViewMode && <MapClickCapture onAddPoint={onAddPoint} />}
               {draft.points.length >= 2 && (
                 <Polyline positions={draft.points} pathOptions={{ color: '#0d6e4f' }} />
               )}
@@ -116,35 +154,39 @@ export default function FieldFormModal({
             </MapContainer>
           </Box>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button
-              variant="outlined"
-              onClick={onRemoveLastPoint}
-              disabled={draft.points.length === 0}
-            >
-              Șterge ultimul punct
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={onClearPolygon}
-              disabled={draft.points.length === 0}
-            >
-              Curăță poligon
-            </Button>
-            <Typography variant="caption" sx={{ color: 'text.secondary', alignSelf: 'center' }}>
-              Click pe hartă pentru a adăuga puncte.
-            </Typography>
-          </Stack>
+          {!isViewMode && (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Button
+                variant="outlined"
+                onClick={onRemoveLastPoint}
+                disabled={draft.points.length === 0}
+              >
+                Șterge ultimul punct
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={onClearPolygon}
+                disabled={draft.points.length === 0}
+              >
+                Curăță poligon
+              </Button>
+              <Typography variant="caption" sx={{ color: 'text.secondary', alignSelf: 'center' }}>
+                Click pe hartă pentru a adăuga puncte.
+              </Typography>
+            </Stack>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit" disabled={pending}>
-          Anulează
+          {isViewMode ? 'Închide' : 'Anulează'}
         </Button>
-        <Button onClick={onSave} variant="contained" disabled={pending}>
-          {pending ? 'Se salvează...' : 'Salvează'}
-        </Button>
+        {!isViewMode && (
+          <Button onClick={onSave} variant="contained" disabled={pending}>
+            {pending ? 'Se salvează...' : 'Salvează'}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   )

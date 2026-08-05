@@ -8,6 +8,7 @@ export type GeoJSONPolygon = {
 export type Field = {
   id: string
   name: string
+  cadastral_number?: string | null
   area_ha: number | null
   geometry: GeoJSONPolygon
   created_at: string
@@ -16,6 +17,7 @@ export type Field = {
 
 export type UpsertFieldRequest = {
   name: string
+  cadastral_number?: string | null
   area_ha?: number | null
   geometry: GeoJSONPolygon
 }
