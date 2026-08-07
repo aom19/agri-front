@@ -17,6 +17,8 @@ const ImplementsPage = lazy(() => import('../../pages/implements/ImplementsPage'
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
 const OperatorsPage = lazy(() => import('../../pages/operators/OperatorsPage'))
 const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPage'))
+const OperationTypesPage = lazy(() => import('../../pages/operations/OperationTypesPage'))
+const OperationTemplatesPage = lazy(() => import('../../pages/operations/OperationTemplatesPage'))
 const UsersPage = lazy(() => import('../../pages/admin/users/UsersPage'))
 const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
 const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
@@ -105,6 +107,26 @@ const PrivateRoutes = () => {
             <RequirePermission permission="assignments:read">
               <Suspense fallback={<PageLoader />}>
                 <AssignmentsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/operation-types"
+          element={
+            <RequirePermission permission="operations:read">
+              <Suspense fallback={<PageLoader />}>
+                <OperationTypesPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/operation-templates"
+          element={
+            <RequirePermission permission="operations:read">
+              <Suspense fallback={<PageLoader />}>
+                <OperationTemplatesPage />
               </Suspense>
             </RequirePermission>
           }

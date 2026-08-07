@@ -14,6 +14,8 @@ import {
   SecurityOutlined,
   VpnKeyOutlined,
   CategoryOutlined,
+  BuildOutlined,
+  AccountTreeOutlined,
 } from '@mui/icons-material'
 type IconComponent = FC<SvgIconProps>
 export type NavLeaf = {
@@ -88,6 +90,27 @@ export const navConfig: NavItem[] = [
     path: '/assignments',
     icon: AssignmentOutlined,
     permission: 'assignments:read',
+  },
+  {
+    type: 'group',
+    label: 'Operațiuni',
+    icon: BuildOutlined,
+    children: [
+      {
+        type: 'leaf',
+        label: 'Tipuri operațiuni',
+        path: '/operation-types',
+        icon: CategoryOutlined,
+        permission: 'operations:read',
+      },
+      {
+        type: 'leaf',
+        label: 'Template-uri',
+        path: '/operation-templates',
+        icon: AccountTreeOutlined,
+        permission: 'operations:read',
+      },
+    ],
   },
   {
     type: 'group',
