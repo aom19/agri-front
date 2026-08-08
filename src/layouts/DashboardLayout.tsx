@@ -36,9 +36,21 @@ import { useAuthStore } from '../store/auth.store'
 import { useLogout } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { usePermissions } from '../hooks/usePermissions'
+import { useCurrentWeather } from '../hooks/useWeather'
 import { navConfig, findNavLabel, type NavLeaf } from '../routes/routeConfig'
 
 const SIDEBAR_WIDTH = 240
+
+const weatherIconSymbols = {
+  sunny: '☀️',
+  moon: '🌙',
+  partly_cloudy: '🌤',
+  cloudy: '☁️',
+  rain: '🌧',
+  snow: '❄️',
+  showers: '🌦',
+  storm: '⛈',
+}
 
 function navItemSx(isActive: boolean): SxProps<Theme> {
   return {
@@ -97,6 +109,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { data: profile } = useProfile()
   const { data: permissions } = usePermissions()
   const [adminOpen, setAdminOpen] = useState(() => location.pathname.startsWith('/admin'))
+  const { data: weather } = useCurrentWeather()
 
   const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
   const can = (perm?: string) => !perm || permSet.has(perm)
@@ -183,9 +196,39 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Bottom weather widget */}
       <Box sx={{ px: 2, pb: 1.5 }}>
-        <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '10px', px: 2, py: 1.5 }}>
-          <Typography sx={{ color: '#a8bdb4', fontSize: '0.7rem' }}>
-            🌤 24°C • Condiții favorabile
+        <Box
+          role="button"
+          tabIndex={0}
+          aria-label="Deschide harta meteo"
+          onClick={() => handleNav('/weather-map')}
+          onKeyDown={(event) => event.key === 'Enter' && handleNav('/weather-map')}
+          sx={{
+            bgcolor:
+              location.pathname === '/weather-map'
+                ? 'rgba(16,185,129,0.15)'
+                : 'rgba(255,255,255,0.05)',
+            borderRadius: '10px',
+            border:
+              location.pathname === '/weather-map'
+                ? '1px solid rgba(16,185,129,0.4)'
+                : '1px solid transparent',
+            cursor: 'pointer',
+            px: 2,
+            py: 1.5,
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.09)',
+            },
+            '&:focus-visible': {
+              outline: '2px solid #10b981',
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <Typography sx={{ color: '#a8bdb4', fontSize: '0.7rem' }} noWrap>
+            {weather
+              ? `${weatherIconSymbols[weather.icon]} ${weather.location} ${weather.temperature_c}°C • ${weather.condition}`
+              : 'Cantemir • Meteo indisponibil'}
           </Typography>
         </Box>
       </Box>

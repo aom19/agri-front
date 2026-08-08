@@ -15,6 +15,7 @@ const StocksPage = lazy(() => import('../../pages/stocks/StocksPage'))
 const ResourceTypesPage = lazy(() => import('../../pages/resource-types/ResourceTypesPage'))
 const ImplementsPage = lazy(() => import('../../pages/implements/ImplementsPage'))
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
+const WeatherMapPage = lazy(() => import('../../pages/weather/WeatherMapPage'))
 const OperatorsPage = lazy(() => import('../../pages/operators/OperatorsPage'))
 const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPage'))
 const OperationTypesPage = lazy(() => import('../../pages/operations/OperationTypesPage'))
@@ -32,6 +33,17 @@ const PrivateRoutes = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
+
+        <Route
+          path="/weather-map"
+          element={
+            <RequirePermission permission="fields:read">
+              <Suspense fallback={<PageLoader />}>
+                <WeatherMapPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
 
         <Route
           path="/machines"

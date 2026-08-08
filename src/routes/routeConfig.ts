@@ -158,5 +158,6 @@ export function findNavLabel(pathname: string): string | undefined {
       if (child) return child.label
     }
   }
+  if (pathname === '/weather-map') return 'Hartă meteo'
   return undefined
 }

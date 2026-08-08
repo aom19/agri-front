@@ -33,16 +33,23 @@ Frontend React + TypeScript + Vite pentru managementul mașinilor agricole, oper
 
 ### Dashboard
 - Salut personalizat cu prenumele din profil
-- Banner hero cu număr de alocări active
-- Carduri KPI (Total mașini, Mașini active, Total operatori, Alocări active) cu bară de progres și tendință
+- Banner hero cu număr de alocări active din API
+- Carduri KPI din `/api/dashboard/cards` (Total mașini, Mașini active, Total operatori, Alocări active) cu bară de progres și tendință
 - Activitate recentă (list)
 - Statistici rapide
 
 ### Layout & navigare
 - Sidebar responsive (permanent pe desktop, drawer pe mobil)
+- Widget meteo în sidebar pentru Cantemir, alimentat prin endpointul backend `/api/weather/current`, cu navigare către `/weather-map`
 - Avatar utilizator în sidebar și topbar din datele de profil
 - Meniu utilizator în topbar (Profil, Setări, Deconectare)
 - Navigare cu `aria-current="page"` pe itemul activ
+
+### Hartă meteo
+- Pagina `/weather-map` afișează terenurile pe OpenStreetMap folosind geometriile GeoJSON existente
+- Include vremea curentă pentru Cantemir, meteo per teren pe baza centrului poligonului și strat radar gratuit RainViewer pentru precipitații
+- Are straturi selectabile pentru temperatură, umiditate, vânt și precipitații, calculate din datele backend fără expunerea cheilor API în frontend
+- Radarul RainViewer este controlat prin switch separat; când este activ, harta blochează zoom-ul la nivelul suportat de radar
 
 ### Accesibilitate (WCAG AA)
 - Toate elementele interactive au `aria-label`
