@@ -21,6 +21,9 @@ const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPa
 const OperationTypesPage = lazy(() => import('../../pages/operations/OperationTypesPage'))
 const OperationTemplatesPage = lazy(() => import('../../pages/operations/OperationTemplatesPage'))
 const FieldOperationsPage = lazy(() => import('../../pages/field-operations/FieldOperationsPage'))
+const FieldOperationDetailPage = lazy(
+  () => import('../../pages/field-operations/FieldOperationDetailPage')
+)
 const FieldOperationFormPage = lazy(
   () => import('../../pages/field-operations/FieldOperationFormPage')
 )
@@ -92,9 +95,11 @@ const PrivateRoutes = () => {
         <Route
           path="/implements"
           element={
-            <Suspense fallback={<PageLoader />}>
-              <ImplementsPage />
-            </Suspense>
+            <RequirePermission permission="implements:read">
+              <Suspense fallback={<PageLoader />}>
+                <ImplementsPage />
+              </Suspense>
+            </RequirePermission>
           }
         />
         <Route
@@ -182,7 +187,7 @@ const PrivateRoutes = () => {
           element={
             <RequirePermission permission="field_operations:read">
               <Suspense fallback={<PageLoader />}>
-                <FieldOperationFormPage mode="view" />
+                <FieldOperationDetailPage />
               </Suspense>
             </RequirePermission>
           }

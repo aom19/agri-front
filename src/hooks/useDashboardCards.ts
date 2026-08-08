@@ -11,7 +11,7 @@ export function useDashboardCards() {
   const accessToken = useAuthStore((s) => s.accessToken)
 
   return useQuery({
-    queryKey: DASHBOARD_CARDS_KEY,
+    queryKey: [...DASHBOARD_CARDS_KEY, accessToken],
     queryFn: dashboardApi.getCards,
     enabled: initialized && !!accessToken,
     refetchOnMount: 'always',

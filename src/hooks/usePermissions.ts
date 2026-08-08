@@ -10,7 +10,7 @@ export function usePermissions() {
   const accessToken = useAuthStore((s) => s.accessToken)
 
   return useQuery({
-    queryKey: PERMISSIONS_KEY,
+    queryKey: [...PERMISSIONS_KEY, accessToken],
     queryFn: permissionsApi.getMyPermissions,
     enabled: initialized && !!accessToken,
     staleTime: 5 * 60 * 1000, // 5 min — permissions don't change often

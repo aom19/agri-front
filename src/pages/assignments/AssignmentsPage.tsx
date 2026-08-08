@@ -3,6 +3,7 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   IconButton,
   Stack,
@@ -15,8 +16,22 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import type { FieldOperation } from '../../api/fieldOperation.api'
+import type { FieldOperation, FieldOperationStatus } from '../../api/fieldOperation.api'
 import { useFieldOperations } from '../../hooks/useFieldOperations'
+
+const statusLabels: Record<FieldOperationStatus, string> = {
+  planned: 'Planificată',
+  in_progress: 'În lucru',
+  completed: 'Finalizată',
+  canceled: 'Anulată',
+}
+
+function statusColor(status: FieldOperationStatus): 'info' | 'warning' | 'success' | 'default' {
+  if (status === 'planned') return 'info'
+  if (status === 'in_progress') return 'warning'
+  if (status === 'completed') return 'success'
+  return 'default'
+}
 
 function formatDate(value: string | null | undefined) {
   if (!value) return 'Data neplanificată'
@@ -105,6 +120,9 @@ export default function AssignmentsPage() {
                   <TableCell>
                     <Typography sx={{ fontWeight: 700 }}>Timp estimat de lucru</Typography>
                   </TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 700 }}>Status operațiune</Typography>
+                  </TableCell>
                   <TableCell align="right">
                     <Typography sx={{ fontWeight: 700 }}>Acțiuni</Typography>
                   </TableCell>
@@ -125,6 +143,13 @@ export default function AssignmentsPage() {
                         operation.planned_end_at
                       )}
                     </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={statusLabels[operation.status]}
+                        size="small"
+                        color={statusColor(operation.status)}
+                      />
+                    </TableCell>
                     <TableCell align="right">
                       <Tooltip title="Vezi operațiunea">
                         <IconButton
@@ -141,7 +166,7 @@ export default function AssignmentsPage() {
 
                 {(operations ?? []).length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
                         Nu există operațiuni pe teren pentru alocări.
                       </Box>

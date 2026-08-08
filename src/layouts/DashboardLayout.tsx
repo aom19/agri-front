@@ -15,6 +15,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Skeleton,
   Stack,
   Toolbar,
   Typography,
@@ -105,14 +106,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const logout = useLogout()
   const { data: profile } = useProfile()
-  const { data: permissions } = usePermissions()
+  const { data: permissions, isPending: permissionsPending } = usePermissions()
   const [adminOpen, setAdminOpen] = useState(() => location.pathname.startsWith('/admin'))
   const { data: weather } = useCurrentWeather()
 
   const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
+  const isMenuLoading = Boolean(accessToken) && permissionsPending
   const can = (perm?: string) => !perm || permSet.has(perm)
+  const canOpenWeather = !isMenuLoading && can('fields:read')
 
   const handleNav = (path: string) => {
     navigate(path)
@@ -130,68 +134,84 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Navigation */}
       <List component="nav" aria-label="Navigare principală" sx={{ px: 1.5, py: 2, flex: 1 }}>
-        {navConfig.map((item) => {
-          if (item.type === 'leaf') {
-            if (!can(item.permission)) return null
-            return (
-              <NavLeafItem
-                key={item.path}
-                item={item}
-                isActive={location.pathname === item.path}
-                onNavigate={handleNav}
+        {isMenuLoading ? (
+          <Stack spacing={1} sx={{ px: 0.5, py: 0.5 }} aria-label="Se încarcă meniul">
+            {[0, 1, 2].map((item) => (
+              <Skeleton
+                key={item}
+                variant="rounded"
+                height={44}
+                sx={{ borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.08)' }}
               />
-            )
-          }
+            ))}
+          </Stack>
+        ) : (
+          navConfig.map((item) => {
+            if (item.type === 'leaf') {
+              if (!can(item.permission)) return null
+              return (
+                <NavLeafItem
+                  key={item.path}
+                  item={item}
+                  isActive={location.pathname === item.path}
+                  onNavigate={handleNav}
+                />
+              )
+            }
 
-          if (item.type === 'group') {
-            const visibleChildren = item.children.filter((c) => can(c.permission))
-            if (visibleChildren.length === 0) return null
-            const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
+            if (item.type === 'group') {
+              const visibleChildren = item.children.filter((c) => can(c.permission))
+              if (visibleChildren.length === 0) return null
+              const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
 
-            return (
-              <Box key={item.label}>
-                <ListItemButton
-                  onClick={() => setAdminOpen((o) => !o)}
-                  sx={{ ...(navItemSx(isGroupActive) as object), justifyContent: 'space-between' }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                      <item.icon sx={{ fontSize: 20 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      slotProps={{
-                        primary: {
-                          sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
-                        },
-                      }}
-                    />
-                  </Box>
-                  {adminOpen ? (
-                    <ExpandLess sx={{ fontSize: 16 }} />
-                  ) : (
-                    <ExpandMore sx={{ fontSize: 16 }} />
-                  )}
-                </ListItemButton>
-                <Collapse in={adminOpen} timeout="auto" unmountOnExit>
-                  <List component="div" disablePadding>
-                    {visibleChildren.map((child) => (
-                      <NavLeafItem
-                        key={child.path}
-                        item={child}
-                        isActive={location.pathname === child.path}
-                        onNavigate={handleNav}
-                        indent
+              return (
+                <Box key={item.label}>
+                  <ListItemButton
+                    onClick={() => setAdminOpen((o) => !o)}
+                    sx={{
+                      ...(navItemSx(isGroupActive) as object),
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                        <item.icon sx={{ fontSize: 20 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        slotProps={{
+                          primary: {
+                            sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
+                          },
+                        }}
                       />
-                    ))}
-                  </List>
-                </Collapse>
-              </Box>
-            )
-          }
+                    </Box>
+                    {adminOpen ? (
+                      <ExpandLess sx={{ fontSize: 16 }} />
+                    ) : (
+                      <ExpandMore sx={{ fontSize: 16 }} />
+                    )}
+                  </ListItemButton>
+                  <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                      {visibleChildren.map((child) => (
+                        <NavLeafItem
+                          key={child.path}
+                          item={child}
+                          isActive={location.pathname === child.path}
+                          onNavigate={handleNav}
+                          indent
+                        />
+                      ))}
+                    </List>
+                  </Collapse>
+                </Box>
+              )
+            }
 
-          return null
-        })}
+            return null
+          })
+        )}
       </List>
 
       {/* Bottom weather widget */}
@@ -200,8 +220,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           role="button"
           tabIndex={0}
           aria-label="Deschide harta meteo"
-          onClick={() => handleNav('/weather-map')}
-          onKeyDown={(event) => event.key === 'Enter' && handleNav('/weather-map')}
+          onClick={() => {
+            if (canOpenWeather) handleNav('/weather-map')
+          }}
+          onKeyDown={(event) => {
+            if (!canOpenWeather) return
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              handleNav('/weather-map')
+            }
+          }}
           sx={{
             bgcolor:
               location.pathname === '/weather-map'

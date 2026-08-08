@@ -69,6 +69,7 @@ export const navConfig: NavItem[] = [
     label: 'Echipament agricol',
     path: '/implements',
     icon: PrecisionManufacturingOutlined,
+    permission: 'implements:read',
   },
   {
     type: 'leaf',

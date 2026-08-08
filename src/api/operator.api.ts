@@ -2,6 +2,7 @@ import { api } from "./axios"
 
 export type Operator = {
     id: number
+    user_id?: number | null
     name: string
     phone: string
     email: string

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     fieldOperationsApi,
+    type FieldOperationChecklistPayload,
     type FieldOperationPayload,
     type FieldOperationsFilter,
 } from '../api/fieldOperation.api'
@@ -13,7 +14,7 @@ export function useFieldOperations(filter?: FieldOperationsFilter) {
     const accessToken = useAuthStore((s) => s.accessToken)
 
     return useQuery({
-        queryKey: [...FIELD_OPERATIONS_KEY, filter ?? {}],
+        queryKey: [...FIELD_OPERATIONS_KEY, accessToken, filter ?? {}],
         queryFn: () => fieldOperationsApi.getAll(filter),
         enabled: initialized && !!accessToken,
         staleTime: 60 * 1000,
@@ -26,7 +27,7 @@ export function useFieldOperation(id: number | null) {
     const accessToken = useAuthStore((s) => s.accessToken)
 
     return useQuery({
-        queryKey: [...FIELD_OPERATIONS_KEY, 'detail', id],
+        queryKey: [...FIELD_OPERATIONS_KEY, accessToken, 'detail', id],
         queryFn: () => fieldOperationsApi.getById(id!),
         enabled: initialized && !!accessToken && id != null,
         staleTime: 60 * 1000,
@@ -47,6 +48,23 @@ export function useUpdateFieldOperation() {
     return useMutation({
         mutationFn: ({ id, payload }: { id: number; payload: FieldOperationPayload }) =>
             fieldOperationsApi.update(id, payload),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY }),
+    })
+}
+
+export function useUpdateFieldOperationChecklist() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ id, payload }: { id: number; payload: FieldOperationChecklistPayload }) =>
+            fieldOperationsApi.updateChecklist(id, payload),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY }),
+    })
+}
+
+export function useStartFieldOperation() {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: (id: number) => fieldOperationsApi.start(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY }),
     })
 }

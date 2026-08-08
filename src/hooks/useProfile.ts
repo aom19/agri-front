@@ -6,10 +6,11 @@ export const PROFILE_KEY = ['profile']
 
 export function useProfile() {
     const initialized = useAuthStore((s) => s.initialized)
+    const accessToken = useAuthStore((s) => s.accessToken)
     return useQuery({
-        queryKey: PROFILE_KEY,
+        queryKey: [...PROFILE_KEY, accessToken],
         queryFn: () => profileApi.get().then((r) => r.data),
-        enabled: initialized,
+        enabled: initialized && !!accessToken,
     })
 }
 

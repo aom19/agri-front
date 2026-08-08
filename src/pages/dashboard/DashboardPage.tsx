@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { useProfile } from '../../hooks/useProfile'
 import { useDashboardCards, type DashboardCardKey } from '../../hooks/useDashboardCards'
+import OperatorDashboard from './OperatorDashboard.tsx'
 
 const kpiConfig = [
   {
@@ -99,6 +100,12 @@ export default function DashboardPage() {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara'
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User'
+  const role = profile?.role_code ?? profile?.role ?? user?.role
+
+  if (role?.toLowerCase() === 'operator') {
+    return <OperatorDashboard displayName={displayName} greeting={greeting} />
+  }
+
   const cardsByKey = new Map(cards?.map((card) => [card.key, card]))
   const dashboardKpis = kpiConfig.map((config) => {
     const card = cardsByKey.get(config.key)

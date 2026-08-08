@@ -30,19 +30,30 @@ type FieldMapModalProps = {
   open: boolean
   fields: MapField[]
   bounds: LatLngBoundsExpression | null
+  title?: string
+  description?: string
   onClose: () => void
 }
 
-export default function FieldMapModal({ open, fields, bounds, onClose }: FieldMapModalProps) {
+export default function FieldMapModal({
+  open,
+  fields,
+  bounds,
+  title = 'Toate terenurile pe hartă',
+  description,
+  onClose,
+}: FieldMapModalProps) {
+  const contentDescription =
+    description ??
+    (fields.length > 0
+      ? 'Terenurile sunt afișate în violet, iar numele lor apare direct pe hartă.'
+      : 'Nu există terenuri adăugate încă.')
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <DialogTitle>Toate terenurile pe hartă</DialogTitle>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ pt: 0 }}>
-        <Box sx={{ mb: 2, color: 'text.secondary' }}>
-          {fields.length > 0
-            ? 'Terenurile sunt afișate în violet, iar numele lor apare direct pe hartă.'
-            : 'Nu există terenuri adăugate încă.'}
-        </Box>
+        <Box sx={{ mb: 2, color: 'text.secondary' }}>{contentDescription}</Box>
         <Box
           sx={{
             borderRadius: 2,
