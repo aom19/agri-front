@@ -20,6 +20,7 @@ import {
   AssignmentOutlined,
   TrendingUp,
 } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { useProfile } from '../../hooks/useProfile'
 import { useDashboardCards, type DashboardCardKey } from '../../hooks/useDashboardCards'
@@ -91,6 +92,7 @@ const quickStats = [
 ]
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const { data: profile } = useProfile()
   const { data: cards, isError, isLoading } = useDashboardCards()
@@ -109,9 +111,12 @@ export default function DashboardPage() {
       trend: isLoading ? '...' : formatTrend(card?.trend ?? 0),
     }
   })
-  const activeAssignmentsText = dashboardKpis.find((kpi) => kpi.key === 'active_assignments')?.value ?? '0'
-  const activeMachinesText = dashboardKpis.find((kpi) => kpi.key === 'active_machines')?.value ?? '0'
-  const totalOperatorsText = dashboardKpis.find((kpi) => kpi.key === 'total_operators')?.value ?? '0'
+  const activeAssignmentsText =
+    dashboardKpis.find((kpi) => kpi.key === 'active_assignments')?.value ?? '0'
+  const activeMachinesText =
+    dashboardKpis.find((kpi) => kpi.key === 'active_machines')?.value ?? '0'
+  const totalOperatorsText =
+    dashboardKpis.find((kpi) => kpi.key === 'total_operators')?.value ?? '0'
 
   return (
     <Box
@@ -172,6 +177,7 @@ export default function DashboardPage() {
           <Button
             variant="outlined"
             size="small"
+            onClick={() => navigate('/assignments')}
             aria-label="Vezi toate alocările active"
             sx={{
               color: '#ffffff',
@@ -224,7 +230,12 @@ export default function DashboardPage() {
                   >
                     <KpiIcon sx={{ fontSize: 20, color: kpi.iconColor }} />
                   </Box>
-                  <Stack aria-hidden="true" direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
+                  <Stack
+                    aria-hidden="true"
+                    direction="row"
+                    sx={{ alignItems: 'center' }}
+                    spacing={0.5}
+                  >
                     <TrendingUp sx={{ fontSize: 14, color: '#059669' }} />
                     <Typography sx={{ fontSize: '0.7rem', color: '#056849', fontWeight: 600 }}>
                       {kpi.trend}
@@ -307,7 +318,10 @@ export default function DashboardPage() {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
-                    <Box aria-hidden="true" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }} />
+                    <Box
+                      aria-hidden="true"
+                      sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }}
+                    />
                     <Typography sx={{ fontSize: '0.825rem', color: 'text.secondary' }}>
                       {stat.label}
                     </Typography>

@@ -110,6 +110,13 @@ export const navConfig: NavItem[] = [
         icon: AccountTreeOutlined,
         permission: 'operations:read',
       },
+      {
+        type: 'leaf',
+        label: 'Pe teren',
+        path: '/field-operations',
+        icon: AgricultureOutlined,
+        permission: 'field_operations:read',
+      },
     ],
   },
   {

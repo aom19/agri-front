@@ -20,6 +20,10 @@ const OperatorsPage = lazy(() => import('../../pages/operators/OperatorsPage'))
 const AssignmentsPage = lazy(() => import('../../pages/assignments/AssignmentsPage'))
 const OperationTypesPage = lazy(() => import('../../pages/operations/OperationTypesPage'))
 const OperationTemplatesPage = lazy(() => import('../../pages/operations/OperationTemplatesPage'))
+const FieldOperationsPage = lazy(() => import('../../pages/field-operations/FieldOperationsPage'))
+const FieldOperationFormPage = lazy(
+  () => import('../../pages/field-operations/FieldOperationFormPage')
+)
 const UsersPage = lazy(() => import('../../pages/admin/users/UsersPage'))
 const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
 const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
@@ -139,6 +143,46 @@ const PrivateRoutes = () => {
             <RequirePermission permission="operations:read">
               <Suspense fallback={<PageLoader />}>
                 <OperationTemplatesPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/field-operations"
+          element={
+            <RequirePermission permission="field_operations:read">
+              <Suspense fallback={<PageLoader />}>
+                <FieldOperationsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/field-operations/new"
+          element={
+            <RequirePermission permission="field_operations:write">
+              <Suspense fallback={<PageLoader />}>
+                <FieldOperationFormPage mode="create" />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/field-operations/:id/edit"
+          element={
+            <RequirePermission permission="field_operations:write">
+              <Suspense fallback={<PageLoader />}>
+                <FieldOperationFormPage mode="edit" />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/field-operations/:id"
+          element={
+            <RequirePermission permission="field_operations:read">
+              <Suspense fallback={<PageLoader />}>
+                <FieldOperationFormPage mode="view" />
               </Suspense>
             </RequirePermission>
           }
