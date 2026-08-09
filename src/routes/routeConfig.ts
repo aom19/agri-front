@@ -16,6 +16,7 @@ import {
   CategoryOutlined,
   BuildOutlined,
   AccountTreeOutlined,
+  HistoryOutlined,
 } from '@mui/icons-material'
 type IconComponent = FC<SvgIconProps>
 export type NavLeaf = {
@@ -152,6 +153,13 @@ export const navConfig: NavItem[] = [
         path: '/admin/permissions',
         icon: VpnKeyOutlined,
         permission: 'permissions:read',
+      },
+      {
+        type: 'leaf',
+        label: 'Jurnal audit',
+        path: '/admin/audit',
+        icon: HistoryOutlined,
+        permission: 'audit:read',
       },
     ],
   },

@@ -30,6 +30,8 @@ const FieldOperationFormPage = lazy(
 const UsersPage = lazy(() => import('../../pages/admin/users/UsersPage'))
 const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
 const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
+const NotificationsPage = lazy(() => import('../../pages/notifications/NotificationsPage'))
+const AuditLogPage = lazy(() => import('../../pages/admin/audit/AuditLogPage'))
 
 // ─── Private Routes ─────────────────────────────────────────────────────────────
 const PrivateRoutes = () => {
@@ -218,6 +220,26 @@ const PrivateRoutes = () => {
             <RequirePermission permission="roles:read">
               <Suspense fallback={<PageLoader />}>
                 <PermissionsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <RequirePermission permission="notifications:read">
+              <Suspense fallback={<PageLoader />}>
+                <NotificationsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/admin/audit"
+          element={
+            <RequirePermission permission="audit:read">
+              <Suspense fallback={<PageLoader />}>
+                <AuditLogPage />
               </Suspense>
             </RequirePermission>
           }
