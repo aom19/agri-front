@@ -1,8 +1,8 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert, Button, Stack, TextField } from '@mui/material'
+import { Alert, Box, Button, Stack, TextField } from '@mui/material'
 import { Link } from 'react-router-dom'
-import { PasswordField } from '../../components'
+import { PasswordField, PasswordRequirements } from '../../components'
 import { useRegister } from '../../hooks/useAuth'
 import { registerSchema, type RegisterForm } from '../../schemas/auth.schema'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
@@ -14,11 +14,14 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: { email: '', password: '', confirmPassword: '' },
   })
+
+  const passwordValue = useWatch({ control, name: 'password' })
 
   const onSubmit = (data: RegisterForm) => mutation.mutate(data)
 
@@ -59,6 +62,9 @@ export default function RegisterPage() {
             helperText={errors.password?.message}
             {...register('password')}
           />
+          <Box>
+            <PasswordRequirements value={passwordValue ?? ''} />
+          </Box>
 
           <PasswordField
             label="Confirmă parola"

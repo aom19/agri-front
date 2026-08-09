@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/auth.store'
 import { authApi } from '../api/auth.api'
+import { DASHBOARD_CARDS_KEY } from './useDashboardCards'
+import { FIELD_OPERATIONS_KEY } from './useFieldOperations'
+import { PERMISSIONS_KEY } from './usePermissions'
+import { PROFILE_KEY } from './useProfile'
 import type { LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm } from '../schemas/auth.schema'
 
 export function useLogin() {
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const setTokens = useAuthStore((s) => s.setTokens)
 
     return useMutation({
         mutationFn: (data: LoginForm) => authApi.login(data),
         onSuccess: ({ data }) => {
+            queryClient.removeQueries({ queryKey: DASHBOARD_CARDS_KEY })
+            queryClient.removeQueries({ queryKey: FIELD_OPERATIONS_KEY })
+            queryClient.removeQueries({ queryKey: PERMISSIONS_KEY })
+            queryClient.removeQueries({ queryKey: PROFILE_KEY })
             setTokens(data.access_token, data.refresh_token)
             navigate('/', { replace: true })
         },
@@ -78,4 +87,11 @@ export function useLogout() {
             logout()
         }
     }, [logout, refreshToken])
+}
+
+export function useChangePassword() {
+    return useMutation({
+        mutationFn: (data: { old_password: string; new_password: string; confirm_password: string }) =>
+            authApi.changePassword(data),
+    })
 }

@@ -15,8 +15,10 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Skeleton,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -36,9 +38,28 @@ import { useAuthStore } from '../store/auth.store'
 import { useLogout } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { usePermissions } from '../hooks/usePermissions'
+import { useCurrentWeather } from '../hooks/useWeather'
+import {
+  useNotificationCount,
+  useNotifications,
+  useMarkNotificationRead,
+} from '../hooks/useNotifications'
+import { useNotificationSocket } from '../hooks/useNotificationSocket'
 import { navConfig, findNavLabel, type NavLeaf } from '../routes/routeConfig'
+import NotificationListItem from '../components/NotificationListItem'
 
 const SIDEBAR_WIDTH = 240
+
+const weatherIconSymbols = {
+  sunny: '☀️',
+  moon: '🌙',
+  partly_cloudy: '🌤',
+  cloudy: '☁️',
+  rain: '🌧',
+  snow: '❄️',
+  showers: '🌦',
+  storm: '⛈',
+}
 
 function navItemSx(isActive: boolean): SxProps<Theme> {
   return {
@@ -93,13 +114,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const logout = useLogout()
   const { data: profile } = useProfile()
-  const { data: permissions } = usePermissions()
+  const { data: permissions, isPending: permissionsPending } = usePermissions()
   const [adminOpen, setAdminOpen] = useState(() => location.pathname.startsWith('/admin'))
+  const { data: weather } = useCurrentWeather()
 
   const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
+  const isMenuLoading = Boolean(accessToken) && permissionsPending
   const can = (perm?: string) => !perm || permSet.has(perm)
+  const canOpenWeather = !isMenuLoading && can('fields:read')
 
   const handleNav = (path: string) => {
     navigate(path)
@@ -117,75 +142,129 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Navigation */}
       <List component="nav" aria-label="Navigare principală" sx={{ px: 1.5, py: 2, flex: 1 }}>
-        {navConfig.map((item) => {
-          if (item.type === 'leaf') {
-            if (!can(item.permission)) return null
-            return (
-              <NavLeafItem
-                key={item.path}
-                item={item}
-                isActive={location.pathname === item.path}
-                onNavigate={handleNav}
+        {isMenuLoading ? (
+          <Stack spacing={1} sx={{ px: 0.5, py: 0.5 }} aria-label="Se încarcă meniul">
+            {[0, 1, 2].map((item) => (
+              <Skeleton
+                key={item}
+                variant="rounded"
+                height={44}
+                sx={{ borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.08)' }}
               />
-            )
-          }
+            ))}
+          </Stack>
+        ) : (
+          navConfig.map((item) => {
+            if (item.type === 'leaf') {
+              if (!can(item.permission)) return null
+              return (
+                <NavLeafItem
+                  key={item.path}
+                  item={item}
+                  isActive={location.pathname === item.path}
+                  onNavigate={handleNav}
+                />
+              )
+            }
 
-          if (item.type === 'group') {
-            const visibleChildren = item.children.filter((c) => can(c.permission))
-            if (visibleChildren.length === 0) return null
-            const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
+            if (item.type === 'group') {
+              const visibleChildren = item.children.filter((c) => can(c.permission))
+              if (visibleChildren.length === 0) return null
+              const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
 
-            return (
-              <Box key={item.label}>
-                <ListItemButton
-                  onClick={() => setAdminOpen((o) => !o)}
-                  sx={{ ...(navItemSx(isGroupActive) as object), justifyContent: 'space-between' }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                    <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                      <item.icon sx={{ fontSize: 20 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.label}
-                      slotProps={{
-                        primary: {
-                          sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
-                        },
-                      }}
-                    />
-                  </Box>
-                  {adminOpen ? (
-                    <ExpandLess sx={{ fontSize: 16 }} />
-                  ) : (
-                    <ExpandMore sx={{ fontSize: 16 }} />
-                  )}
-                </ListItemButton>
-                <Collapse in={adminOpen} timeout="auto" unmountOnExit>
-                  <List component="div" disablePadding>
-                    {visibleChildren.map((child) => (
-                      <NavLeafItem
-                        key={child.path}
-                        item={child}
-                        isActive={location.pathname === child.path}
-                        onNavigate={handleNav}
-                        indent
+              return (
+                <Box key={item.label}>
+                  <ListItemButton
+                    onClick={() => setAdminOpen((o) => !o)}
+                    sx={{
+                      ...(navItemSx(isGroupActive) as object),
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                        <item.icon sx={{ fontSize: 20 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.label}
+                        slotProps={{
+                          primary: {
+                            sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
+                          },
+                        }}
                       />
-                    ))}
-                  </List>
-                </Collapse>
-              </Box>
-            )
-          }
+                    </Box>
+                    {adminOpen ? (
+                      <ExpandLess sx={{ fontSize: 16 }} />
+                    ) : (
+                      <ExpandMore sx={{ fontSize: 16 }} />
+                    )}
+                  </ListItemButton>
+                  <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                      {visibleChildren.map((child) => (
+                        <NavLeafItem
+                          key={child.path}
+                          item={child}
+                          isActive={location.pathname === child.path}
+                          onNavigate={handleNav}
+                          indent
+                        />
+                      ))}
+                    </List>
+                  </Collapse>
+                </Box>
+              )
+            }
 
-          return null
-        })}
+            return null
+          })
+        )}
       </List>
 
       {/* Bottom weather widget */}
       <Box sx={{ px: 2, pb: 1.5 }}>
-        <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '10px', px: 2, py: 1.5 }}>
-          <Typography sx={{ color: '#a8bdb4', fontSize: '0.7rem' }}>
-            🌤 24°C • Condiții favorabile
+        <Box
+          role="button"
+          tabIndex={0}
+          aria-label="Deschide harta meteo"
+          onClick={() => {
+            if (canOpenWeather) handleNav('/weather-map')
+          }}
+          onKeyDown={(event) => {
+            if (!canOpenWeather) return
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              handleNav('/weather-map')
+            }
+          }}
+          sx={{
+            bgcolor:
+              location.pathname === '/weather-map'
+                ? 'rgba(16,185,129,0.15)'
+                : 'rgba(255,255,255,0.05)',
+            borderRadius: '10px',
+            border:
+              location.pathname === '/weather-map'
+                ? '1px solid rgba(16,185,129,0.4)'
+                : '1px solid transparent',
+            cursor: 'pointer',
+            px: 2,
+            py: 1.5,
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.09)',
+            },
+            '&:focus-visible': {
+              outline: '2px solid #10b981',
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <Typography sx={{ color: '#a8bdb4', fontSize: '0.7rem' }} noWrap>
+            {weather
+              ? `${weatherIconSymbols[weather.icon]} ${weather.location} ${weather.temperature_c}°C • ${weather.condition}`
+              : 'Cantemir • Meteo indisponibil'}
           </Typography>
         </Box>
       </Box>
@@ -244,10 +323,17 @@ export default function DashboardLayout() {
   const user = useAuthStore((s) => s.user)
   const logout = useLogout()
   const { data: profile } = useProfile()
+  const { data: notifCountData } = useNotificationCount()
+  const { data: recentNotifs } = useNotifications({ unread: true, limit: 10 })
+  const markRead = useMarkNotificationRead()
+  useNotificationSocket()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = useState(false)
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [notifAnchor, setNotifAnchor] = useState<null | HTMLElement>(null)
+
+  const unreadCount = notifCountData?.count ?? 0
 
   const pageTitle =
     findNavLabel(location.pathname) ??
@@ -326,11 +412,117 @@ export default function DashboardLayout() {
                 <SearchOutlined />
               </IconButton>
 
-              <IconButton size="small" aria-label="Notificări" sx={{ color: 'text.secondary' }}>
-                <Badge badgeContent={3} color="error" variant="dot">
-                  <NotificationsOutlined />
-                </Badge>
-              </IconButton>
+              <Tooltip title="Deschide notificările" arrow>
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label="Notificări"
+                    sx={{ color: 'text.secondary' }}
+                    onClick={(e) => setNotifAnchor(e.currentTarget)}
+                  >
+                    <Badge
+                      badgeContent={unreadCount}
+                      color="error"
+                      variant="dot"
+                      invisible={unreadCount === 0}
+                    >
+                      <NotificationsOutlined />
+                    </Badge>
+                  </IconButton>
+                </span>
+              </Tooltip>
+
+              <Menu
+                anchorEl={notifAnchor}
+                open={Boolean(notifAnchor)}
+                onClose={() => setNotifAnchor(null)}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      width: { xs: 'calc(100vw - 24px)', sm: 560 },
+                      maxWidth: 'calc(100vw - 32px)',
+                      maxHeight: 680,
+                      mt: 1,
+                      borderRadius: '24px',
+                      border: '1px solid rgba(195, 210, 201, 0.9)',
+                      overflow: 'hidden',
+                      bgcolor: 'rgba(247,250,248,0.96)',
+                      backdropFilter: 'blur(18px)',
+                      boxShadow:
+                        '0 30px 80px rgba(10,30,20,0.22), inset 0 1px 0 rgba(255,255,255,0.8)',
+                      '& .MuiMenu-list': { p: 0 },
+                    },
+                  },
+                }}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <Box
+                  sx={{
+                    px: 2.5,
+                    py: 2.25,
+                    borderBottom: '1px solid rgba(224,230,226,0.9)',
+                    background:
+                      'radial-gradient(circle at top left, rgba(16,185,129,0.18), transparent 34%), linear-gradient(135deg, #ffffff 0%, #f3faf6 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontWeight: 900, fontSize: '1.05rem' }}>
+                      Notificări
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem' }}>
+                      {unreadCount === 1
+                        ? '1 notificare necitită'
+                        : `${unreadCount} notificări necitite`}
+                    </Typography>
+                  </Box>
+                </Box>
+                {(recentNotifs ?? []).length === 0 ? (
+                  <MenuItem disabled sx={{ py: 4, justifyContent: 'center', whiteSpace: 'normal' }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                      Nu ai notificări necitite.
+                    </Typography>
+                  </MenuItem>
+                ) : (
+                  <Box sx={{ p: 1.5, maxHeight: 480, overflowY: 'auto' }}>
+                    {(recentNotifs ?? []).map((notification) => (
+                      <MenuItem
+                        key={notification.id}
+                        disableRipple
+                        onClick={() => {
+                          markRead.mutate(notification.id)
+                          setNotifAnchor(null)
+                        }}
+                        sx={{
+                          p: 0,
+                          mb: 1.25,
+                          borderRadius: '16px',
+                          whiteSpace: 'normal',
+                          '&:hover': { bgcolor: 'transparent' },
+                        }}
+                      >
+                        <NotificationListItem notification={notification} compact />
+                      </MenuItem>
+                    ))}
+                  </Box>
+                )}
+                <Divider />
+                <MenuItem
+                  onClick={() => {
+                    setNotifAnchor(null)
+                    navigate('/notifications')
+                  }}
+                  sx={{ justifyContent: 'center', py: 1.5 }}
+                >
+                  <Typography sx={{ fontSize: '0.88rem', fontWeight: 800, color: 'primary.main' }}>
+                    Vezi toate notificările
+                  </Typography>
+                </MenuItem>
+              </Menu>
 
               <Divider
                 orientation="vertical"
@@ -403,7 +595,14 @@ export default function DashboardLayout() {
                 >
                   Profil
                 </MenuItem>
-                <MenuItem onClick={() => setAnchorEl(null)}>Setări</MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setAnchorEl(null)
+                    navigate('/settings')
+                  }}
+                >
+                  Setări
+                </MenuItem>
                 <Divider />
                 <MenuItem
                   onClick={() => {

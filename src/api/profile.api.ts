@@ -1,15 +1,17 @@
 import { api } from './axios'
 
 export type UserProfile = {
-  user_id: number
-  email: string
-  role: string
-  first_name: string
-  last_name: string
-  date_of_birth: string | null
-  profile_photo: string
-  created_at: string
-  updated_at: string
+    user_id: number
+    email: string
+    role_id: number
+    role_code: string
+    role: string
+    first_name: string
+    last_name: string
+    date_of_birth: string | null
+    profile_photo: string
+    created_at: string
+    updated_at: string
 }
 
 export type UpdateProfileRequest = {

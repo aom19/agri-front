@@ -3,6 +3,9 @@ import type { SvgIconProps } from '@mui/material'
 import {
   DashboardOutlined,
   AgricultureOutlined,
+  Inventory2Outlined,
+  WarehouseOutlined,
+  PrecisionManufacturingOutlined,
   LandscapeOutlined,
   PeopleOutlined,
   AssignmentOutlined,
@@ -10,10 +13,12 @@ import {
   PeopleAltOutlined,
   SecurityOutlined,
   VpnKeyOutlined,
+  CategoryOutlined,
+  BuildOutlined,
+  AccountTreeOutlined,
+  HistoryOutlined,
 } from '@mui/icons-material'
-
 type IconComponent = FC<SvgIconProps>
-
 export type NavLeaf = {
   type: 'leaf'
   label: string
@@ -48,6 +53,27 @@ export const navConfig: NavItem[] = [
   },
   {
     type: 'leaf',
+    label: 'Resurse',
+    path: '/resources',
+    icon: Inventory2Outlined,
+    permission: 'resources:read',
+  },
+  {
+    type: 'leaf',
+    label: 'Stocuri',
+    path: '/stocks',
+    icon: WarehouseOutlined,
+    permission: 'stock.view',
+  },
+  {
+    type: 'leaf',
+    label: 'Echipament agricol',
+    path: '/implements',
+    icon: PrecisionManufacturingOutlined,
+    permission: 'implements:read',
+  },
+  {
+    type: 'leaf',
     label: 'Terenuri',
     path: '/fields',
     icon: LandscapeOutlined,
@@ -69,9 +95,44 @@ export const navConfig: NavItem[] = [
   },
   {
     type: 'group',
+    label: 'Operațiuni',
+    icon: BuildOutlined,
+    children: [
+      {
+        type: 'leaf',
+        label: 'Tipuri operațiuni',
+        path: '/operation-types',
+        icon: CategoryOutlined,
+        permission: 'operations:read',
+      },
+      {
+        type: 'leaf',
+        label: 'Template-uri',
+        path: '/operation-templates',
+        icon: AccountTreeOutlined,
+        permission: 'operations:read',
+      },
+      {
+        type: 'leaf',
+        label: 'Pe teren',
+        path: '/field-operations',
+        icon: AgricultureOutlined,
+        permission: 'field_operations:read',
+      },
+    ],
+  },
+  {
+    type: 'group',
     label: 'Administrare',
     icon: AdminPanelSettingsOutlined,
     children: [
+      {
+        type: 'leaf',
+        label: 'Categorii de resurse',
+        path: '/admin/resource-types',
+        icon: CategoryOutlined,
+        permission: 'resources:read',
+      },
       {
         type: 'leaf',
         label: 'Utilizatori',
@@ -93,6 +154,13 @@ export const navConfig: NavItem[] = [
         icon: VpnKeyOutlined,
         permission: 'permissions:read',
       },
+      {
+        type: 'leaf',
+        label: 'Jurnal audit',
+        path: '/admin/audit',
+        icon: HistoryOutlined,
+        permission: 'audit:read',
+      },
     ],
   },
 ]
@@ -106,5 +174,6 @@ export function findNavLabel(pathname: string): string | undefined {
       if (child) return child.label
     }
   }
+  if (pathname === '/weather-map') return 'Hartă meteo'
   return undefined
 }

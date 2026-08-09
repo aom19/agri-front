@@ -20,55 +20,62 @@ import {
   AssignmentOutlined,
   TrendingUp,
 } from '@mui/icons-material'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { useProfile } from '../../hooks/useProfile'
+import { useDashboardCards, type DashboardCardKey } from '../../hooks/useDashboardCards'
+import OperatorDashboard from './OperatorDashboard.tsx'
 
-const kpis = [
+const kpiConfig = [
   {
+    key: 'total_machines',
     label: 'Total mașini',
-    value: '24',
     icon: AgricultureOutlined,
     iconBg: '#e8f5ee',
     iconColor: '#1a5c38',
-    progress: 75,
     progressColor: '#1a5c38',
-    trend: '+3',
     delay: '0ms',
   },
   {
+    key: 'active_machines',
     label: 'Mașini active',
-    value: '18',
     icon: CheckCircleOutlined,
     iconBg: '#d1fae5',
     iconColor: '#059669',
-    progress: 85,
     progressColor: '#059669',
-    trend: '+2',
     delay: '100ms',
   },
   {
+    key: 'total_operators',
     label: 'Total operatori',
-    value: '47',
     icon: PeopleOutlined,
     iconBg: '#e8f0ff',
     iconColor: '#1d4ed8',
-    progress: 60,
     progressColor: '#1d4ed8',
-    trend: '+5',
     delay: '200ms',
   },
   {
+    key: 'active_assignments',
     label: 'Alocări active',
-    value: '12',
     icon: AssignmentOutlined,
     iconBg: '#fef3c7',
     iconColor: '#b45309',
-    progress: 45,
     progressColor: '#b45309',
-    trend: '+1',
     delay: '300ms',
   },
-]
+] satisfies Array<{
+  key: DashboardCardKey
+  label: string
+  icon: typeof AgricultureOutlined
+  iconBg: string
+  iconColor: string
+  progressColor: string
+  delay: string
+}>
+
+function formatTrend(value: number) {
+  return value > 0 ? `+${value}` : String(value)
+}
 
 const recentActivity = [
   { text: 'Tractorul John Deere 8R alocat lui Ion Popescu', time: 'acum 5 min', color: '#1a5c38' },
@@ -86,11 +93,37 @@ const quickStats = [
 ]
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const { data: profile } = useProfile()
+  const { data: cards, isError, isLoading } = useDashboardCards()
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara'
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User'
+  const role = profile?.role_code ?? profile?.role ?? user?.role
+
+  if (role?.toLowerCase() === 'operator') {
+    return <OperatorDashboard displayName={displayName} greeting={greeting} />
+  }
+
+  const cardsByKey = new Map(cards?.map((card) => [card.key, card]))
+  const dashboardKpis = kpiConfig.map((config) => {
+    const card = cardsByKey.get(config.key)
+
+    return {
+      ...config,
+      label: card?.label ?? config.label,
+      value: isLoading ? '...' : String(card?.value ?? 0),
+      progress: card?.progress ?? 0,
+      trend: isLoading ? '...' : formatTrend(card?.trend ?? 0),
+    }
+  })
+  const activeAssignmentsText =
+    dashboardKpis.find((kpi) => kpi.key === 'active_assignments')?.value ?? '0'
+  const activeMachinesText =
+    dashboardKpis.find((kpi) => kpi.key === 'active_machines')?.value ?? '0'
+  const totalOperatorsText =
+    dashboardKpis.find((kpi) => kpi.key === 'total_operators')?.value ?? '0'
 
   return (
     <Box
@@ -143,14 +176,15 @@ export default function DashboardPage() {
           }}
         >
           <Typography sx={{ color: '#ffffff', fontWeight: 700, fontSize: '1.25rem', mb: 0.5 }}>
-            3 alocări active astăzi
+            {activeAssignmentsText} alocări active astăzi
           </Typography>
           <Typography sx={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.875rem', mb: 2 }}>
-            Distribuite pe 5 mașini și 8 operatori
+            Distribuite pe {activeMachinesText} mașini active și {totalOperatorsText} operatori
           </Typography>
           <Button
             variant="outlined"
             size="small"
+            onClick={() => navigate('/assignments')}
             aria-label="Vezi toate alocările active"
             sx={{
               color: '#ffffff',
@@ -166,66 +200,80 @@ export default function DashboardPage() {
       </Card>
 
       {/* KPI Cards */}
+      {isError && (
+        <Typography sx={{ color: '#b45309', fontSize: '0.8rem', mb: 1.5 }}>
+          Nu am putut încărca statisticile din baza de date. Sunt afișate valori temporare.
+        </Typography>
+      )}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        {kpis.map((kpi) => (
-          <Grid key={kpi.label} size={{ xs: 12, sm: 6, lg: 3 }}>
-            <Card
-              component="article"
-              aria-label={`${kpi.label}: ${kpi.value}, tendință ${kpi.trend}`}
-              sx={{
-                p: 2.5,
-                animation: `fadeInUp 0.5s ease-out ${kpi.delay} both`,
-              }}
-            >
-              <Stack
-                direction="row"
-                sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
-              >
-                <Box
-                  aria-hidden="true"
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '10px',
-                    bgcolor: kpi.iconBg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <kpi.icon sx={{ fontSize: 20, color: kpi.iconColor }} />
-                </Box>
-                <Stack aria-hidden="true" direction="row" sx={{ alignItems: 'center' }} spacing={0.5}>
-                  <TrendingUp sx={{ fontSize: 14, color: '#059669' }} />
-                  <Typography sx={{ fontSize: '0.7rem', color: '#056849', fontWeight: 600 }}>
-                    {kpi.trend}
-                  </Typography>
-                </Stack>
-              </Stack>
-              <Box aria-hidden="true">
-                <Typography
-                  sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}
-                >
-                  {kpi.value}
-                </Typography>
-                <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', mb: 1.5 }}>
-                  {kpi.label}
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={kpi.progress}
-                aria-label={`Progres ${kpi.label}: ${kpi.progress}%`}
+        {dashboardKpis.map((kpi) => {
+          const KpiIcon = kpi.icon
+
+          return (
+            <Grid key={kpi.key} size={{ xs: 12, sm: 6, lg: 3 }}>
+              <Card
+                component="article"
+                aria-label={`${kpi.label}: ${kpi.value}, tendință ${kpi.trend}`}
                 sx={{
-                  height: 4,
-                  borderRadius: 2,
-                  bgcolor: '#e0e6e2',
-                  '& .MuiLinearProgress-bar': { bgcolor: kpi.progressColor, borderRadius: 2 },
+                  p: 2.5,
+                  animation: `fadeInUp 0.5s ease-out ${kpi.delay} both`,
                 }}
-              />
-            </Card>
-          </Grid>
-        ))}
+              >
+                <Stack
+                  direction="row"
+                  sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
+                >
+                  <Box
+                    aria-hidden="true"
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '10px',
+                      bgcolor: kpi.iconBg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <KpiIcon sx={{ fontSize: 20, color: kpi.iconColor }} />
+                  </Box>
+                  <Stack
+                    aria-hidden="true"
+                    direction="row"
+                    sx={{ alignItems: 'center' }}
+                    spacing={0.5}
+                  >
+                    <TrendingUp sx={{ fontSize: 14, color: '#059669' }} />
+                    <Typography sx={{ fontSize: '0.7rem', color: '#056849', fontWeight: 600 }}>
+                      {kpi.trend}
+                    </Typography>
+                  </Stack>
+                </Stack>
+                <Box aria-hidden="true">
+                  <Typography
+                    sx={{ fontWeight: 700, fontSize: '2rem', color: '#0d1f17', lineHeight: 1.2 }}
+                  >
+                    {kpi.value}
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8rem', color: 'text.secondary', mb: 1.5 }}>
+                    {kpi.label}
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={kpi.progress}
+                  aria-label={`Progres ${kpi.label}: ${kpi.progress}%`}
+                  sx={{
+                    height: 4,
+                    borderRadius: 2,
+                    bgcolor: '#e0e6e2',
+                    '& .MuiLinearProgress-bar': { bgcolor: kpi.progressColor, borderRadius: 2 },
+                  }}
+                />
+              </Card>
+            </Grid>
+          )
+        })}
       </Grid>
 
       {/* Bottom section */}
@@ -277,7 +325,10 @@ export default function DashboardPage() {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1.5}>
-                    <Box aria-hidden="true" sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }} />
+                    <Box
+                      aria-hidden="true"
+                      sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: stat.color }}
+                    />
                     <Typography sx={{ fontSize: '0.825rem', color: 'text.secondary' }}>
                       {stat.label}
                     </Typography>
