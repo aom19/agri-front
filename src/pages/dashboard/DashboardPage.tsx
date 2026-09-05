@@ -107,6 +107,9 @@ const entityLabels: Record<string, string> = {
   operation_template: 'șablon de operațiune',
   assignment: 'alocare',
   user: 'utilizator',
+  season: 'sezon',
+  crop: 'cultură',
+  field_crop: 'cultură pe teren',
 }
 
 const actionLabels: Record<string, string> = {
@@ -122,6 +125,8 @@ const actionLabels: Record<string, string> = {
   checklist: 'Actualizare checklist',
   overdue: 'Depășire timp estimat',
   status_change: 'Schimbare status',
+  complete: 'Finalizare',
+  movement: 'Mișcare de stoc',
 }
 
 const statusLabels: Record<string, string> = {
@@ -140,6 +145,8 @@ const actionColors: Record<string, string> = {
   activate: '#059669',
   enable: '#059669',
   start: '#1d4ed8',
+  complete: '#008300',
+  movement: '#1a5c38',
   update: '#1a5c38',
   checklist: '#1a5c38',
   close: '#4a5e54',

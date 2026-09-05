@@ -4,6 +4,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   SearchOutlined,
+  SwapVertOutlined,
   VisibilityOutlined,
 } from '@mui/icons-material'
 import {
@@ -38,6 +39,7 @@ import {
 import type { Stock } from '../../api/resource.api'
 import { ModalConfirmAction } from '../../components'
 import { useHasPermission } from '../../hooks/usePermissions'
+import StockMovementsDialog from './components/StockMovementsDialog'
 import { useResources } from '../../hooks/useResources'
 import { useCreateStock, useDeleteStock, useStocks, useUpdateStock } from '../../hooks/useStocks'
 import {
@@ -77,6 +79,11 @@ export default function StocksPage() {
   const [formErrors, setFormErrors] = useState<StockFormErrors>({})
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [stockToDelete, setStockToDelete] = useState<Stock | null>(null)
+  const [movementsTarget, setMovementsTarget] = useState<{
+    stock: Stock
+    unit: string
+    name: string
+  } | null>(null)
 
   const show = useNotificationStore((state) => state.show)
   const canCreate = useHasPermission('stock.create')
@@ -311,6 +318,17 @@ export default function StocksPage() {
                         />
                       </TableCell>
                       <TableCell align="right">
+                        <Tooltip title="Mișcări de stoc">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setMovementsTarget({ stock, unit, name: resource?.name ?? 'Resursă' })
+                            }
+                            aria-label="Mișcări de stoc"
+                          >
+                            <SwapVertOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Vezi detalii">
                           <IconButton
                             size="small"
@@ -439,6 +457,15 @@ export default function StocksPage() {
           )}
         </DialogActions>
       </Dialog>
+
+      <StockMovementsDialog
+        open={Boolean(movementsTarget)}
+        stock={movementsTarget?.stock ?? null}
+        unit={movementsTarget?.unit ?? ''}
+        resourceName={movementsTarget?.name ?? ''}
+        canUpdate={canUpdate}
+        onClose={() => setMovementsTarget(null)}
+      />
 
       <ModalConfirmAction
         open={deleteOpen}

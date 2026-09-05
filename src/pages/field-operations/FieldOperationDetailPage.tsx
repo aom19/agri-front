@@ -14,6 +14,7 @@ import {
   PlayArrowOutlined,
   PrecisionManufacturingOutlined,
   RouteOutlined,
+  TaskAltOutlined,
   WarningAmberOutlined,
 } from '@mui/icons-material'
 import {
@@ -47,8 +48,23 @@ import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import { FieldMapModal } from '../fields/components'
+import CompleteOperationDialog from './components/CompleteOperationDialog'
 
 const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
+
+function formatMinutes(minutes: number | null | undefined) {
+  if (minutes == null || minutes <= 0) return '-'
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (hours === 0) return `${rest} min`
+  if (rest === 0) return `${hours} h`
+  return `${hours} h ${rest} min`
+}
+
+function formatMetric(value: number | null | undefined, suffix: string, digits = 2) {
+  if (value == null) return '-'
+  return `${new Intl.NumberFormat('ro-RO', { maximumFractionDigits: digits }).format(value)} ${suffix}`
+}
 
 const statusLabels: Record<FieldOperationStatus, string> = {
   planned: 'Planificată',
@@ -287,12 +303,14 @@ export default function FieldOperationDetailPage() {
   const navigate = useNavigate()
   const { show } = useNotificationStore()
   const canWrite = useHasPermission('field_operations:write')
+  const canComplete = useHasPermission('field_operations:complete')
   const id = params.id ? Number(params.id) : null
   const { data: operation, isPending, isError } = useFieldOperation(Number.isFinite(id) ? id : null)
   const updateChecklist = useUpdateFieldOperationChecklist()
   const startOperation = useStartFieldOperation()
   const [selectedResource, setSelectedResource] = useState<ResourceDialogData | null>(null)
   const [fieldMapOpen, setFieldMapOpen] = useState(false)
+  const [completeOpen, setCompleteOpen] = useState(false)
 
   const progress = getProgress(operation)
   const tone = statusTone(operation?.status ?? 'planned')
@@ -679,6 +697,47 @@ export default function FieldOperationDetailPage() {
             </Stack>
           </Paper>
 
+          {(operation.status === 'completed' || operation.actual_start_at) && (
+            <Paper sx={{ p: 2.5, borderRadius: '24px', mb: 2.5 }}>
+              <Typography sx={{ fontWeight: 900, fontSize: '1.1rem', mb: 1.5 }}>
+                Date reale
+              </Typography>
+              <Stack spacing={1}>
+                {[
+                  { label: 'Pornită la', value: formatDate(operation.actual_start_at) },
+                  { label: 'Finalizată la', value: formatDate(operation.actual_end_at) },
+                  {
+                    label: 'Durată reală',
+                    value: formatMinutes(operation.actual_duration_minutes),
+                  },
+                  {
+                    label: 'Suprafață realizată',
+                    value: formatMetric(operation.area_completed_ha, 'ha', 2),
+                  },
+                  {
+                    label: 'Combustibil consumat',
+                    value: formatMetric(operation.fuel_used_l, 'l', 1),
+                  },
+                  { label: 'Ore de mașină', value: formatMetric(operation.machine_hours, 'h', 2) },
+                ].map((item) => (
+                  <Stack key={item.label} direction="row" sx={{ justifyContent: 'space-between' }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                      {item.label}
+                    </Typography>
+                    <Typography sx={{ fontWeight: 800, fontSize: '0.9rem' }}>
+                      {item.value}
+                    </Typography>
+                  </Stack>
+                ))}
+                {operation.completion_notes && (
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', mt: 1 }}>
+                    {operation.completion_notes}
+                  </Typography>
+                )}
+              </Stack>
+            </Paper>
+          )}
+
           <Paper
             sx={{
               p: 2.5,
@@ -773,6 +832,18 @@ export default function FieldOperationDetailPage() {
                       : 'Start lucrare'}
               </Button>
             )}
+            {canComplete &&
+              (operation.status === 'planned' || operation.status === 'in_progress') && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<TaskAltOutlined />}
+                  onClick={() => setCompleteOpen(true)}
+                  sx={{ mt: 1.5, borderRadius: '14px', py: 1.1, fontWeight: 900 }}
+                >
+                  Finalizează lucrarea
+                </Button>
+              )}
           </Paper>
         </Box>
       </Stack>
@@ -821,6 +892,12 @@ export default function FieldOperationDetailPage() {
           </Stack>
         </DialogContent>
       </Dialog>
+
+      <CompleteOperationDialog
+        open={completeOpen}
+        operation={operation}
+        onClose={() => setCompleteOpen(false)}
+      />
 
       <FieldMapModal
         open={fieldMapOpen}

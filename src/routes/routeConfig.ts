@@ -17,6 +17,8 @@ import {
   BuildOutlined,
   AccountTreeOutlined,
   HistoryOutlined,
+  AssessmentOutlined,
+  GrassOutlined,
 } from '@mui/icons-material'
 type IconComponent = FC<SvgIconProps>
 export type NavLeaf = {
@@ -43,6 +45,13 @@ export const navConfig: NavItem[] = [
     path: '/',
     icon: DashboardOutlined,
     // no permission → visible to all authenticated users
+  },
+  {
+    type: 'leaf',
+    label: 'Rapoarte',
+    path: '/reports',
+    icon: AssessmentOutlined,
+    permission: 'reports:read',
   },
   {
     type: 'leaf',
@@ -78,6 +87,13 @@ export const navConfig: NavItem[] = [
     path: '/fields',
     icon: LandscapeOutlined,
     permission: 'fields:read',
+  },
+  {
+    type: 'leaf',
+    label: 'Culturi',
+    path: '/crops',
+    icon: GrassOutlined,
+    permission: 'crops:read',
   },
   {
     type: 'leaf',

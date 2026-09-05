@@ -32,6 +32,8 @@ const RolesPage = lazy(() => import('../../pages/admin/roles/RolesPage'))
 const PermissionsPage = lazy(() => import('../../pages/admin/permissions/PermissionsPage'))
 const NotificationsPage = lazy(() => import('../../pages/notifications/NotificationsPage'))
 const AuditLogPage = lazy(() => import('../../pages/admin/audit/AuditLogPage'))
+const ReportsPage = lazy(() => import('../../pages/reports/ReportsPage'))
+const CropsPage = lazy(() => import('../../pages/crops/CropsPage'))
 
 // ─── Private Routes ─────────────────────────────────────────────────────────────
 const PrivateRoutes = () => {
@@ -42,6 +44,27 @@ const PrivateRoutes = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
+
+        <Route
+          path="/crops"
+          element={
+            <RequirePermission permission="crops:read">
+              <Suspense fallback={<PageLoader />}>
+                <CropsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <RequirePermission permission="reports:read">
+              <Suspense fallback={<PageLoader />}>
+                <ReportsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
 
         <Route
           path="/weather-map"

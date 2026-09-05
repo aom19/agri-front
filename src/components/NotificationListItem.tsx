@@ -7,6 +7,7 @@ import {
   ReportProblemOutlined,
   TimerOffOutlined,
   WarningAmberOutlined,
+  TaskAltOutlined,
 } from '@mui/icons-material'
 import type { UserNotification } from '../api/notifications.api'
 
@@ -35,6 +36,15 @@ function notificationMeta(notification: UserNotification) {
       accent: '#dc2626',
       tint: '#fef2f2',
       ring: 'rgba(220, 38, 38, 0.18)',
+    }
+  }
+  if (type === 'operation_completed') {
+    return {
+      label: 'Lucrare finalizată',
+      Icon: TaskAltOutlined,
+      accent: '#1a5c38',
+      tint: '#eef7f1',
+      ring: 'rgba(26, 92, 56, 0.18)',
     }
   }
   if (text.includes('echipament') && text.includes('activat') && !text.includes('dezactivat')) {
