@@ -5,6 +5,7 @@ import {
   NotificationsActiveOutlined,
   PlayCircleOutlined,
   ReportProblemOutlined,
+  TimerOffOutlined,
   WarningAmberOutlined,
 } from '@mui/icons-material'
 import type { UserNotification } from '../api/notifications.api'
@@ -27,6 +28,15 @@ function notificationMeta(notification: UserNotification) {
   const message = (notification.notification.message ?? '').toLocaleLowerCase('ro-RO')
   const text = `${title} ${message}`
 
+  if (type === 'operation_overdue') {
+    return {
+      label: 'Timp estimat depășit',
+      Icon: TimerOffOutlined,
+      accent: '#dc2626',
+      tint: '#fef2f2',
+      ring: 'rgba(220, 38, 38, 0.18)',
+    }
+  }
   if (text.includes('echipament') && text.includes('activat') && !text.includes('dezactivat')) {
     return {
       label: 'Activare echipament',

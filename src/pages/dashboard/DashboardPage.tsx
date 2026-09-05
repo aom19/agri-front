@@ -18,12 +18,20 @@ import {
   CheckCircleOutlined,
   PeopleOutlined,
   AssignmentOutlined,
+  TrendingDown,
+  TrendingFlat,
   TrendingUp,
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import { useProfile } from '../../hooks/useProfile'
-import { useDashboardCards, type DashboardCardKey } from '../../hooks/useDashboardCards'
+import {
+  useDashboardActivity,
+  useDashboardCards,
+  useDashboardQuickStats,
+  type DashboardCardKey,
+} from '../../hooks/useDashboardCards'
+import type { DashboardActivityItem, DashboardQuickStats } from '../../api/dashboard.api'
 import OperatorDashboard from './OperatorDashboard.tsx'
 
 const kpiConfig = [
@@ -73,49 +81,185 @@ const kpiConfig = [
   delay: string
 }>
 
+const NEUTRAL_COLOR = '#6b7f75'
+
 function formatTrend(value: number) {
   return value > 0 ? `+${value}` : String(value)
 }
 
-const recentActivity = [
-  { text: 'Tractorul John Deere 8R alocat lui Ion Popescu', time: 'acum 5 min', color: '#1a5c38' },
-  { text: 'Combina a finalizat câmpul B-12', time: 'acum 23 min', color: '#059669' },
-  { text: 'Operator nou Maria Ionescu înregistrat', time: 'acum 1h', color: '#1d4ed8' },
-  { text: 'Mentenanță sistem irigații programată', time: 'acum 2h', color: '#b45309' },
-  { text: 'Raport combustibil depus pentru secțiunea A', time: 'acum 3h', color: '#4a5e54' },
-]
+function trendVisual(value: number) {
+  if (value > 0) return { icon: TrendingUp, color: '#059669', textColor: '#056849' }
+  if (value < 0) return { icon: TrendingDown, color: '#dc2626', textColor: '#b91c1c' }
+  return { icon: TrendingFlat, color: NEUTRAL_COLOR, textColor: '#4a5e54' }
+}
 
-const quickStats = [
-  { label: 'Câmpuri active', value: '12 / 18', color: '#059669' },
-  { label: 'Eficiență combustibil', value: '87%', color: '#1a5c38' },
-  { label: 'Sarcini întârziate', value: '2', color: '#dc2626' },
-  { label: 'Mentenanță necesară', value: '4 unități', color: '#b45309' },
-]
+// Etichete în limba română pentru intrările din jurnalul de audit afișate în „Activitate recentă”.
+const entityLabels: Record<string, string> = {
+  machine: 'mașină',
+  implement: 'echipament',
+  field: 'teren',
+  field_operation: 'lucrare',
+  stock: 'stoc',
+  resource: 'resursă',
+  resource_type: 'tip de resursă',
+  operator: 'operator',
+  operation_type: 'tip de operațiune',
+  operation_template: 'șablon de operațiune',
+  assignment: 'alocare',
+  user: 'utilizator',
+}
 
-export default function DashboardPage() {
+const actionLabels: Record<string, string> = {
+  create: 'Creare',
+  update: 'Actualizare',
+  delete: 'Ștergere',
+  activate: 'Activare',
+  deactivate: 'Dezactivare',
+  enable: 'Activare cont',
+  disable: 'Dezactivare cont',
+  start: 'Pornire',
+  close: 'Închidere',
+  checklist: 'Actualizare checklist',
+  overdue: 'Depășire timp estimat',
+  status_change: 'Schimbare status',
+}
+
+const statusLabels: Record<string, string> = {
+  active: 'Activ',
+  inactive: 'Inactiv',
+  maintenance: 'Mentenanță',
+  planned: 'Planificat',
+  in_progress: 'În lucru',
+  completed: 'Finalizat',
+  cancelled: 'Anulat',
+  canceled: 'Anulat',
+}
+
+const actionColors: Record<string, string> = {
+  create: '#059669',
+  activate: '#059669',
+  enable: '#059669',
+  start: '#1d4ed8',
+  update: '#1a5c38',
+  checklist: '#1a5c38',
+  close: '#4a5e54',
+  deactivate: '#b45309',
+  disable: '#b45309',
+  overdue: '#dc2626',
+  delete: '#dc2626',
+}
+
+function cleanText(value: string | null | undefined) {
+  return value?.replace(/\s+/g, ' ').trim() ?? ''
+}
+
+function activityColor(action: string) {
+  return actionColors[action] ?? '#4a5e54'
+}
+
+function activityText(item: DashboardActivityItem) {
+  const action = actionLabels[item.action] ?? item.action
+  const entity = entityLabels[item.entity_type] ?? item.entity_type
+  const name = cleanText(item.entity_name) || `#${item.entity_id}`
+  const base = `${action} ${entity} „${name}”`
+  const oldStatus = item.old_status ? (statusLabels[item.old_status] ?? item.old_status) : null
+  const status = item.status ? (statusLabels[item.status] ?? item.status) : null
+  if (oldStatus && status && oldStatus !== status) return `${base} (${oldStatus} → ${status})`
+  return base
+}
+
+function activityActor(item: DashboardActivityItem) {
+  return cleanText(item.actor_name) || 'Sistem'
+}
+
+const relativeTimeFormat = new Intl.RelativeTimeFormat('ro-RO', { numeric: 'auto' })
+const absoluteDateFormat = new Intl.DateTimeFormat('ro-RO', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+function formatRelativeTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000)
+  const elapsed = Math.abs(diffSeconds)
+  if (elapsed < 60) return 'chiar acum'
+  if (elapsed < 3600) return relativeTimeFormat.format(Math.round(diffSeconds / 60), 'minute')
+  if (elapsed < 86400) return relativeTimeFormat.format(Math.round(diffSeconds / 3600), 'hour')
+  if (elapsed < 7 * 86400) return relativeTimeFormat.format(Math.round(diffSeconds / 86400), 'day')
+  return absoluteDateFormat.format(date)
+}
+
+function buildQuickStats(stats: DashboardQuickStats | undefined, isLoading: boolean) {
+  const show = (text: string) => (isLoading ? '...' : text)
+  const maintenance = (stats?.maintenance_machines ?? 0) + (stats?.maintenance_implements ?? 0)
+  const overdue = stats?.overdue_operations ?? 0
+  const lowStocks = stats?.low_stocks ?? 0
+
+  return [
+    {
+      label: 'Terenuri active',
+      value: show(`${stats?.active_fields ?? 0} / ${stats?.total_fields ?? 0}`),
+      color: '#059669',
+    },
+    {
+      label: 'Lucrări în desfășurare',
+      value: show(String(stats?.in_progress_operations ?? 0)),
+      color: '#1a5c38',
+    },
+    {
+      label: 'Lucrări întârziate',
+      value: show(String(overdue)),
+      color: overdue > 0 ? '#dc2626' : NEUTRAL_COLOR,
+    },
+    {
+      label: 'Mentenanță necesară',
+      value: show(`${maintenance} ${maintenance === 1 ? 'unitate' : 'unități'}`),
+      color: maintenance > 0 ? '#b45309' : NEUTRAL_COLOR,
+    },
+    {
+      label: 'Stocuri sub minim',
+      value: show(`${lowStocks} / ${stats?.total_stocks ?? 0}`),
+      color: lowStocks > 0 ? '#dc2626' : NEUTRAL_COLOR,
+    },
+  ]
+}
+
+type ManagerDashboardProps = {
+  displayName: string
+  greeting: string
+}
+
+function ManagerDashboard({ displayName, greeting }: ManagerDashboardProps) {
   const navigate = useNavigate()
-  const user = useAuthStore((s) => s.user)
-  const { data: profile } = useProfile()
-  const { data: cards, isError, isLoading } = useDashboardCards()
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara'
-  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User'
-  const role = profile?.role_code ?? profile?.role ?? user?.role
-
-  if (role?.toLowerCase() === 'operator') {
-    return <OperatorDashboard displayName={displayName} greeting={greeting} />
-  }
+  const { data: cards, isError: isCardsError, isLoading: isCardsLoading } = useDashboardCards()
+  const {
+    data: quickStatsData,
+    isError: isQuickStatsError,
+    isLoading: isQuickStatsLoading,
+  } = useDashboardQuickStats()
+  const {
+    data: activity,
+    isError: isActivityError,
+    isLoading: isActivityLoading,
+  } = useDashboardActivity(5)
 
   const cardsByKey = new Map(cards?.map((card) => [card.key, card]))
   const dashboardKpis = kpiConfig.map((config) => {
     const card = cardsByKey.get(config.key)
+    const trendValue = card?.trend ?? 0
 
     return {
       ...config,
       label: card?.label ?? config.label,
-      value: isLoading ? '...' : String(card?.value ?? 0),
+      value: isCardsLoading ? '...' : String(card?.value ?? 0),
       progress: card?.progress ?? 0,
-      trend: isLoading ? '...' : formatTrend(card?.trend ?? 0),
+      trend: isCardsLoading ? '...' : formatTrend(trendValue),
+      trendVisual: trendVisual(isCardsLoading ? 0 : trendValue),
     }
   })
   const activeAssignmentsText =
@@ -124,6 +268,9 @@ export default function DashboardPage() {
     dashboardKpis.find((kpi) => kpi.key === 'active_machines')?.value ?? '0'
   const totalOperatorsText =
     dashboardKpis.find((kpi) => kpi.key === 'total_operators')?.value ?? '0'
+
+  const quickStats = buildQuickStats(quickStatsData, isQuickStatsLoading)
+  const activityItems = activity ?? []
 
   return (
     <Box
@@ -200,14 +347,15 @@ export default function DashboardPage() {
       </Card>
 
       {/* KPI Cards */}
-      {isError && (
+      {isCardsError && (
         <Typography sx={{ color: '#b45309', fontSize: '0.8rem', mb: 1.5 }}>
-          Nu am putut încărca statisticile din baza de date. Sunt afișate valori temporare.
+          Nu am putut încărca statisticile din baza de date. Reîncearcă mai târziu.
         </Typography>
       )}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         {dashboardKpis.map((kpi) => {
           const KpiIcon = kpi.icon
+          const TrendIcon = kpi.trendVisual.icon
 
           return (
             <Grid key={kpi.key} size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -243,8 +391,10 @@ export default function DashboardPage() {
                     sx={{ alignItems: 'center' }}
                     spacing={0.5}
                   >
-                    <TrendingUp sx={{ fontSize: 14, color: '#059669' }} />
-                    <Typography sx={{ fontSize: '0.7rem', color: '#056849', fontWeight: 600 }}>
+                    <TrendIcon sx={{ fontSize: 14, color: kpi.trendVisual.color }} />
+                    <Typography
+                      sx={{ fontSize: '0.7rem', color: kpi.trendVisual.textColor, fontWeight: 600 }}
+                    >
                       {kpi.trend}
                     </Typography>
                   </Stack>
@@ -283,32 +433,50 @@ export default function DashboardPage() {
             <Typography sx={{ fontWeight: 600, fontSize: '1rem', color: '#0d1f17', mb: 2 }}>
               Activitate recentă
             </Typography>
-            <List disablePadding>
-              {recentActivity.map((item, i) => (
-                <ListItem
-                  key={i}
-                  disablePadding
-                  sx={{
-                    py: 1,
-                    borderBottom: i < recentActivity.length - 1 ? '1px solid #e0e6e2' : 'none',
-                  }}
-                >
-                  <ListItemAvatar aria-hidden="true">
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: `${item.color}18` }}>
-                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: item.color }} />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={item.text}
-                    secondary={item.time}
-                    slotProps={{
-                      primary: { sx: { fontSize: '0.825rem', color: '#0d1f17' } },
-                      secondary: { sx: { fontSize: '0.7rem', color: 'text.secondary' } },
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            {isActivityLoading ? (
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.825rem', py: 1 }}>
+                Se încarcă activitatea...
+              </Typography>
+            ) : isActivityError ? (
+              <Typography sx={{ color: '#b45309', fontSize: '0.825rem', py: 1 }}>
+                Nu am putut încărca activitatea recentă.
+              </Typography>
+            ) : activityItems.length === 0 ? (
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.825rem', py: 1 }}>
+                Nu există activitate înregistrată încă.
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {activityItems.map((item, i) => {
+                  const color = activityColor(item.action)
+
+                  return (
+                    <ListItem
+                      key={item.id}
+                      disablePadding
+                      sx={{
+                        py: 1,
+                        borderBottom: i < activityItems.length - 1 ? '1px solid #e0e6e2' : 'none',
+                      }}
+                    >
+                      <ListItemAvatar aria-hidden="true">
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: `${color}18` }}>
+                          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={activityText(item)}
+                        secondary={`${formatRelativeTime(item.created_at)} · ${activityActor(item)}`}
+                        slotProps={{
+                          primary: { sx: { fontSize: '0.825rem', color: '#0d1f17' } },
+                          secondary: { sx: { fontSize: '0.7rem', color: 'text.secondary' } },
+                        }}
+                      />
+                    </ListItem>
+                  )
+                })}
+              </List>
+            )}
           </Card>
         </Grid>
 
@@ -317,6 +485,11 @@ export default function DashboardPage() {
             <Typography sx={{ fontWeight: 600, fontSize: '1rem', color: '#0d1f17', mb: 2 }}>
               Statistici rapide
             </Typography>
+            {isQuickStatsError && (
+              <Typography sx={{ color: '#b45309', fontSize: '0.8rem', mb: 1.5 }}>
+                Nu am putut încărca statisticile rapide.
+              </Typography>
+            )}
             <Stack spacing={2}>
               {quickStats.map((stat) => (
                 <Stack
@@ -344,4 +517,19 @@ export default function DashboardPage() {
       </Grid>
     </Box>
   )
+}
+
+export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user)
+  const { data: profile } = useProfile()
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Bună dimineața' : hour < 18 ? 'Bună ziua' : 'Bună seara'
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User'
+  const role = profile?.role_code ?? profile?.role ?? user?.role
+
+  if (role?.toLowerCase() === 'operator') {
+    return <OperatorDashboard displayName={displayName} greeting={greeting} />
+  }
+
+  return <ManagerDashboard displayName={displayName} greeting={greeting} />
 }

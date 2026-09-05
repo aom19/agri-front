@@ -1,4 +1,5 @@
-import { VisibilityOutlined, WorkOutlineOutlined } from '@mui/icons-material'
+import { useEffect, useState } from 'react'
+import { TimerOffOutlined, VisibilityOutlined, WorkOutlineOutlined } from '@mui/icons-material'
 import {
   Box,
   Card,
@@ -46,6 +47,18 @@ function formatDate(value: string | null | undefined) {
   }).format(date)
 }
 
+// Afișează o durată doar în ore și minute (fără zile), ex: "26 h 30 min".
+function formatHoursAndMinutes(durationMs: number) {
+  const totalMinutes = Math.round(durationMs / 60000)
+  if (totalMinutes <= 0) return '-'
+
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours === 0) return `${minutes} min`
+  if (minutes === 0) return `${hours} h`
+  return `${hours} h ${minutes} min`
+}
+
 function formatEstimatedWorkTime(
   startValue: string | null | undefined,
   endValue: string | null | undefined
@@ -56,25 +69,32 @@ function formatEstimatedWorkTime(
   const endDate = new Date(endValue)
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return '-'
 
-  const durationMinutes = Math.round((endDate.getTime() - startDate.getTime()) / 60000)
-  if (durationMinutes <= 0) return '-'
+  return formatHoursAndMinutes(endDate.getTime() - startDate.getTime())
+}
 
-  const days = Math.floor(durationMinutes / 1440)
-  const remainingMinutesAfterDays = durationMinutes % 1440
-  const hours = Math.floor(remainingMinutesAfterDays / 60)
-  const minutes = remainingMinutesAfterDays % 60
+// Cu cât a fost depășit timpul estimat (ms) pentru o operațiune în lucru; 0 dacă nu este depășit.
+function getOverdueMs(operation: FieldOperation, now: number) {
+  if (operation.status !== 'in_progress' || !operation.planned_end_at) return 0
+  const end = new Date(operation.planned_end_at).getTime()
+  if (Number.isNaN(end)) return 0
+  return Math.max(0, now - end)
+}
 
-  const parts: string[] = []
-  if (days > 0) parts.push(`${days} ${days === 1 ? 'zi' : 'zile'}`)
-  if (hours > 0) parts.push(`${hours} h`)
-  if (minutes > 0) parts.push(`${minutes} min`)
+function useNow(intervalMs = 60_000) {
+  const [now, setNow] = useState(() => Date.now())
 
-  return parts.join(' ')
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), intervalMs)
+    return () => window.clearInterval(timer)
+  }, [intervalMs])
+
+  return now
 }
 
 export default function AssignmentsPage() {
   const navigate = useNavigate()
   const { data: operations, isPending } = useFieldOperations()
+  const now = useNow()
 
   const openView = (operation: FieldOperation) => {
     navigate(`/field-operations/${operation.id}`)
@@ -130,39 +150,63 @@ export default function AssignmentsPage() {
               </TableHead>
 
               <TableBody>
-                {(operations ?? []).map((operation) => (
-                  <TableRow key={operation.id} hover>
-                    <TableCell>{operation.field_name}</TableCell>
-                    <TableCell>{operation.operator_name ?? 'Operator neatribuit'}</TableCell>
-                    <TableCell>{operation.machine_name ?? 'Mașină neatribuită'}</TableCell>
-                    <TableCell>{operation.implement_name ?? 'Echipament neatribuit'}</TableCell>
-                    <TableCell>{formatDate(operation.planned_start_at)}</TableCell>
-                    <TableCell>
-                      {formatEstimatedWorkTime(
-                        operation.planned_start_at,
-                        operation.planned_end_at
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={statusLabels[operation.status]}
-                        size="small"
-                        color={statusColor(operation.status)}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Vezi operațiunea">
-                        <IconButton
+                {(operations ?? []).map((operation) => {
+                  const overdueMs = getOverdueMs(operation, now)
+                  const overdueLabel =
+                    overdueMs >= 60_000
+                      ? `Depășit cu ${formatHoursAndMinutes(overdueMs)}`
+                      : 'Depășit'
+
+                  return (
+                    <TableRow key={operation.id} hover>
+                      <TableCell>{operation.field_name}</TableCell>
+                      <TableCell>{operation.operator_name ?? 'Operator neatribuit'}</TableCell>
+                      <TableCell>{operation.machine_name ?? 'Mașină neatribuită'}</TableCell>
+                      <TableCell>{operation.implement_name ?? 'Echipament neatribuit'}</TableCell>
+                      <TableCell>{formatDate(operation.planned_start_at)}</TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                          <span>
+                            {formatEstimatedWorkTime(
+                              operation.planned_start_at,
+                              operation.planned_end_at
+                            )}
+                          </span>
+                          {overdueMs > 0 && (
+                            <Tooltip title="Timpul estimat de lucru a fost depășit">
+                              <Chip
+                                icon={<TimerOffOutlined />}
+                                label={overdueLabel}
+                                size="small"
+                                color="error"
+                                variant="outlined"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={statusLabels[operation.status]}
                           size="small"
-                          onClick={() => openView(operation)}
-                          aria-label="Vezi operațiunea"
-                        >
-                          <VisibilityOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          color={statusColor(operation.status)}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Vezi operațiunea">
+                          <IconButton
+                            size="small"
+                            onClick={() => openView(operation)}
+                            aria-label="Vezi operațiunea"
+                          >
+                            <VisibilityOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
 
                 {(operations ?? []).length === 0 && (
                   <TableRow>
