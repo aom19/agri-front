@@ -10,6 +10,7 @@ import type { Machine } from '../../../api/machine.api'
 import type { Implement } from '../../../api/implement.api'
 import type { Operator } from '../../../api/operator.api'
 import type { OperationTemplate, OperationType } from '../../../api/operation.api'
+import type { FieldCrop } from '../../../api/crops.api'
 import {
   FIELD_OPERATION_STATUSES,
   type FieldOperationStatus,
@@ -30,6 +31,7 @@ type Props = {
   machines: Machine[]
   implementItems: Implement[]
   operators: Operator[]
+  fieldCrops?: FieldCrop[]
   onChange: (next: FieldOperationFormState) => void
 }
 
@@ -50,6 +52,7 @@ export default function FieldOperationForm({
   machines,
   implementItems,
   operators,
+  fieldCrops = [],
   onChange,
 }: Props) {
   const readOnly = mode === 'view'
@@ -62,10 +65,44 @@ export default function FieldOperationForm({
     [operationTemplates, state.operation_template_id]
   )
 
-  const filteredTemplates = useMemo(() => {
+  // Cultura de pe terenul ales, în sezonul în care cade data planificată (sau azi).
+  const detectedCrop = useMemo(() => {
+    if (!state.field_id) return null
+    const reference = state.planned_start_at
+      ? state.planned_start_at.slice(0, 10)
+      : new Date().toISOString().slice(0, 10)
+    return (
+      fieldCrops.find(
+        (fc) =>
+          fc.field_id === state.field_id &&
+          fc.season_start <= reference &&
+          fc.season_end >= reference
+      ) ?? null
+    )
+  }, [fieldCrops, state.field_id, state.planned_start_at])
+  const templateOptions = useMemo(() => {
     if (!state.operation_type_id) return []
-    return operationTemplates.filter((t) => String(t.operation_type_id) === state.operation_type_id)
-  }, [operationTemplates, state.operation_type_id])
+    const forType = operationTemplates.filter(
+      (t) => String(t.operation_type_id) === state.operation_type_id
+    )
+    const rank = (t: OperationTemplate) => {
+      if (!t.crop_id) return 1
+      if (detectedCrop && t.crop_id === detectedCrop.crop_id) return 0
+      return 2
+    }
+    return forType
+      .map((template) => ({
+        template,
+        rank: rank(template),
+        tag:
+          rank(template) === 0
+            ? `recomandat pentru ${template.crop_name ?? 'cultura curentă'}`
+            : rank(template) === 2
+              ? `pentru ${template.crop_name ?? 'altă cultură'}`
+              : '',
+      }))
+      .sort((a, b) => a.rank - b.rank || a.template.name.localeCompare(b.template.name, 'ro'))
+  }, [operationTemplates, state.operation_type_id, detectedCrop])
 
   const filteredMachines = useMemo(() => {
     if (!selectedTemplate?.machine_types || selectedTemplate.machine_types.length === 0) {
@@ -203,9 +240,22 @@ export default function FieldOperationForm({
             <MenuItem value="">
               <em>Fără template (manual)</em>
             </MenuItem>
-            {filteredTemplates.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.name}
+            {templateOptions.map(({ template, tag, rank }) => (
+              <MenuItem key={template.id} value={String(template.id)}>
+                {template.name}
+                {tag ? (
+                  <Typography
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      fontSize: '0.72rem',
+                      color: rank === 0 ? '#1a5c38' : 'text.secondary',
+                      fontWeight: rank === 0 ? 700 : 400,
+                    }}
+                  >
+                    · {tag}
+                  </Typography>
+                ) : null}
               </MenuItem>
             ))}
           </TextField>
@@ -225,6 +275,14 @@ export default function FieldOperationForm({
             ))}
           </TextField>
         </Stack>
+
+        {state.field_id ? (
+          <Typography variant="caption" sx={{ color: detectedCrop ? '#1a5c38' : 'text.secondary' }}>
+            {detectedCrop
+              ? `Cultură pe teren: ${detectedCrop.crop_name} (${detectedCrop.season_name}). Operațiunea va fi legată automat de această cultură.`
+              : 'Terenul nu are o cultură atribuită în sezonul datei planificate; operațiunea nu va fi legată de o cultură.'}
+          </Typography>
+        ) : null}
 
         {selectedTemplate &&
         (selectedTemplate.machine_types?.length || selectedTemplate.implement_types?.length) ? (

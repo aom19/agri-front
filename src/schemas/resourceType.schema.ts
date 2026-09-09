@@ -6,6 +6,7 @@ export const resourceCategoryValues = [
   'seed',
   'pesticide',
   'water',
+  'harvest',
   'other',
 ] as const
 
@@ -18,6 +19,7 @@ export const resourceCategoryOptions: ReadonlyArray<{
   { label: 'Semințe', value: 'seed' },
   { label: 'Pesticid', value: 'pesticide' },
   { label: 'Apă', value: 'water' },
+  { label: 'Recoltă', value: 'harvest' },
   { label: 'Alte resurse', value: 'other' },
 ]
 

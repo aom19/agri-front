@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AddOutlined, DeleteOutlined, EditOutlined } from '@mui/icons-material'
+import { AddOutlined, DeleteOutlined, EditOutlined, Inventory2Outlined } from '@mui/icons-material'
 import {
   Alert,
   Box,
@@ -43,6 +43,7 @@ import {
   useDeleteFieldCrop,
   useDeleteSeason,
   useFieldCrops,
+  useRecordHarvest,
   useSeasons,
   useUpdateCrop,
   useUpdateFieldCrop,
@@ -581,6 +582,28 @@ export default function CropsPage() {
   const deleteSeason = useDeleteSeason()
   const deleteCrop = useDeleteCrop()
   const deleteFieldCrop = useDeleteFieldCrop()
+  const recordHarvest = useRecordHarvest()
+
+  const handleHarvest = (item: FieldCrop) => {
+    recordHarvest.mutate(item.id, {
+      onSuccess: (result) => {
+        if (!result.movement) {
+          show('Recolta este deja înregistrată în stoc la această cantitate.', 'info')
+          return
+        }
+        const delta = new Intl.NumberFormat('ro-RO', {
+          maximumFractionDigits: 3,
+          signDisplay: 'exceptZero',
+        }).format(result.movement.quantity_delta)
+        show(
+          `Recolta a fost înregistrată în stoc (${delta} ${item.yield_unit}). Stoc curent: ${formatNumber(result.movement.resulting_quantity, 3)} ${item.yield_unit}.`,
+          'success'
+        )
+      },
+      onError: (error) =>
+        show(getApiErrorMessage(error, 'Nu am putut înregistra recolta.'), 'error'),
+    })
+  }
 
   const [seasonDialog, setSeasonDialog] = useState<{ open: boolean; season: Season | null }>({
     open: false,
@@ -769,6 +792,7 @@ export default function CropsPage() {
                   <TableCell align="right">Producție</TableCell>
                   <TableCell align="right">Randament</TableCell>
                   <TableCell align="right">Estimat</TableCell>
+                  <TableCell>Recoltă în stoc</TableCell>
                   {canWrite && <TableCell align="right">Acțiuni</TableCell>}
                 </TableRow>
               </TableHead>
@@ -795,8 +819,49 @@ export default function CropsPage() {
                         ? '-'
                         : `${formatNumber(item.expected_yield_per_ha, 2)} ${item.yield_unit}/ha`}
                     </TableCell>
+                    <TableCell>
+                      {item.harvest_recorded_quantity != null ? (
+                        <Chip
+                          size="small"
+                          color={
+                            item.production_total != null &&
+                            item.production_total !== item.harvest_recorded_quantity
+                              ? 'warning'
+                              : 'success'
+                          }
+                          label={`${formatNumber(item.harvest_recorded_quantity, 2)} ${item.yield_unit} în stoc`}
+                        />
+                      ) : (
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                          neînregistrată
+                        </Typography>
+                      )}
+                    </TableCell>
                     {canWrite && (
                       <TableCell align="right">
+                        <Tooltip
+                          title={
+                            item.production_total && item.production_total > 0
+                              ? 'Înregistrează recolta în stoc'
+                              : 'Introdu mai întâi producția obținută'
+                          }
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              disabled={
+                                !item.production_total ||
+                                item.production_total <= 0 ||
+                                recordHarvest.isPending
+                              }
+                              onClick={() => handleHarvest(item)}
+                              aria-label="Înregistrează recolta în stoc"
+                            >
+                              <Inventory2Outlined fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
                         <Tooltip title="Editează">
                           <IconButton
                             size="small"

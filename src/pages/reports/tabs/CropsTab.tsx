@@ -124,8 +124,18 @@ const itemColumns: ReportColumn<ReportFieldCropRow>[] = [
     csv: (row) => row.expected_yield_per_ha,
   },
   {
+    key: 'harvest',
+    label: 'Recoltă în stoc',
+    align: 'right',
+    render: (row) =>
+      row.harvest_recorded_quantity == null
+        ? '-'
+        : `${formatDecimal(row.harvest_recorded_quantity, 2)} ${row.yield_unit}`,
+    csv: (row) => row.harvest_recorded_quantity,
+  },
+  {
     key: 'ops',
-    label: 'Lucrări în sezon',
+    label: 'Lucrări legate',
     align: 'right',
     render: (row) => formatInt(row.operations_count),
   },

@@ -127,6 +127,7 @@ const actionLabels: Record<string, string> = {
   status_change: 'Schimbare status',
   complete: 'Finalizare',
   movement: 'Mișcare de stoc',
+  harvest: 'Recoltă în stoc',
 }
 
 const statusLabels: Record<string, string> = {

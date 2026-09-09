@@ -50,6 +50,7 @@ import {
   useUpdateOperationTemplate,
 } from '../../hooks/useOperations'
 import { useResources } from '../../hooks/useResources'
+import { useCrops } from '../../hooks/useCrops'
 import {
   operationTemplateFormSchema,
   type OperationTemplateFormErrors,
@@ -87,6 +88,7 @@ const initialFormState: OperationTemplateFormValues = {
   operationTypeId: '',
   unit: 'ha',
   description: '',
+  cropId: '',
 }
 
 type ResourceRow = {
@@ -117,6 +119,7 @@ export default function OperationTemplatesPage() {
   const { data: templates, isPending: templatesLoading } = useOperationTemplates()
   const { data: operationTypes, isPending: typesLoading } = useOperationTypes()
   const { data: resources } = useResources()
+  const { data: crops } = useCrops()
   const { data: compatibilities } = useImplementCompatibilities()
 
   const createMutation = useCreateOperationTemplate()
@@ -181,6 +184,7 @@ export default function OperationTemplatesPage() {
       operationTypeId: String(item.operation_type_id),
       unit: item.unit,
       description: item.description,
+      cropId: item.crop_id ? String(item.crop_id) : '',
     })
     setResourceRows(
       (item.resources ?? []).map((r) => ({
@@ -274,6 +278,7 @@ export default function OperationTemplatesPage() {
       name: validation.data.name,
       description: validation.data.description,
       unit: validation.data.unit,
+      crop_id: validation.data.cropId ? Number(validation.data.cropId) : null,
       resources: resPayload,
       machine_types: machineTypes,
       implement_types: implementTypes,
@@ -371,6 +376,9 @@ export default function OperationTemplatesPage() {
                     </Tooltip>
                   </TableCell>
                   <TableCell>
+                    <Typography sx={{ fontWeight: 700 }}>Cultură</Typography>
+                  </TableCell>
+                  <TableCell>
                     <Typography sx={{ fontWeight: 700 }}>Resurse consumate</Typography>
                   </TableCell>
                   <TableCell align="right">
@@ -389,8 +397,21 @@ export default function OperationTemplatesPage() {
                     </TableCell>
                     <TableCell>{item.unit}</TableCell>
                     <TableCell>
+                      {item.crop_name ? (
+                        <Chip
+                          size="small"
+                          label={item.crop_name}
+                          sx={{ bgcolor: '#e8f5ee', color: '#1a5c38', fontWeight: 600 }}
+                        />
+                      ) : (
+                        <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                          Generic
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       {item.resources && item.resources.length > 0 ? (
-                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                        <Stack direction="row" spacing={0.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
                           {item.resources.slice(0, 3).map((r) => (
                             <Chip
                               key={r.id}
@@ -436,7 +457,7 @@ export default function OperationTemplatesPage() {
                 ))}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
                         Nu există template-uri de operațiuni.
                       </Box>
@@ -506,6 +527,25 @@ export default function OperationTemplatesPage() {
                 fullWidth
               />
             </Stack>
+
+            <TextField
+              select
+              label="Cultură recomandată (opțional)"
+              value={formState.cropId}
+              onChange={(e) => setFormState((p) => ({ ...p, cropId: e.target.value }))}
+              disabled={submitting || isView}
+              helperText="Template-ul apare primul la operațiunile de pe terenurile cu această cultură."
+              fullWidth
+            >
+              <MenuItem value="">
+                <em>Generic (orice cultură)</em>
+              </MenuItem>
+              {(crops ?? []).map((crop) => (
+                <MenuItem key={crop.id} value={String(crop.id)}>
+                  {crop.name}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <TextField
               label="Descriere"

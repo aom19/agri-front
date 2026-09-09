@@ -9,6 +9,7 @@ import {
   EditOutlined,
   EngineeringOutlined,
   EventOutlined,
+  GrassOutlined,
   Inventory2Outlined,
   NotesOutlined,
   PlayArrowOutlined,
@@ -522,6 +523,18 @@ export default function FieldOperationDetailPage() {
               value={operation.field_name}
               onClick={() => setFieldMapOpen(true)}
             />
+            {operation.crop_name && (
+              <InfoTile
+                icon={GrassOutlined}
+                label="Cultură"
+                value={
+                  operation.season_name
+                    ? `${operation.crop_name} · ${operation.season_name}`
+                    : operation.crop_name
+                }
+                onClick={() => navigate('/crops')}
+              />
+            )}
             <InfoTile
               icon={BuildOutlined}
               label="Lucrare"

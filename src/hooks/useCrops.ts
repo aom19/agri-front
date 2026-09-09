@@ -129,3 +129,18 @@ export function useDeleteFieldCrop() {
     onSuccess: invalidate,
   })
 }
+
+export function useRecordHarvest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => cropsApi.recordHarvest(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: FIELD_CROPS_KEY })
+      queryClient.invalidateQueries({ queryKey: CROPS_KEY })
+      queryClient.invalidateQueries({ queryKey: ['stocks'] })
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
+      queryClient.invalidateQueries({ queryKey: ['resources'] })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+    },
+  })
+}

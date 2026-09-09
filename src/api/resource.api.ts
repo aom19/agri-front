@@ -1,6 +1,6 @@
 import { api } from './axios'
 
-export type ResourceCategory = 'fuel' | 'fertilizer' | 'seed' | 'pesticide' | 'water' | 'other'
+export type ResourceCategory = 'fuel' | 'fertilizer' | 'seed' | 'pesticide' | 'water' | 'harvest' | 'other'
 
 export type ResourceType = {
   id: number

@@ -26,6 +26,7 @@ export type Crop = {
   category: string
   yield_unit: string
   notes: string
+  harvest_resource_id?: number | null
   created_at: string
   updated_at: string
 }
@@ -45,6 +46,8 @@ export type FieldCrop = {
   field_area_ha?: number | null
   season_id: number
   season_name: string
+  season_start: string
+  season_end: string
   crop_id: number
   crop_name: string
   yield_unit: string
@@ -55,8 +58,20 @@ export type FieldCrop = {
   expected_yield_per_ha?: number | null
   yield_per_ha?: number | null
   notes: string
+  harvest_recorded_quantity?: number | null
+  harvest_recorded_at?: string | null
   created_at: string
   updated_at: string
+}
+
+export type HarvestResult = {
+  field_crop: FieldCrop
+  movement?: {
+    id: number
+    movement_type: 'in' | 'out' | 'adjustment'
+    quantity_delta: number
+    resulting_quantity: number
+  } | null
 }
 
 export type FieldCropPayload = {
@@ -104,4 +119,6 @@ export const cropsApi = {
   updateFieldCrop: (id: number, payload: FieldCropPayload) =>
     api.patch<FieldCrop>(`/field-crops/${id}`, payload).then((r) => r.data),
   deleteFieldCrop: (id: number) => api.delete(`/field-crops/${id}`).then((r) => r.data),
+  recordHarvest: (id: number) =>
+    api.post<HarvestResult>(`/field-crops/${id}/harvest`).then((r) => r.data),
 }

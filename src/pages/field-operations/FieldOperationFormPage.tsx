@@ -17,6 +17,7 @@ import { useMachines } from '../../hooks/useMachines'
 import { useImplements } from '../../hooks/useImplements'
 import { useOperators } from '../../hooks/useOperators'
 import { useOperationTemplates, useOperationTypes } from '../../hooks/useOperations'
+import { useFieldCrops } from '../../hooks/useCrops'
 import {
   useCreateFieldOperation,
   useFieldOperation,
@@ -58,6 +59,7 @@ export default function FieldOperationFormPage({ mode }: Props) {
   const { data: operators } = useOperators()
   const { data: operationTypes } = useOperationTypes()
   const { data: templates } = useOperationTemplates()
+  const { data: fieldCrops } = useFieldCrops()
 
   const createMutation = useCreateFieldOperation()
   const updateMutation = useUpdateFieldOperation()
@@ -137,6 +139,7 @@ export default function FieldOperationFormPage({ mode }: Props) {
               machines={machines ?? []}
               implementItems={implementsData ?? []}
               operators={operators ?? []}
+              fieldCrops={fieldCrops ?? []}
               onChange={setFormState}
             />
 

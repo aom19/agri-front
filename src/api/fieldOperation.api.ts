@@ -39,6 +39,9 @@ export type FieldOperation = {
   notes: string
   status: FieldOperationStatus
   checklist: FieldOperationChecklist
+  field_crop_id?: number | null
+  crop_name?: string | null
+  season_name?: string | null
   actual_start_at?: string | null
   actual_end_at?: string | null
   actual_duration_minutes?: number | null
@@ -89,6 +92,7 @@ export type FieldOperationPayload = {
   area_planned_ha?: number | null
   notes?: string
   status?: FieldOperationStatus
+  field_crop_id?: number | null
 }
 
 export type FieldOperationsFilter = {
