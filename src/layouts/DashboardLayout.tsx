@@ -13,6 +13,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Menu,
   MenuItem,
   Skeleton,
@@ -45,7 +46,14 @@ import {
   useMarkNotificationRead,
 } from '../hooks/useNotifications'
 import { useNotificationSocket } from '../hooks/useNotificationSocket'
-import { navConfig, findNavLabel, type NavLeaf } from '../routes/routeConfig'
+import {
+  navConfig,
+  findNavLabel,
+  isNavPathActive,
+  type NavGroup,
+  type NavItem,
+  type NavLeaf,
+} from '../routes/routeConfig'
 import NotificationListItem from '../components/NotificationListItem'
 
 const SIDEBAR_WIDTH = 240
@@ -110,6 +118,62 @@ function NavLeafItem({
   )
 }
 
+function NavGroupItem({
+  group,
+  pathname,
+  openOverride,
+  onToggle,
+  onNavigate,
+}: {
+  group: NavGroup
+  pathname: string
+  /** Open state chosen by the user; undefined until the group is first toggled. */
+  openOverride: boolean | undefined
+  onToggle: (open: boolean) => void
+  onNavigate: (path: string) => void
+}) {
+  const isGroupActive = group.children.some((c) => isNavPathActive(pathname, c.path))
+  const isOpen = openOverride ?? isGroupActive
+
+  return (
+    <Box>
+      <ListItemButton
+        onClick={() => onToggle(!isOpen)}
+        aria-expanded={isOpen}
+        sx={{ ...(navItemSx(isGroupActive) as object), justifyContent: 'space-between' }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <group.icon sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          <ListItemText
+            primary={group.label}
+            slotProps={{
+              primary: {
+                sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
+              },
+            }}
+          />
+        </Box>
+        {isOpen ? <ExpandLess sx={{ fontSize: 16 }} /> : <ExpandMore sx={{ fontSize: 16 }} />}
+      </ListItemButton>
+      <Collapse in={isOpen} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding>
+          {group.children.map((child) => (
+            <NavLeafItem
+              key={child.path}
+              item={child}
+              isActive={isNavPathActive(pathname, child.path)}
+              onNavigate={onNavigate}
+              indent
+            />
+          ))}
+        </List>
+      </Collapse>
+    </Box>
+  )
+}
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -118,7 +182,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const logout = useLogout()
   const { data: profile } = useProfile()
   const { data: permissions, isPending: permissionsPending } = usePermissions()
-  const [adminOpen, setAdminOpen] = useState(() => location.pathname.startsWith('/admin'))
+  // Explicit open/closed state per group; groups never toggled fall back to "open if active".
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const { data: weather } = useCurrentWeather()
 
   const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
@@ -140,8 +205,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mx: 2 }} />
 
-      {/* Navigation */}
-      <List component="nav" aria-label="Navigare principală" sx={{ px: 1.5, py: 2, flex: 1 }}>
+      {/* Navigation — scrolls on its own so logo, weather and user stay visible */}
+      <List
+        component="nav"
+        aria-label="Navigare principală"
+        sx={{ px: 1.5, py: 1.5, flex: 1, minHeight: 0, overflowY: 'auto' }}
+      >
         {isMenuLoading ? (
           <Stack spacing={1} sx={{ px: 0.5, py: 0.5 }} aria-label="Se încarcă meniul">
             {[0, 1, 2].map((item) => (
@@ -154,70 +223,61 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </Stack>
         ) : (
-          navConfig.map((item) => {
-            if (item.type === 'leaf') {
-              if (!can(item.permission)) return null
-              return (
-                <NavLeafItem
-                  key={item.path}
-                  item={item}
-                  isActive={location.pathname === item.path}
-                  onNavigate={handleNav}
-                />
-              )
-            }
+          navConfig.map((section, sectionIndex) => {
+            // Drop items the user can't see; a section with nothing left is hidden entirely.
+            const visibleItems = section.items.flatMap((item): NavItem[] => {
+              if (item.type === 'leaf') return can(item.permission) ? [item] : []
+              const children = item.children.filter((c) => can(c.permission))
+              return children.length > 0 ? [{ ...item, children }] : []
+            })
+            if (visibleItems.length === 0) return null
 
-            if (item.type === 'group') {
-              const visibleChildren = item.children.filter((c) => can(c.permission))
-              if (visibleChildren.length === 0) return null
-              const isGroupActive = visibleChildren.some((c) => location.pathname === c.path)
-
-              return (
-                <Box key={item.label}>
-                  <ListItemButton
-                    onClick={() => setAdminOpen((o) => !o)}
-                    sx={{
-                      ...(navItemSx(isGroupActive) as object),
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                        <item.icon sx={{ fontSize: 20 }} />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={item.label}
-                        slotProps={{
-                          primary: {
-                            sx: { fontSize: '0.875rem', fontWeight: isGroupActive ? 600 : 400 },
-                          },
-                        }}
+            return (
+              <Box key={section.label ?? sectionIndex} component="li" sx={{ listStyle: 'none' }}>
+                <List component="ul" disablePadding>
+                  {section.label && (
+                    <ListSubheader
+                      disableSticky
+                      sx={{
+                        bgcolor: 'transparent',
+                        color: '#6f8a7f',
+                        fontSize: '0.68rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        lineHeight: 1,
+                        px: 1.5,
+                        pt: 2,
+                        pb: 1,
+                      }}
+                    >
+                      {section.label}
+                    </ListSubheader>
+                  )}
+                  {visibleItems.map((item) =>
+                    item.type === 'leaf' ? (
+                      <NavLeafItem
+                        key={item.path}
+                        item={item}
+                        isActive={isNavPathActive(location.pathname, item.path)}
+                        onNavigate={handleNav}
                       />
-                    </Box>
-                    {adminOpen ? (
-                      <ExpandLess sx={{ fontSize: 16 }} />
                     ) : (
-                      <ExpandMore sx={{ fontSize: 16 }} />
-                    )}
-                  </ListItemButton>
-                  <Collapse in={adminOpen} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding>
-                      {visibleChildren.map((child) => (
-                        <NavLeafItem
-                          key={child.path}
-                          item={child}
-                          isActive={location.pathname === child.path}
-                          onNavigate={handleNav}
-                          indent
-                        />
-                      ))}
-                    </List>
-                  </Collapse>
-                </Box>
-              )
-            }
-
-            return null
+                      <NavGroupItem
+                        key={item.label}
+                        group={item}
+                        pathname={location.pathname}
+                        openOverride={openGroups[item.label]}
+                        onToggle={(open) =>
+                          setOpenGroups((prev) => ({ ...prev, [item.label]: open }))
+                        }
+                        onNavigate={handleNav}
+                      />
+                    )
+                  )}
+                </List>
+              </Box>
+            )
           })
         )}
       </List>
