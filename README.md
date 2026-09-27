@@ -100,6 +100,21 @@ npm run dev
 
 - **ESLint** — reguli recomandate pentru TypeScript și React Hooks
 - **Prettier** — formatare consistentă (fără punct și virgulă, ghilimele simple, 100 caractere/linie)
+- **SonarQube** — analiză statică (bug-uri, vulnerabilități, cod duplicat), rulată local
+
+### Analiză SonarQube
+
+SonarQube rulează în `docker-compose`-ul din `agri-api`, iar comenzile se dau de acolo. Setup-ul complet (prima pornire, token) e descris în README-ul din `agri-api`.
+
+```bash
+cd ../agri-api
+make sonar-up      # pornește SonarQube (dacă nu rulează deja)
+make sonar-front   # analizează doar frontend-ul
+```
+
+Rezultatele se văd la http://localhost:9000, la proiectul **Agri Front**.
+
+Configurarea analizei e în `sonar-project.properties`. Excepțiile de reguli se pun acolo, cu motivul în comentariu. Excepție existentă: `Math.random()` din `src/pages/auth/AuthLayout.tsx`, care poziționează doar particule decorative și nu e folosit în scop de securitate.
 
 ## Structura proiectului
 

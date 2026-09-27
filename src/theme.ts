@@ -48,7 +48,7 @@ const theme = createTheme({
         '0 2px 6px rgba(10,30,20,0.10), 0 8px 24px rgba(10,30,20,0.08)',
         '0 4px 12px rgba(10,30,20,0.12), 0 12px 32px rgba(10,30,20,0.10)',
         '0 8px 40px rgba(10,30,20,0.10)',
-        ...Array(21).fill('0 8px 40px rgba(10,30,20,0.10)'),
+        ... new Array(21).fill('0 8px 40px rgba(10,30,20,0.10)'),
     ] as unknown as typeof createTheme extends (o: infer T) => unknown ? T extends { shadows: infer S } ? S : never : never,
     components: {
         MuiButton: {

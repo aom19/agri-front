@@ -196,7 +196,7 @@ export function downloadCsv(filename: string, headers: string[], rows: CsvCell[]
   const escape = (cell: CsvCell) => {
     if (cell == null) return ''
     const text = String(cell)
-    return /[";\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+    return /[";\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
   }
   const lines = [headers, ...rows].map((row) => row.map(escape).join(';'))
   const blob = new Blob([`\uFEFF${lines.join('\n')}`], { type: 'text/csv;charset=utf-8;' })

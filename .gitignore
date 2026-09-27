@@ -38,3 +38,6 @@ updates.md
 # Fișiere de lock
 .package-lock.json
 package-lock.json
+
+# Analiză SonarQube (fișiere temporare ale scanner-ului)
+.scannerwork/
