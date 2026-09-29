@@ -98,7 +98,7 @@ export default function OperatorsTable({
                 </TableCell>
                 <TableCell>
                   {operator.allowed_machine_types && operator.allowed_machine_types.length > 0 ? (
-                    <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
                       {operator.allowed_machine_types.map((type) => {
                         const opt = machineTypeOptions.find((o) => o.value === type)
                         return (

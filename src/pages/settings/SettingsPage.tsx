@@ -78,15 +78,15 @@ export default function SettingsPage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 680, mx: 'auto' }}>
-      <Typography variant="h5" fontWeight={700} mb={3}>
+      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
         Setări
       </Typography>
 
       <Card>
         <CardContent sx={{ p: 3 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2 }}>
             <LockOutlined color="action" />
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Schimbă parola
             </Typography>
           </Stack>

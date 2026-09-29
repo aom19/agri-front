@@ -23,7 +23,7 @@ export default function PasswordRequirements({ value }: PasswordRequirementsProp
       {passwordRules.map((rule) => {
         const met = rule.test(value)
         return (
-          <Stack key={rule.key} direction="row" alignItems="center" spacing={0.75}>
+          <Stack key={rule.key} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
             {met ? (
               <CheckCircleOutlined sx={{ fontSize: 15, color: 'success.main' }} />
             ) : (
