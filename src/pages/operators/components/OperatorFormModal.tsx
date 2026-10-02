@@ -119,7 +119,7 @@ export default function OperatorFormModal({
                 selected.length === 0 ? (
                   <em>Niciun tip selectat</em>
                 ) : (
-                  <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                  <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
                     {selected.map((val) => {
                       const opt = machineTypeOptions.find((o) => o.value === val)
                       return <Chip key={val} label={opt?.label ?? val} size="small" />
