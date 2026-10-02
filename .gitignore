@@ -41,3 +41,6 @@ package-lock.json
 
 # Analiză SonarQube (fișiere temporare ale scanner-ului)
 .scannerwork/
+
+# Raport de coverage (generat de vitest, citit de SonarQube)
+coverage/

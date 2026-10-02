@@ -94,13 +94,33 @@ npm run dev
 | `npm run dev` | Pornește serverul de dezvoltare |
 | `npm run build` | Build de producție (TypeScript + Vite) |
 | `npm run lint` | Verificare ESLint |
+| `npm test` | Rulează testele (Vitest) |
+| `npm run test:watch` | Testele în mod watch |
+| `npm run test:coverage` | Testele + raport de coverage în `coverage/` (citit de SonarQube) |
 | `npm run preview` | Previzualizare build de producție |
 
 ## Calitatea codului
 
 - **ESLint** — reguli recomandate pentru TypeScript și React Hooks
 - **Prettier** — formatare consistentă (fără punct și virgulă, ghilimele simple, 100 caractere/linie)
+- **Vitest + Testing Library** — teste unitare pentru logica aplicației (vezi mai jos)
 - **SonarQube** — analiză statică (bug-uri, vulnerabilități, cod duplicat), rulată local
+
+### Teste
+
+```bash
+npm test                 # toate testele
+npm run test:coverage    # + coverage/lcov.info
+npx vitest run src/hooks # doar un director
+```
+
+Testele stau lângă codul testat (`*.test.ts` / `*.test.tsx`) și rulează în `jsdom`, configurat în `vite.config.ts` (secțiunea `test`). Ajutoarele comune sunt în `src/test/`:
+- `setup.ts` — matcher-ele `jest-dom`, curățarea DOM-ului și a `localStorage` după fiecare test
+- `utils.tsx` — `renderWithProviders` / `createWrapper` (react-query + router), `setAuth` (pune store-ul în starea „logat”), `expectQueryData`, `expectQueryDisabled`, `runMutation` (rulează o mutație și întoarce cheile invalidate)
+
+Modulele din `src/api/` se înlocuiesc cu `vi.mock('../api/x.api')`, deci hook-urile se testează fără server. Interceptorii din `axios.ts` se testează cu un adaptor fals (refresh de token, coadă de cereri, delogare).
+
+**Ce nu intră în coverage** (listat în `vite.config.ts` și `sonar-project.properties`): `src/pages/`, `src/layouts/` și fișierele de bootstrap (`main.tsx`, `App.tsx`, rutele). Sunt UI pur cu MUI, hărți și grafice; se măsoară logica din `api/`, `hooks/`, `schemas/`, `store/`, `utils/`, `components/` și `routes/routeConfig.ts`.
 
 ### Analiză SonarQube
 
@@ -109,7 +129,7 @@ SonarQube rulează în `docker-compose`-ul din `agri-api`, iar comenzile se dau 
 ```bash
 cd ../agri-api
 make sonar-up      # pornește SonarQube (dacă nu rulează deja)
-make sonar-front   # analizează doar frontend-ul
+make sonar-front   # rulează testele cu coverage și analizează frontend-ul
 ```
 
 Rezultatele se văd la http://localhost:9000, la proiectul **Agri Front**.
