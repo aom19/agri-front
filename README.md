@@ -114,11 +114,11 @@ npm run test:coverage    # + coverage/lcov.info
 npx vitest run src/hooks # doar un director
 ```
 
-Testele stau lângă codul testat (`*.test.ts` / `*.test.tsx`) și rulează în `jsdom`, configurat în `vite.config.ts` (secțiunea `test`). Ajutoarele comune sunt în `src/test/`:
+Testele stau într-un subfolder `test/` al folderului testat (ex. `src/hooks/test/useAuth.test.tsx` pentru `src/hooks/useAuth.ts`) și rulează în `jsdom`, configurat în `vite.config.ts` (secțiunea `test`). Ajutoarele comune sunt în `src/test/`:
 - `setup.ts` — matcher-ele `jest-dom`, curățarea DOM-ului și a `localStorage` după fiecare test
 - `utils.tsx` — `renderWithProviders` / `createWrapper` (react-query + router), `setAuth` (pune store-ul în starea „logat”), `expectQueryData`, `expectQueryDisabled`, `runMutation` (rulează o mutație și întoarce cheile invalidate)
 
-Modulele din `src/api/` se înlocuiesc cu `vi.mock('../api/x.api')`, deci hook-urile se testează fără server. Interceptorii din `axios.ts` se testează cu un adaptor fals (refresh de token, coadă de cereri, delogare).
+Modulele din `src/api/` se înlocuiesc cu `vi.mock('../../api/x.api')`, deci hook-urile se testează fără server. Interceptorii din `axios.ts` se testează cu un adaptor fals (refresh de token, coadă de cereri, delogare).
 
 **Ce nu intră în coverage** (listat în `vite.config.ts` și `sonar-project.properties`): `src/pages/`, `src/layouts/` și fișierele de bootstrap (`main.tsx`, `App.tsx`, rutele). Sunt UI pur cu MUI, hărți și grafice; se măsoară logica din `api/`, `hooks/`, `schemas/`, `store/`, `utils/`, `components/` și `routes/routeConfig.ts`.
 
