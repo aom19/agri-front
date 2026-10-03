@@ -76,6 +76,7 @@ describe('useResources / useStocks', () => {
       notes: null,
     }
     const stockPayload = { resource_id: 1, quantity: 10, minimum_quantity: 1 }
+    const stockUpdatePayload = { minimum_quantity: 1 }
 
     for (const run of [
       await runMutation(() => useCreateResource(), resourcePayload),
@@ -86,12 +87,12 @@ describe('useResources / useStocks', () => {
     }
     for (const run of [
       await runMutation(() => useCreateStock(), stockPayload),
-      await runMutation(() => useUpdateStock(), { id: '1', payload: stockPayload }),
+      await runMutation(() => useUpdateStock(), { id: '1', payload: stockUpdatePayload }),
       await runMutation(() => useDeleteStock(), '1'),
     ]) {
       expect(invalidatedKeys(run.invalidate)).toEqual([STOCKS_KEY])
     }
     expect(resourceApi.updateResource).toHaveBeenCalledWith('1', resourcePayload)
-    expect(resourceApi.updateStock).toHaveBeenCalledWith('1', stockPayload)
+    expect(resourceApi.updateStock).toHaveBeenCalledWith('1', stockUpdatePayload)
   })
 })

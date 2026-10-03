@@ -246,6 +246,20 @@ const cases: Case[] = [
     url: '/field-operations/1/checklist',
   },
   {
+    name: 'fieldOperations.getConsumptionEstimate',
+    call: () => fieldOperationsApi.getConsumptionEstimate(1, 2.5),
+    method: 'get',
+    url: '/field-operations/1/consumption-estimate',
+    args: [{ params: { area_ha: 2.5 } }],
+  },
+  {
+    name: 'fieldOperations.getConsumptionEstimate (suprafața planificată)',
+    call: () => fieldOperationsApi.getConsumptionEstimate(1, null),
+    method: 'get',
+    url: '/field-operations/1/consumption-estimate',
+    args: [{ params: undefined }],
+  },
+  {
     name: 'fieldOperations.complete',
     call: () => fieldOperationsApi.complete(1, anyPayload),
     method: 'patch',

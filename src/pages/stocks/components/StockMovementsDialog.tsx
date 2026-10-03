@@ -54,7 +54,7 @@ const dateFormat = new Intl.DateTimeFormat('ro-RO', {
 
 function formatQuantity(value: number) {
   return new Intl.NumberFormat('ro-RO', {
-    maximumFractionDigits: 3,
+    maximumFractionDigits: 4,
     signDisplay: 'exceptZero',
   }).format(value)
 }

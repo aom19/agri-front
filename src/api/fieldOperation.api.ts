@@ -61,11 +61,37 @@ export type FieldOperationResourceUsage = {
 export type FieldOperationCompletionPayload = {
   actual_end_at?: string | null
   area_completed_ha?: number | null
+  /** Combustibilul raportat; se scade din stocul resursei fuel_resource_id. */
   fuel_used_l?: number | null
+  fuel_resource_id?: number | null
   machine_hours?: number | null
   notes?: string
+  /** Cu consume_from_template, corectează consumul calculat din normele șablonului. */
   resources?: FieldOperationResourceUsage[]
   consume_from_template?: boolean
+}
+
+export type ConsumptionEstimateItem = {
+  resource_id: number
+  resource_name: string
+  category: string
+  unit: string
+  quantity_per_unit: number
+  quantity: number
+}
+
+export type FuelStock = {
+  resource_id: number
+  resource_name: string
+  unit: string
+  quantity: number
+}
+
+/** Consumul estimat la finalizare, calculat de server (normă × suprafață). */
+export type ConsumptionEstimate = {
+  area_ha: number
+  items: ConsumptionEstimateItem[]
+  fuel_resources: FuelStock[]
 }
 
 export type FieldOperationCompletionResult = {
@@ -117,6 +143,13 @@ export const fieldOperationsApi = {
 
   updateChecklist: (id: number, payload: FieldOperationChecklistPayload) =>
     api.patch<FieldOperation>(`/field-operations/${id}/checklist`, payload).then((r) => r.data),
+
+  getConsumptionEstimate: (id: number, areaHa?: number | null) =>
+    api
+      .get<ConsumptionEstimate>(`/field-operations/${id}/consumption-estimate`, {
+        params: areaHa != null ? { area_ha: areaHa } : undefined,
+      })
+      .then((r) => r.data),
 
   complete: (id: number, payload: FieldOperationCompletionPayload) =>
     api

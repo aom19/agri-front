@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fieldOperationsApi,
   type FieldOperationChecklistPayload,
@@ -33,6 +33,20 @@ export function useFieldOperation(id: number | null) {
     enabled: initialized && !!accessToken && id != null,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  })
+}
+
+/** Consumul estimat la finalizare pentru suprafața dată (sau cea planificată, dacă e null). */
+export function useConsumptionEstimate(id: number | null, areaHa: number | null) {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: [...FIELD_OPERATIONS_KEY, accessToken, 'consumption-estimate', id, areaHa],
+    queryFn: () => fieldOperationsApi.getConsumptionEstimate(id!, areaHa),
+    enabled: initialized && !!accessToken && id != null,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
   })
 }
 

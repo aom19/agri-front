@@ -14,6 +14,7 @@ import {
 import {
   FIELD_OPERATIONS_KEY,
   useCompleteFieldOperation,
+  useConsumptionEstimate,
   useCreateFieldOperation,
   useDeleteFieldOperation,
   useFieldOperation,
@@ -47,6 +48,11 @@ describe('useFieldOperations', () => {
     expect(fieldOperationsApi.getAll).toHaveBeenCalledWith({ status: 'planned' })
     await expectQueryData(() => useFieldOperation(1), operation)
     expectQueryDisabled(() => useFieldOperation(null))
+    const estimate = { area_ha: 4, items: [], fuel_resources: [] }
+    vi.mocked(fieldOperationsApi.getConsumptionEstimate).mockResolvedValue(estimate)
+    await expectQueryData(() => useConsumptionEstimate(1, 4), estimate)
+    expect(fieldOperationsApi.getConsumptionEstimate).toHaveBeenCalledWith(1, 4)
+    expectQueryDisabled(() => useConsumptionEstimate(null, 4))
     setAuth(null)
     expectQueryDisabled(() => useFieldOperations())
   })

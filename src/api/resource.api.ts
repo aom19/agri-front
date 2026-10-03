@@ -1,6 +1,13 @@
 import { api } from './axios'
 
-export type ResourceCategory = 'fuel' | 'fertilizer' | 'seed' | 'pesticide' | 'water' | 'harvest' | 'other'
+export type ResourceCategory =
+  | 'fuel'
+  | 'fertilizer'
+  | 'seed'
+  | 'pesticide'
+  | 'water'
+  | 'harvest'
+  | 'other'
 
 export type ResourceType = {
   id: number
@@ -39,9 +46,15 @@ export type Stock = {
   updated_at: string
 }
 
+// La creare, cantitatea inițială se înregistrează ca ajustare de inventar.
 export type StockPayload = {
   resource_id: number
   quantity: number
+  minimum_quantity: number
+}
+
+// La editare se schimbă doar pragul minim; cantitatea se modifică prin mișcări de stoc.
+export type StockUpdatePayload = {
   minimum_quantity: number
 }
 
@@ -66,7 +79,7 @@ export const resourceApi = {
 
   createStock: (payload: StockPayload) => api.post<Stock>('/stocks', payload).then((r) => r.data),
 
-  updateStock: (id: string, payload: StockPayload) =>
+  updateStock: (id: string, payload: StockUpdatePayload) =>
     api.patch<Stock>(`/stocks/${id}`, payload).then((r) => r.data),
 
   deleteStock: (id: string) => api.delete(`/stocks/${id}`).then((r) => r.data),

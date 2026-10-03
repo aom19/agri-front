@@ -162,6 +162,17 @@ export default function StocksPage() {
     setFormErrors({})
   }
 
+  const openMovementsFromForm = () => {
+    if (!selectedStock) return
+    const resource = selectedStock.resource ?? resourceById.get(selectedStock.resource_id)
+    setFormOpen(false)
+    setMovementsTarget({
+      stock: selectedStock,
+      unit: resource?.resource_type?.default_unit ?? '',
+      name: resource?.name ?? 'Resursă',
+    })
+  }
+
   const closeDeleteDialog = () => {
     if (deleting) return
     setDeleteOpen(false)
@@ -182,19 +193,23 @@ export default function StocksPage() {
       return
     }
 
-    const payload = {
-      resource_id: Number(validation.data.resourceId),
-      quantity: Number(validation.data.quantity),
-      minimum_quantity: Number(validation.data.minimumQuantity),
-    }
+    const minimumQuantity = Number(validation.data.minimumQuantity)
 
     try {
       if (formMode === 'create') {
-        await createStock.mutateAsync(payload)
+        await createStock.mutateAsync({
+          resource_id: Number(validation.data.resourceId),
+          quantity: Number(validation.data.quantity),
+          minimum_quantity: minimumQuantity,
+        })
         show('Stocul a fost creat.', 'success')
       } else if (formMode === 'edit' && selectedStock) {
-        await updateStock.mutateAsync({ id: String(selectedStock.id), payload })
-        show('Stocul a fost actualizat.', 'success')
+        // Cantitatea nu se editează: corecțiile se fac prin mișcări de stoc.
+        await updateStock.mutateAsync({
+          id: String(selectedStock.id),
+          payload: { minimum_quantity: minimumQuantity },
+        })
+        show('Pragul minim a fost actualizat.', 'success')
       }
       setFormOpen(false)
     } catch (error) {
@@ -214,6 +229,7 @@ export default function StocksPage() {
   }
 
   const isView = formMode === 'view'
+  const isCreate = formMode === 'create'
   const selectedResource = resourceById.get(Number(formState.resourceId))
 
   return (
@@ -339,11 +355,11 @@ export default function StocksPage() {
                           </IconButton>
                         </Tooltip>
                         {canUpdate && (
-                          <Tooltip title="Editează stocul">
+                          <Tooltip title="Editează pragul minim">
                             <IconButton
                               size="small"
                               onClick={() => openEditDialog(stock)}
-                              aria-label="Editează stocul"
+                              aria-label="Editează pragul minim"
                             >
                               <EditOutlined fontSize="small" />
                             </IconButton>
@@ -388,7 +404,7 @@ export default function StocksPage() {
           {formMode === 'create'
             ? 'Creează stoc'
             : formMode === 'edit'
-              ? 'Editează stoc'
+              ? 'Editează pragul minim'
               : 'Detalii stoc'}
         </DialogTitle>
         <DialogContent>
@@ -402,7 +418,7 @@ export default function StocksPage() {
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, resourceId: event.target.value }))
                 }
-                disabled={submitting || isView}
+                disabled={submitting || !isCreate}
               >
                 {selectableResources.map((resource) => (
                   <MenuItem key={resource.id} value={String(resource.id)}>
@@ -420,15 +436,20 @@ export default function StocksPage() {
             )}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                label="Cantitate"
-                required
+                label={isCreate ? 'Cantitate inițială' : 'Cantitate'}
+                required={isCreate}
                 value={formState.quantity}
                 onChange={(event) =>
                   setFormState((prev) => ({ ...prev, quantity: event.target.value }))
                 }
-                disabled={submitting || isView}
+                disabled={submitting || !isCreate}
                 error={Boolean(formErrors.quantity)}
-                helperText={formErrors.quantity}
+                helperText={
+                  formErrors.quantity ??
+                  (isCreate
+                    ? 'Se înregistrează ca ajustare de inventar.'
+                    : 'Se modifică doar prin mișcări de stoc.')
+                }
                 fullWidth
               />
               <TextField
@@ -444,6 +465,18 @@ export default function StocksPage() {
                 fullWidth
               />
             </Stack>
+            {formMode === 'edit' && selectedStock && (
+              <Alert
+                severity="info"
+                action={
+                  <Button color="inherit" size="small" onClick={openMovementsFromForm}>
+                    Mișcări
+                  </Button>
+                }
+              >
+                Pentru a corecta cantitatea, înregistrează o ajustare de inventar.
+              </Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>

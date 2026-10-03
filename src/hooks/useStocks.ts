@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { resourceApi, type StockPayload } from '../api/resource.api'
+import { resourceApi, type StockPayload, type StockUpdatePayload } from '../api/resource.api'
 import { useAuthStore } from '../store/auth.store'
 
 export const STOCKS_KEY = ['stocks']
@@ -30,7 +30,7 @@ export function useUpdateStock() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: StockPayload }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: StockUpdatePayload }) =>
       resourceApi.updateStock(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: STOCKS_KEY }),
   })
