@@ -82,7 +82,7 @@ export const navConfig: NavSection[] = [
         label: 'Alocări',
         path: '/assignments',
         icon: AssignmentOutlined,
-        permission: 'assignments:read',
+        permission: 'field_operations:read',
       },
       {
         type: 'leaf',

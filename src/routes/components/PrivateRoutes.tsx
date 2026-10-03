@@ -150,7 +150,7 @@ const PrivateRoutes = () => {
         <Route
           path="/assignments"
           element={
-            <RequirePermission permission="assignments:read">
+            <RequirePermission permission="field_operations:read">
               <Suspense fallback={<PageLoader />}>
                 <AssignmentsPage />
               </Suspense>
