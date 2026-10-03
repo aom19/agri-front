@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { FieldOperation, FieldOperationStatus } from '../../../api/fieldOperation.api'
+import { formatDateTime } from '../../../utils/dateFormat'
 
 type Props = {
   items: FieldOperation[]
@@ -37,19 +38,6 @@ function statusColor(status: FieldOperationStatus): 'info' | 'warning' | 'succes
   if (status === 'in_progress') return 'warning'
   if (status === 'completed') return 'success'
   return 'default'
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return '-'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '-'
-  return new Intl.DateTimeFormat('ro-RO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 function formatArea(value: number | null | undefined) {
@@ -110,7 +98,7 @@ export default function FieldOperationsTable({
                 <TableCell>{item.operation_template_name ?? '-'}</TableCell>
                 <TableCell>{item.machine_name ?? '-'}</TableCell>
                 <TableCell>{item.operator_name ?? '-'}</TableCell>
-                <TableCell>{formatDate(item.planned_start_at)}</TableCell>
+                <TableCell>{formatDateTime(item.planned_start_at)}</TableCell>
                 <TableCell>{formatArea(item.area_planned_ha)}</TableCell>
                 <TableCell>
                   <Chip

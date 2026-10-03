@@ -53,18 +53,7 @@ import { useFields } from '../../hooks/useFields'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
-
-const dateFormat = new Intl.DateTimeFormat('ro-RO', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
-
-function formatDay(value: string | null | undefined) {
-  if (!value) return '-'
-  const date = new Date(`${value}T00:00:00`)
-  return Number.isNaN(date.getTime()) ? value : dateFormat.format(date)
-}
+import { formatIsoDay } from '../../utils/dateFormat'
 
 function formatNumber(value: number | null | undefined, digits = 2) {
   if (value == null) return '-'
@@ -697,7 +686,7 @@ export default function CropsPage() {
                 <TableRow key={season.id} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{season.name}</TableCell>
                   <TableCell>
-                    {formatDay(season.start_date)} – {formatDay(season.end_date)}
+                    {formatIsoDay(season.start_date)} – {formatIsoDay(season.end_date)}
                   </TableCell>
                   <TableCell>
                     {season.is_active ? (
@@ -802,8 +791,8 @@ export default function CropsPage() {
                     <TableCell sx={{ fontWeight: 600 }}>{item.field_name}</TableCell>
                     <TableCell>{item.crop_name}</TableCell>
                     <TableCell align="right">{formatNumber(item.planted_area_ha, 2)}</TableCell>
-                    <TableCell>{formatDay(item.planted_at)}</TableCell>
-                    <TableCell>{formatDay(item.harvested_at)}</TableCell>
+                    <TableCell>{formatIsoDay(item.planted_at)}</TableCell>
+                    <TableCell>{formatIsoDay(item.harvested_at)}</TableCell>
                     <TableCell align="right">
                       {item.production_total == null
                         ? '-'

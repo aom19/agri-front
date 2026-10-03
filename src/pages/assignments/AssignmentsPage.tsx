@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import type { FieldOperation, FieldOperationStatus } from '../../api/fieldOperation.api'
 import { useFieldOperations } from '../../hooks/useFieldOperations'
+import { formatDateTime } from '../../utils/dateFormat'
 
 const statusLabels: Record<FieldOperationStatus, string> = {
   planned: 'Planificată',
@@ -32,19 +33,6 @@ function statusColor(status: FieldOperationStatus): 'info' | 'warning' | 'succes
   if (status === 'in_progress') return 'warning'
   if (status === 'completed') return 'success'
   return 'default'
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Data neplanificată'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Data neplanificată'
-  return new Intl.DateTimeFormat('ro-RO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 // Afișează o durată doar în ore și minute (fără zile), ex: "26 h 30 min".
@@ -163,7 +151,9 @@ export default function AssignmentsPage() {
                       <TableCell>{operation.operator_name ?? 'Operator neatribuit'}</TableCell>
                       <TableCell>{operation.machine_name ?? 'Mașină neatribuită'}</TableCell>
                       <TableCell>{operation.implement_name ?? 'Echipament neatribuit'}</TableCell>
-                      <TableCell>{formatDate(operation.planned_start_at)}</TableCell>
+                      <TableCell>
+                        {formatDateTime(operation.planned_start_at, 'Data neplanificată')}
+                      </TableCell>
                       <TableCell>
                         <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
                           <span>

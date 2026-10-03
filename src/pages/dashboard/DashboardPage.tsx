@@ -33,6 +33,7 @@ import {
 } from '../../hooks/useDashboardCards'
 import type { DashboardActivityItem, DashboardQuickStats } from '../../api/dashboard.api'
 import OperatorDashboard from './OperatorDashboard.tsx'
+import { formatDateTime } from '../../utils/dateFormat'
 
 const kpiConfig = [
   {
@@ -181,13 +182,6 @@ function activityActor(item: DashboardActivityItem) {
 }
 
 const relativeTimeFormat = new Intl.RelativeTimeFormat('ro-RO', { numeric: 'auto' })
-const absoluteDateFormat = new Intl.DateTimeFormat('ro-RO', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
 
 function formatRelativeTime(value: string) {
   const date = new Date(value)
@@ -199,7 +193,7 @@ function formatRelativeTime(value: string) {
   if (elapsed < 3600) return relativeTimeFormat.format(Math.round(diffSeconds / 60), 'minute')
   if (elapsed < 86400) return relativeTimeFormat.format(Math.round(diffSeconds / 3600), 'hour')
   if (elapsed < 7 * 86400) return relativeTimeFormat.format(Math.round(diffSeconds / 86400), 'day')
-  return absoluteDateFormat.format(date)
+  return formatDateTime(value)
 }
 
 function buildQuickStats(stats: DashboardQuickStats | undefined, isLoading: boolean) {

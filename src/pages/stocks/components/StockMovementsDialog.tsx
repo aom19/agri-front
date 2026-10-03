@@ -25,6 +25,7 @@ import type { StockMovementType } from '../../../api/stockMovement.api'
 import { useCreateStockMovement, useStockMovements } from '../../../hooks/useStockMovements'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
+import { formatDateTime } from '../../../utils/dateFormat'
 
 type StockMovementsDialogProps = {
   open: boolean
@@ -43,14 +44,6 @@ const typeMeta: Record<
   out: { label: 'Ieșire', color: 'warning' },
   adjustment: { label: 'Ajustare', color: 'default' },
 }
-
-const dateFormat = new Intl.DateTimeFormat('ro-RO', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
 
 function formatQuantity(value: number) {
   return new Intl.NumberFormat('ro-RO', {
@@ -240,7 +233,7 @@ export default function StockMovementsDialog({
                     {(movements ?? []).map((movement) => (
                       <TableRow key={movement.id} hover>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {dateFormat.format(new Date(movement.created_at))}
+                          {formatDateTime(movement.created_at)}
                         </TableCell>
                         <TableCell>
                           <Chip

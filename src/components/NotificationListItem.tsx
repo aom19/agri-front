@@ -10,18 +10,7 @@ import {
   TaskAltOutlined,
 } from '@mui/icons-material'
 import type { UserNotification } from '../api/notifications.api'
-
-function formatTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-  return new Intl.DateTimeFormat('ro-RO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
+import { formatDateTime } from '../utils/dateFormat'
 
 function notificationMeta(notification: UserNotification) {
   const type = notification.notification.type
@@ -127,7 +116,7 @@ export default function NotificationListItem({
   markReadDisabled = false,
 }: NotificationListItemProps) {
   const isUnread = !notification.read_at
-  const createdAt = formatTime(notification.notification.created_at)
+  const createdAt = formatDateTime(notification.notification.created_at, '')
   const meta = notificationMeta(notification)
   const Icon = meta.Icon
 

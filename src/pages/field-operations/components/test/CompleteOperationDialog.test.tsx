@@ -50,7 +50,8 @@ function estimateFor(area: number): ConsumptionEstimate {
   }
 }
 
-describe('CompleteOperationDialog', () => {
+// Dialogul MUI cu tastare reală e lent în jsdom când rulează toată suita; 5 s nu ajung mereu.
+describe('CompleteOperationDialog', { timeout: 20000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setAuth()

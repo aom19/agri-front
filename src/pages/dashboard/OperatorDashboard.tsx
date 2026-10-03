@@ -26,6 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import type { FieldOperation } from '../../api/fieldOperation.api'
 import { useFieldOperations } from '../../hooks/useFieldOperations'
+import { formatDateTime, formatTime } from '../../utils/dateFormat'
 
 type OperatorDashboardProps = {
   displayName: string
@@ -39,29 +40,6 @@ type DetailItemProps = {
 }
 
 const activeStatuses = new Set(['planned', 'in_progress'])
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Neplanificat'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Neplanificat'
-  return new Intl.DateTimeFormat('ro-RO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
-
-function formatShortTime(value: string | null | undefined) {
-  if (!value) return '--:--'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '--:--'
-  return new Intl.DateTimeFormat('ro-RO', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
 
 function formatEstimatedWorkTime(
   startValue: string | null | undefined,
@@ -262,7 +240,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                 </Typography>
                 <Typography sx={{ color: 'rgba(255,255,255,0.9)', mt: 1, fontSize: '1rem' }}>
                   {nextOperation
-                    ? `${nextOperation.operation_type_name} · ${formatDate(nextOperation.planned_start_at)}`
+                    ? `${nextOperation.operation_type_name} · ${formatDateTime(nextOperation.planned_start_at, 'Neplanificat')}`
                     : 'Când vei avea o operațiune planificată, detaliile apar aici.'}
                 </Typography>
               </Box>
@@ -382,7 +360,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                       Start
                     </Typography>
                     <Typography sx={{ fontWeight: 900, fontSize: '1.25rem' }}>
-                      {formatShortTime(nextOperation.planned_start_at)}
+                      {formatTime(nextOperation.planned_start_at)}
                     </Typography>
                   </Box>
                   <Box sx={{ flex: 1, p: 1.5, borderRadius: '16px', bgcolor: '#fff4de' }}>
@@ -390,7 +368,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                       Sfârșit
                     </Typography>
                     <Typography sx={{ fontWeight: 900, fontSize: '1.25rem' }}>
-                      {formatShortTime(nextOperation.planned_end_at)}
+                      {formatTime(nextOperation.planned_end_at)}
                     </Typography>
                   </Box>
                 </Stack>
@@ -455,7 +433,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                   >
                     <Box sx={{ width: 72, flexShrink: 0 }}>
                       <Typography sx={{ fontWeight: 900, fontSize: '1.1rem' }}>
-                        {formatShortTime(operation.planned_start_at)}
+                        {formatTime(operation.planned_start_at)}
                       </Typography>
                       <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
                         {formatEstimatedWorkTime(
@@ -555,7 +533,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                     {operation.field_name}
                   </Typography>
                   <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem' }}>
-                    {formatShortTime(operation.planned_start_at)}
+                    {formatTime(operation.planned_start_at)}
                   </Typography>
                 </Stack>
               ))

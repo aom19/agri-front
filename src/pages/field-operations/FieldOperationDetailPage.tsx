@@ -50,6 +50,7 @@ import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import { FieldMapModal } from '../fields/components'
 import CompleteOperationDialog from './components/CompleteOperationDialog'
+import { formatDateTime, formatTime } from '../../utils/dateFormat'
 
 const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
 
@@ -113,29 +114,6 @@ function getResourceIssue(
 ): ResourceIssue | null {
   if (!status || status === 'active') return null
   return { resource, status, statusLabel: assetStatusLabel(status) }
-}
-
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Neplanificat'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Neplanificat'
-  return new Intl.DateTimeFormat('ro-RO', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
-
-function formatShortTime(value: string | null | undefined) {
-  if (!value) return '--:--'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '--:--'
-  return new Intl.DateTimeFormat('ro-RO', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
 }
 
 function formatDuration(
@@ -467,7 +445,8 @@ export default function FieldOperationDetailPage() {
                 {operation.field_name}
               </Typography>
               <Typography sx={{ color: 'rgba(255,255,255,0.86)', mt: 1, fontSize: '1.05rem' }}>
-                {operation.operation_type_name} · {formatDate(operation.planned_start_at)}
+                {operation.operation_type_name} ·{' '}
+                {formatDateTime(operation.planned_start_at, 'Neplanificat')}
               </Typography>
             </Box>
             <Paper
@@ -480,8 +459,7 @@ export default function FieldOperationDetailPage() {
                 {formatDuration(operation.planned_start_at, operation.planned_end_at)}
               </Typography>
               <Typography sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                {formatShortTime(operation.planned_start_at)} -{' '}
-                {formatShortTime(operation.planned_end_at)}
+                {formatTime(operation.planned_start_at)} - {formatTime(operation.planned_end_at)}
               </Typography>
             </Paper>
           </Stack>
@@ -593,7 +571,7 @@ export default function FieldOperationDetailPage() {
                             : []),
                           {
                             label: 'Interval',
-                            value: `${formatShortTime(operation.planned_start_at)} - ${formatShortTime(operation.planned_end_at)}`,
+                            value: `${formatTime(operation.planned_start_at)} - ${formatTime(operation.planned_end_at)}`,
                           },
                           { label: 'Atașată lucrării', value: operation.operation_type_name },
                           ...(machineIssue
@@ -696,7 +674,7 @@ export default function FieldOperationDetailPage() {
               <Box sx={{ flex: 1, p: 1.5, borderRadius: '16px', bgcolor: '#f1f8f3' }}>
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>Start</Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: '1.25rem' }}>
-                  {formatShortTime(operation.planned_start_at)}
+                  {formatTime(operation.planned_start_at)}
                 </Typography>
               </Box>
               <Box sx={{ flex: 1, p: 1.5, borderRadius: '16px', bgcolor: '#fff4de' }}>
@@ -704,7 +682,7 @@ export default function FieldOperationDetailPage() {
                   Sfârșit
                 </Typography>
                 <Typography sx={{ fontWeight: 900, fontSize: '1.25rem' }}>
-                  {formatShortTime(operation.planned_end_at)}
+                  {formatTime(operation.planned_end_at)}
                 </Typography>
               </Box>
             </Stack>
@@ -717,8 +695,14 @@ export default function FieldOperationDetailPage() {
               </Typography>
               <Stack spacing={1}>
                 {[
-                  { label: 'Pornită la', value: formatDate(operation.actual_start_at) },
-                  { label: 'Finalizată la', value: formatDate(operation.actual_end_at) },
+                  {
+                    label: 'Pornită la',
+                    value: formatDateTime(operation.actual_start_at, 'Neplanificat'),
+                  },
+                  {
+                    label: 'Finalizată la',
+                    value: formatDateTime(operation.actual_end_at, 'Neplanificat'),
+                  },
                   {
                     label: 'Durată reală',
                     value: formatMinutes(operation.actual_duration_minutes),

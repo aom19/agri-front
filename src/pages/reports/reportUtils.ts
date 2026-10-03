@@ -5,6 +5,9 @@ import { fuelTypeOptions, machineTypeOptions } from '../../schemas/machine.schem
 import { implementTypeOptions } from '../../schemas/implement.schema'
 import { resourceCategoryOptions } from '../../schemas/resourceType.schema'
 
+// Formatele de dată sunt comune aplicației; rămân exportate și de aici pentru rapoarte.
+export { formatDate, formatDateTime, formatIsoDay } from '../../utils/dateFormat'
+
 // Paletă categorială validată (ordine fixă, niciodată ciclică). Peste 8 serii se pliază în „Altele”.
 export const SERIES_COLORS = [
   '#2a78d6',
@@ -92,18 +95,6 @@ const compactFormat = new Intl.NumberFormat('ro-RO', {
   notation: 'compact',
   maximumFractionDigits: 1,
 })
-const dateTimeFormat = new Intl.DateTimeFormat('ro-RO', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
-const dateFormat = new Intl.DateTimeFormat('ro-RO', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
 const shortDateFormat = new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit' })
 const monthFormat = new Intl.DateTimeFormat('ro-RO', { month: 'short', year: 'numeric' })
 
@@ -128,18 +119,6 @@ export function formatHa(value: number | null | undefined) {
 export function formatPercent(part: number, total: number) {
   if (total <= 0) return '-'
   return `${Math.round((part / total) * 100)}%`
-}
-
-export function formatDateTime(value: string | null | undefined) {
-  if (!value) return '-'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : dateTimeFormat.format(date)
-}
-
-export function formatDate(value: string | null | undefined) {
-  if (!value) return '-'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : dateFormat.format(date)
 }
 
 // Duratele se exprimă doar în ore și minute, ca în restul aplicației.
@@ -214,13 +193,6 @@ export function foldSeries<T extends { label: string; value: number }>(items: T[
   const kept = items.slice(0, max).map((item) => ({ label: item.label, value: item.value }))
   const rest = items.slice(max).reduce((sum, item) => sum + item.value, 0)
   return [...kept, { label: 'Altele', value: rest }]
-}
-
-// Formatează o dată ISO fără oră (YYYY-MM-DD) ca zi calendaristică locală.
-export function formatIsoDay(value: string | null | undefined) {
-  if (!value) return '-'
-  const date = new Date(`${value}T00:00:00`)
-  return Number.isNaN(date.getTime()) ? '-' : dateFormat.format(date)
 }
 
 // Culoarea unei categorii de resurse urmează entitatea (ordine fixă), nu poziția în grafic.
