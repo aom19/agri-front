@@ -21,7 +21,14 @@ import {
 vi.mock('../../api/operator.api')
 
 const operator = { id: 1, name: 'Ion' } as Operator
-const payload = { name: 'Ion', phone: '', email: '', notes: '', allowed_machine_types: [] }
+const payload = {
+  first_name: 'Ion',
+  last_name: '',
+  phone: '',
+  email: '',
+  notes: '',
+  allowed_machine_types: [],
+}
 
 describe('useOperators', () => {
   beforeEach(() => {

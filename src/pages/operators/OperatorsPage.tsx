@@ -25,7 +25,8 @@ import { OperatorFormModal, OperatorsPageHeader, OperatorsTable } from './compon
 type FormMode = 'create' | 'edit' | 'view'
 
 const initialFormState: OperatorFormValues = {
-  name: '',
+  first_name: '',
+  last_name: '',
   phone: '',
   email: '',
   notes: '',
@@ -34,7 +35,8 @@ const initialFormState: OperatorFormValues = {
 
 function mapOperatorToFormState(operator: Operator): OperatorFormValues {
   return {
-    name: operator.name,
+    first_name: operator.first_name ?? '',
+    last_name: operator.last_name ?? '',
     phone: operator.phone ?? '',
     email: operator.email ?? '',
     notes: operator.notes ?? '',
@@ -128,7 +130,7 @@ export default function OperatorsPage() {
       const fieldErrors = validation.error.flatten().fieldErrors
       const nextErrors: OperatorFormErrors = {}
 
-      if (fieldErrors.name?.[0]) nextErrors.name = fieldErrors.name[0]
+      if (fieldErrors.first_name?.[0]) nextErrors.first_name = fieldErrors.first_name[0]
       if (fieldErrors.phone?.[0]) nextErrors.phone = fieldErrors.phone[0]
       if (fieldErrors.email?.[0]) nextErrors.email = fieldErrors.email[0]
       if (fieldErrors.notes?.[0]) nextErrors.notes = fieldErrors.notes[0]
@@ -141,7 +143,8 @@ export default function OperatorsPage() {
     setFormErrors({})
     const parsedValues = validation.data
     const payload = {
-      name: parsedValues.name,
+      first_name: parsedValues.first_name,
+      last_name: parsedValues.last_name,
       phone: parsedValues.phone,
       email: parsedValues.email,
       notes: parsedValues.notes,
@@ -167,7 +170,7 @@ export default function OperatorsPage() {
 
     try {
       await deleteOperator.mutateAsync(String(operatorToDelete.id))
-      show('Operatorul a fost șters.', 'success')
+      show('Operatorul a fost șters, iar contul lui a fost dezactivat.', 'success')
       closeDeleteDialog()
     } catch (error) {
       show(getApiErrorMessage(error, 'Nu am putut șterge operatorul.'), 'error')
@@ -249,7 +252,9 @@ export default function OperatorsPage() {
         open={deleteOpen}
         title="Șterge operator"
         description={
-          operatorToDelete ? `Confirmi ștergerea operatorului „${operatorToDelete.name}"?` : ''
+          operatorToDelete
+            ? `Confirmi ștergerea operatorului „${operatorToDelete.name}"? Contul lui se dezactivează, iar lucrările îl păstrează ca operator.`
+            : ''
         }
         confirmText="Șterge"
         loading={deleting}

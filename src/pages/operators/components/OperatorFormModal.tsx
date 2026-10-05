@@ -56,16 +56,29 @@ export default function OperatorFormModal({
 
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 0.5 }}>
-          <TextField
-            label="Nume"
-            required
-            value={formState.name}
-            onChange={(event) => onChange((prev) => ({ ...prev, name: event.target.value }))}
-            disabled={submitting || isView}
-            error={Boolean(errors.name)}
-            helperText={errors.name}
-            fullWidth
-          />
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+            <TextField
+              label="Prenume"
+              required
+              value={formState.first_name}
+              onChange={(event) =>
+                onChange((prev) => ({ ...prev, first_name: event.target.value }))
+              }
+              disabled={submitting || isView}
+              error={Boolean(errors.first_name)}
+              helperText={errors.first_name}
+              fullWidth
+            />
+            <TextField
+              label="Nume"
+              value={formState.last_name}
+              onChange={(event) => onChange((prev) => ({ ...prev, last_name: event.target.value }))}
+              disabled={submitting || isView}
+              error={Boolean(errors.last_name)}
+              helperText={errors.last_name}
+              fullWidth
+            />
+          </Stack>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
             <TextField
@@ -84,7 +97,10 @@ export default function OperatorFormModal({
               onChange={(event) => onChange((prev) => ({ ...prev, email: event.target.value }))}
               disabled={submitting || isView}
               error={Boolean(errors.email)}
-              helperText={errors.email}
+              helperText={
+                errors.email ??
+                (isView ? undefined : 'Contul operatorului. Fără e-mail nu se poate autentifica.')
+              }
               fullWidth
             />
           </Stack>
