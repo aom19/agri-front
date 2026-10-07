@@ -44,7 +44,6 @@ import { useHasPermission } from '../../hooks/usePermissions'
 import {
   useCreateOperationTemplate,
   useDeleteOperationTemplate,
-  useImplementCompatibilities,
   useOperationTemplates,
   useOperationTypes,
   useUpdateOperationTemplate,
@@ -120,7 +119,6 @@ export default function OperationTemplatesPage() {
   const { data: operationTypes, isPending: typesLoading } = useOperationTypes()
   const { data: resources } = useResources()
   const { data: crops } = useCrops()
-  const { data: compatibilities } = useImplementCompatibilities()
 
   const createMutation = useCreateOperationTemplate()
   const updateMutation = useUpdateOperationTemplate()
@@ -128,21 +126,6 @@ export default function OperationTemplatesPage() {
 
   const submitting = createMutation.isPending || updateMutation.isPending
   const isPending = templatesLoading || typesLoading
-
-  // Implement types compatible with the currently selected machine types.
-  const allowedImplementTypes = useMemo(() => {
-    if (!compatibilities || machineTypes.length === 0) return null
-    const set = new Set<string>()
-    for (const c of compatibilities) {
-      if (machineTypes.includes(c.machine_type)) set.add(c.implement_type)
-    }
-    return set
-  }, [compatibilities, machineTypes])
-
-  const availableImplementOptions = useMemo(() => {
-    if (!allowedImplementTypes) return implementTypeOptions
-    return implementTypeOptions.filter((o) => allowedImplementTypes.has(o.value))
-  }, [allowedImplementTypes])
 
   const operationTypeById = useMemo(() => {
     const map = new Map<number, string>()
@@ -565,17 +548,7 @@ export default function OperationTemplatesPage() {
             <Autocomplete
               multiple
               value={machineTypes}
-              onChange={(_, newValue) => {
-                setMachineTypes(newValue)
-                // Drop implement selections that are no longer compatible with any selected machine.
-                if (compatibilities && newValue.length > 0) {
-                  const allowed = new Set<string>()
-                  for (const c of compatibilities) {
-                    if (newValue.includes(c.machine_type)) allowed.add(c.implement_type)
-                  }
-                  setImplementTypes((prev) => prev.filter((t) => allowed.has(t)))
-                }
-              }}
+              onChange={(_, newValue) => setMachineTypes(newValue)}
               options={machineTypeOptions.map((o) => o.value)}
               getOptionLabel={(val) =>
                 machineTypeOptions.find((o) => o.value === val)?.label ?? val
@@ -599,31 +572,16 @@ export default function OperationTemplatesPage() {
             {/* Implement Types */}
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
               Tipuri de echipament compatibile
-              {allowedImplementTypes && (
-                <Typography
-                  component="span"
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ ml: 1 }}
-                >
-                  (filtrate după mașinile selectate)
-                </Typography>
-              )}
             </Typography>
             <Autocomplete
               multiple
               value={implementTypes}
               onChange={(_, newValue) => setImplementTypes(newValue)}
-              options={availableImplementOptions.map((o) => o.value)}
+              options={implementTypeOptions.map((o) => o.value)}
               getOptionLabel={(val) =>
                 implementTypeOptions.find((o) => o.value === val)?.label ?? val
               }
               disabled={submitting || isView}
-              noOptionsText={
-                machineTypes.length === 0
-                  ? 'Selectează întâi tipuri de mașini'
-                  : 'Niciun echipament compatibil'
-              }
               renderValue={(value, getItemProps) =>
                 value.map((option, index) => (
                   <Chip

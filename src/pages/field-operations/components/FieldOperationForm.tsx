@@ -118,20 +118,6 @@ export default function FieldOperationForm({
     return implementItems.filter((i) => selectedTemplate.implement_types!.includes(i.type))
   }, [implementItems, selectedTemplate])
 
-  const selectedMachine = useMemo(
-    () =>
-      state.machine_id ? (machines.find((m) => String(m.id) === state.machine_id) ?? null) : null,
-    [machines, state.machine_id]
-  )
-
-  const filteredOperators = useMemo(() => {
-    if (!selectedMachine) return operators
-    return operators.filter(
-      (o) =>
-        !o.allowed_machine_types?.length || o.allowed_machine_types.includes(selectedMachine.type)
-    )
-  }, [operators, selectedMachine])
-
   const patch = <K extends keyof FieldOperationFormState>(
     key: K,
     value: FieldOperationFormState[K]
@@ -343,7 +329,7 @@ export default function FieldOperationForm({
             <MenuItem value="">
               <em>Neatribuit</em>
             </MenuItem>
-            {filteredOperators.map((o) => (
+            {operators.map((o) => (
               <MenuItem key={o.id} value={String(o.id)}>
                 {o.name}
               </MenuItem>

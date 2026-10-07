@@ -11,7 +11,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -21,7 +20,6 @@ import {
   Typography,
 } from '@mui/material'
 import type { Operator } from '../../../api/operator.api'
-import { machineTypeOptions } from '../../../schemas/machine.schema'
 
 type OperatorsTableProps = {
   operators: Operator[]
@@ -74,9 +72,6 @@ export default function OperatorsTable({
               <TableCell>
                 <Typography sx={{ fontWeight: 700 }}>Status</Typography>
               </TableCell>
-              <TableCell>
-                <Typography sx={{ fontWeight: 700 }}>Mașini permise</Typography>
-              </TableCell>
               <TableCell align="right">
                 <Typography sx={{ fontWeight: 700 }}>Acțiuni</Typography>
               </TableCell>
@@ -95,25 +90,6 @@ export default function OperatorsTable({
                     size="small"
                     color={statusColor(operator.status)}
                   />
-                </TableCell>
-                <TableCell>
-                  {operator.allowed_machine_types && operator.allowed_machine_types.length > 0 ? (
-                    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-                      {operator.allowed_machine_types.map((type) => {
-                        const opt = machineTypeOptions.find((o) => o.value === type)
-                        return (
-                          <Chip
-                            key={type}
-                            label={opt?.label ?? type}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )
-                      })}
-                    </Stack>
-                  ) : (
-                    '-'
-                  )}
                 </TableCell>
                 <TableCell align="right">
                   <Tooltip title="Vezi detalii">

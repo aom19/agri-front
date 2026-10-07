@@ -7,7 +7,6 @@ const valid = {
   phone: '+40 700 000 000',
   email: 'ion@x.ro',
   notes: '',
-  allowed_machine_types: ['tractor'],
 }
 
 describe('operator.schema', () => {
@@ -27,10 +26,7 @@ describe('operator.schema', () => {
     expect(result.error!.issues.map((i) => i.path[0])).toEqual(['first_name', 'phone', 'email'])
   })
 
-  it('respinge tipurile de mașini necunoscute', () => {
-    expect(
-      operatorFormSchema.safeParse({ ...valid, allowed_machine_types: ['barca'] }).success
-    ).toBe(false)
+  it('are statusurile activ și inactiv', () => {
     expect(operatorStatusOptions.map((o) => o.value)).toEqual(['active', 'inactive'])
   })
 })

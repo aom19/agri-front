@@ -10,7 +10,7 @@ import { fieldsApi } from '../fields.api'
 import { implementApi } from '../implement.api'
 import { machineApi } from '../machine.api'
 import { notificationsApi } from '../notifications.api'
-import { implementCompatibilityApi, operationApi } from '../operation.api'
+import { operationApi } from '../operation.api'
 import { operatorApi } from '../operator.api'
 import { permissionsApi } from '../permissions.api'
 import { profileApi } from '../profile.api'
@@ -240,12 +240,6 @@ const cases: Case[] = [
     url: '/field-operations/1',
   },
   {
-    name: 'fieldOperations.updateChecklist',
-    call: () => fieldOperationsApi.updateChecklist(1, anyPayload),
-    method: 'patch',
-    url: '/field-operations/1/checklist',
-  },
-  {
     name: 'fieldOperations.getConsumptionEstimate',
     call: () => fieldOperationsApi.getConsumptionEstimate(1, 2.5),
     method: 'get',
@@ -464,12 +458,6 @@ const cases: Case[] = [
     call: () => operationApi.deleteTemplate(2),
     method: 'delete',
     url: '/operation-templates/2',
-  },
-  {
-    name: 'implementCompatibility.getAll',
-    call: () => implementCompatibilityApi.getAll(),
-    method: 'get',
-    url: '/implement-compatibilities',
   },
 
   {

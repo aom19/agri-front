@@ -27,7 +27,6 @@ const payload = {
   phone: '',
   email: '',
   notes: '',
-  allowed_machine_types: [],
 }
 
 describe('useOperators', () => {

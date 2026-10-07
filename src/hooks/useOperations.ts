@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    implementCompatibilityApi,
     operationApi,
     type OperationTemplatePayload,
     type OperationTypePayload,
@@ -9,21 +8,6 @@ import { useAuthStore } from '../store/auth.store'
 
 export const OPERATION_TYPES_KEY = ['operation-types']
 export const OPERATION_TEMPLATES_KEY = ['operation-templates']
-export const IMPLEMENT_COMPATIBILITIES_KEY = ['implement-compatibilities']
-
-export function useImplementCompatibilities() {
-    const initialized = useAuthStore((s) => s.initialized)
-    const accessToken = useAuthStore((s) => s.accessToken)
-
-    return useQuery({
-        queryKey: IMPLEMENT_COMPATIBILITIES_KEY,
-        queryFn: implementCompatibilityApi.getAll,
-        enabled: initialized && !!accessToken,
-        staleTime: 10 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
-    })
-}
-
 export function useOperationTypes() {
     const initialized = useAuthStore((s) => s.initialized)
     const accessToken = useAuthStore((s) => s.accessToken)

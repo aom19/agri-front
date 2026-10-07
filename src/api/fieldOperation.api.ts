@@ -4,17 +4,6 @@ import type { GeoJSONPolygon } from './fields.api'
 export const FIELD_OPERATION_STATUSES = ['planned', 'in_progress', 'completed', 'canceled'] as const
 export type FieldOperationStatus = (typeof FIELD_OPERATION_STATUSES)[number]
 
-export type FieldOperationChecklistPayload = {
-  machine_status: boolean
-  implement_status: boolean
-  field_area: boolean
-  notes_confirmed: boolean
-}
-
-export type FieldOperationChecklist = FieldOperationChecklistPayload & {
-  updated_at?: string | null
-}
-
 export type FieldOperation = {
   id: number
   field_id: string
@@ -38,7 +27,6 @@ export type FieldOperation = {
   area_planned_ha?: number | null
   notes: string
   status: FieldOperationStatus
-  checklist: FieldOperationChecklist
   field_crop_id?: number | null
   crop_name?: string | null
   season_name?: string | null
@@ -140,9 +128,6 @@ export const fieldOperationsApi = {
 
   update: (id: number, payload: FieldOperationPayload) =>
     api.patch<FieldOperation>(`/field-operations/${id}`, payload).then((r) => r.data),
-
-  updateChecklist: (id: number, payload: FieldOperationChecklistPayload) =>
-    api.patch<FieldOperation>(`/field-operations/${id}/checklist`, payload).then((r) => r.data),
 
   getConsumptionEstimate: (id: number, areaHa?: number | null) =>
     api

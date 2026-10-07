@@ -27,6 +27,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   LinearProgress,
   Paper,
@@ -34,17 +35,9 @@ import {
   Typography,
 } from '@mui/material'
 import type { LatLngBoundsExpression, LatLngTuple } from 'leaflet'
-import type {
-  FieldOperation,
-  FieldOperationChecklistPayload,
-  FieldOperationStatus,
-} from '../../api/fieldOperation.api'
+import type { FieldOperation, FieldOperationStatus } from '../../api/fieldOperation.api'
 import type { GeoJSONPolygon } from '../../api/fields.api'
-import {
-  useFieldOperation,
-  useStartFieldOperation,
-  useUpdateFieldOperationChecklist,
-} from '../../hooks/useFieldOperations'
+import { useFieldOperation, useStartFieldOperation } from '../../hooks/useFieldOperations'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
@@ -74,13 +67,6 @@ const statusLabels: Record<FieldOperationStatus, string> = {
   completed: 'Finalizată',
   canceled: 'Anulată',
 }
-
-const checklistItems: { key: keyof FieldOperationChecklistPayload; label: string }[] = [
-  { key: 'machine_status', label: 'Verifică starea mașinii' },
-  { key: 'implement_status', label: 'Verifică starea echipamentului' },
-  { key: 'field_area', label: 'Verifică terenul și suprafața' },
-  { key: 'notes_confirmed', label: 'Confirmă instrucțiunile din note' },
-]
 
 function statusTone(status: FieldOperationStatus) {
   if (status === 'in_progress') return { color: '#92400e', bg: '#fef3c7' }
@@ -283,25 +269,19 @@ export default function FieldOperationDetailPage() {
   const { show } = useNotificationStore()
   const canWrite = useHasPermission('field_operations:write')
   const canComplete = useHasPermission('field_operations:complete')
+  const canStart = useHasPermission('field_operations:start')
   const id = params.id ? Number(params.id) : null
   const { data: operation, isPending, isError } = useFieldOperation(Number.isFinite(id) ? id : null)
-  const updateChecklist = useUpdateFieldOperationChecklist()
   const startOperation = useStartFieldOperation()
+  // Confirmarea de dinainte de start nu se salvează: mașina și echipamentul sunt verificate
+  // oricum de API la pornire.
+  const [startConfirmed, setStartConfirmed] = useState(false)
   const [selectedResource, setSelectedResource] = useState<ResourceDialogData | null>(null)
   const [fieldMapOpen, setFieldMapOpen] = useState(false)
   const [completeOpen, setCompleteOpen] = useState(false)
 
   const progress = getProgress(operation)
   const tone = statusTone(operation?.status ?? 'planned')
-  const checklistState: FieldOperationChecklistPayload = {
-    machine_status: operation?.checklist?.machine_status ?? false,
-    implement_status: operation?.checklist?.implement_status ?? false,
-    field_area: operation?.checklist?.field_area ?? false,
-    notes_confirmed: operation?.checklist?.notes_confirmed ?? false,
-  }
-  const completedChecklistItems = checklistItems.filter((item) => checklistState[item.key]).length
-  const checklistProgress = Math.round((completedChecklistItems / checklistItems.length) * 100)
-  const checklistComplete = completedChecklistItems === checklistItems.length
   const fieldGeometry = operation?.field_geometry
   const operationFieldPoints = useMemo(
     () => (fieldGeometry ? geoJSONToPoints(fieldGeometry) : []),
@@ -331,21 +311,9 @@ export default function FieldOperationDetailPage() {
     Boolean(issue)
   )
   const startBlocked = resourceIssues.length > 0
+  const operationPlanned = operation?.status === 'planned'
   const operationStarted = operation?.status === 'in_progress'
-
-  const toggleChecklistItem = (key: keyof FieldOperationChecklistPayload) => {
-    if (!operation) return
-
-    const next = { ...checklistState, [key]: !checklistState[key] }
-    updateChecklist.mutate(
-      { id: operation.id, payload: next },
-      {
-        onError: (error) => {
-          show(getApiErrorMessage(error, 'Nu am putut salva checklistul.'), 'error')
-        },
-      }
-    )
-  }
+  const showActions = (operationPlanned || operationStarted) && (canStart || canComplete)
 
   const openResourceDialog = (resource: ResourceDialogData) => {
     setSelectedResource(resource)
@@ -735,102 +703,77 @@ export default function FieldOperationDetailPage() {
             </Paper>
           )}
 
-          <Paper
-            sx={{
-              p: 2.5,
-              borderRadius: '24px',
-              boxShadow: 'none',
-              border: '1px solid rgba(24,63,45,0.08)',
-            }}
-          >
-            <Stack
-              direction="row"
-              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          {showActions && (
+            <Paper
+              sx={{
+                p: 2.5,
+                borderRadius: '24px',
+                boxShadow: 'none',
+                border: '1px solid rgba(24,63,45,0.08)',
+              }}
             >
-              <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+              <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', mb: 1.5 }}>
                 <CheckCircleOutlineOutlined color="primary" />
                 <Typography sx={{ fontWeight: 900, fontSize: '1.1rem' }}>
-                  Checklist plecare
+                  {operationStarted ? 'Lucrare în curs' : 'Pornire lucrare'}
                 </Typography>
               </Stack>
-              <Typography sx={{ fontWeight: 900, color: '#1a5c38' }}>
-                {checklistProgress}%
-              </Typography>
-            </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={checklistProgress}
-              sx={{
-                height: 6,
-                borderRadius: 3,
-                mb: 1.5,
-                bgcolor: '#e0e6e2',
-                '& .MuiLinearProgress-bar': { bgcolor: '#1a5c38' },
-              }}
-            />
-            {startBlocked && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  p: 1.5,
-                  mb: 1.5,
-                  borderRadius: '16px',
-                  bgcolor: '#fff7ed',
-                  border: '1px solid #fed7aa',
-                  color: '#7c2d12',
-                }}
-              >
-                <WarningAmberOutlined sx={{ fontSize: 20, mt: 0.2, flexShrink: 0 }} />
-                <Box>
-                  <Typography sx={{ fontWeight: 900, fontSize: '0.9rem' }}>
-                    Lucrarea nu poate fi pornită.
-                  </Typography>
-                  {resourceIssues.map((issue) => (
-                    <Typography key={issue.resource} sx={{ fontSize: '0.82rem' }}>
-                      {issue.resource}: {issue.statusLabel}. Necesită modificări.
+              {operationPlanned && startBlocked && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    p: 1.5,
+                    mb: 1.5,
+                    borderRadius: '16px',
+                    bgcolor: '#fff7ed',
+                    border: '1px solid #fed7aa',
+                    color: '#7c2d12',
+                  }}
+                >
+                  <WarningAmberOutlined sx={{ fontSize: 20, mt: 0.2, flexShrink: 0 }} />
+                  <Box>
+                    <Typography sx={{ fontWeight: 900, fontSize: '0.9rem' }}>
+                      Lucrarea nu poate fi pornită.
                     </Typography>
-                  ))}
+                    {resourceIssues.map((issue) => (
+                      <Typography key={issue.resource} sx={{ fontSize: '0.82rem' }}>
+                        {issue.resource}: {issue.statusLabel}. Necesită modificări.
+                      </Typography>
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            )}
-            <Stack spacing={0.75}>
-              {checklistItems.map((item) => (
-                <Stack key={item.key} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <Checkbox
-                    checked={checklistState[item.key]}
-                    onChange={() => toggleChecklistItem(item.key)}
-                    disabled={updateChecklist.isPending}
-                    size="small"
+              )}
+              {operationPlanned && canStart && (
+                <>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={startConfirmed}
+                        onChange={(event) => setStartConfirmed(event.target.checked)}
+                        disabled={startBlocked}
+                        size="small"
+                      />
+                    }
+                    label="Am verificat utilajul și terenul"
                   />
-                  <Typography
-                    sx={{ color: checklistState[item.key] ? 'text.secondary' : '#173327' }}
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<PlayArrowOutlined />}
+                    disabled={!startConfirmed || startBlocked || startOperation.isPending}
+                    onClick={startFieldOperation}
+                    sx={{ mt: 1, borderRadius: '14px', py: 1.1, fontWeight: 900 }}
                   >
-                    {item.label}
-                  </Typography>
-                </Stack>
-              ))}
-            </Stack>
-            {checklistComplete && (
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<PlayArrowOutlined />}
-                disabled={operationStarted || startBlocked || startOperation.isPending}
-                onClick={startFieldOperation}
-                sx={{ mt: 2, borderRadius: '14px', py: 1.1, fontWeight: 900 }}
-              >
-                {startBlocked
-                  ? 'Resurse indisponibile'
-                  : operationStarted
-                    ? 'Lucrare pornită'
-                    : startOperation.isPending
-                      ? 'Se pornește...'
-                      : 'Start lucrare'}
-              </Button>
-            )}
-            {canComplete &&
-              (operation.status === 'planned' || operation.status === 'in_progress') && (
+                    {startBlocked
+                      ? 'Resurse indisponibile'
+                      : startOperation.isPending
+                        ? 'Se pornește...'
+                        : 'Start lucrare'}
+                  </Button>
+                </>
+              )}
+              {canComplete && (
                 <Button
                   fullWidth
                   variant="outlined"
@@ -841,7 +784,8 @@ export default function FieldOperationDetailPage() {
                   Finalizează lucrarea
                 </Button>
               )}
-          </Paper>
+            </Paper>
+          )}
         </Box>
       </Stack>
 

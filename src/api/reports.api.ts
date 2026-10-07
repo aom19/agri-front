@@ -183,7 +183,6 @@ export type ReportOperatorRow = {
   id: number
   name: string
   status: string
-  allowed_machine_types: string[]
   operations_count: number
   completed_count: number
   in_progress_count: number

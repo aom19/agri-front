@@ -13,12 +13,11 @@ export type Operator = {
   email: string
   notes: string
   status: string
-  allowed_machine_types: string[]
 }
 
 export type OperatorPayload = Pick<
   Operator,
-  'first_name' | 'last_name' | 'phone' | 'email' | 'notes' | 'allowed_machine_types'
+  'first_name' | 'last_name' | 'phone' | 'email' | 'notes'
 >
 
 export const operatorApi = {

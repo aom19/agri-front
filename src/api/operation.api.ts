@@ -98,15 +98,3 @@ export const operationApi = {
 
   deleteTemplate: (id: number) => api.delete(`/operation-templates/${id}`).then((r) => r.data),
 }
-
-export type ImplementCompatibility = {
-  id: number
-  machine_type: string
-  implement_type: string
-  created_at: string
-  updated_at: string
-}
-
-export const implementCompatibilityApi = {
-  getAll: () => api.get<ImplementCompatibility[]>('/implement-compatibilities').then((r) => r.data),
-}

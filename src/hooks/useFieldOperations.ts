@@ -1,7 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fieldOperationsApi,
-  type FieldOperationChecklistPayload,
   type FieldOperationPayload,
   type FieldOperationsFilter,
   type FieldOperationCompletionPayload,
@@ -63,15 +62,6 @@ export function useUpdateFieldOperation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: FieldOperationPayload }) =>
       fieldOperationsApi.update(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY }),
-  })
-}
-
-export function useUpdateFieldOperationChecklist() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: FieldOperationChecklistPayload }) =>
-      fieldOperationsApi.updateChecklist(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY }),
   })
 }

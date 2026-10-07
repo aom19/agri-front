@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  implementCompatibilityApi,
-  operationApi,
-  type ImplementCompatibility,
-  type OperationTemplate,
-  type OperationType,
-} from '../../api/operation.api'
+import { operationApi, type OperationTemplate, type OperationType } from '../../api/operation.api'
 import {
   expectQueryData,
   expectQueryDisabled,
@@ -14,14 +8,12 @@ import {
   setAuth,
 } from '../../test/utils'
 import {
-  IMPLEMENT_COMPATIBILITIES_KEY,
   OPERATION_TEMPLATES_KEY,
   OPERATION_TYPES_KEY,
   useCreateOperationTemplate,
   useCreateOperationType,
   useDeleteOperationTemplate,
   useDeleteOperationType,
-  useImplementCompatibilities,
   useOperationTemplate,
   useOperationTemplates,
   useOperationTypes,
@@ -33,7 +25,6 @@ vi.mock('../../api/operation.api')
 
 const type = { id: 1, code: 'arat' } as OperationType
 const template = { id: 2, name: 'Arat' } as OperationTemplate
-const compat = [{ id: 1 } as ImplementCompatibility]
 
 describe('useOperations', () => {
   beforeEach(() => {
@@ -41,20 +32,16 @@ describe('useOperations', () => {
     setAuth()
   })
 
-  it('încarcă tipurile, template-urile și compatibilitățile', async () => {
+  it('încarcă tipurile și template-urile', async () => {
     vi.mocked(operationApi.getAllTypes).mockResolvedValue([type])
     vi.mocked(operationApi.getAllTemplates).mockResolvedValue([template])
     vi.mocked(operationApi.getTemplateById).mockResolvedValue(template)
-    vi.mocked(implementCompatibilityApi.getAll).mockResolvedValue(compat)
     await expectQueryData(() => useOperationTypes(), [type])
     await expectQueryData(() => useOperationTemplates(), [template])
     await expectQueryData(() => useOperationTemplate(2), template)
-    await expectQueryData(() => useImplementCompatibilities(), compat)
     expectQueryDisabled(() => useOperationTemplate(null))
     setAuth(null)
     expectQueryDisabled(() => useOperationTypes())
-    expectQueryDisabled(() => useImplementCompatibilities())
-    expect(IMPLEMENT_COMPATIBILITIES_KEY).toEqual(['implement-compatibilities'])
   })
 
   it('mutațiile invalidează cache-urile potrivite', async () => {

@@ -12,7 +12,6 @@ import {
   formatDecimal,
   formatInt,
   formatPercent,
-  machineTypeLabel,
 } from '../reportUtils'
 
 type OperatorsTabProps = {
@@ -37,11 +36,6 @@ const columns: ReportColumn<ReportOperatorRow>[] = [
     label: 'Status',
     render: (row) => <OperatorStatusChip status={row.status} />,
     csv: (row) => (row.status === 'active' ? 'Activ' : 'Inactiv'),
-  },
-  {
-    key: 'types',
-    label: 'Mașini permise',
-    render: (row) => row.allowed_machine_types.map(machineTypeLabel).join(', ') || '-',
   },
   {
     key: 'ops',

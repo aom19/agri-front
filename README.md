@@ -37,7 +37,7 @@ Frontend React + TypeScript + Vite pentru managementul mașinilor agricole, oper
 - Carduri KPI din `/api/dashboard/cards` (Total mașini, Mașini active, Total operatori, Alocări active) cu bară de progres și tendință
 - Dashboard dedicat pentru utilizatorii cu rol `operator`, sub formă de panou de tură: lucrarea curentă, fișa lucrării, agenda zilei și sumar operațional
 - Operatorii au acces doar la dashboard și la operațiunile pe teren filtrate pe userul curent; după login se curăță cache-ul user-scoped pentru dashboard, profil, permisiuni și operațiuni pe teren, iar widgetul meteo nu navighează pentru rolurile fără acces la terenuri
-- Pagina de view pentru o operațiune pe teren folosește un ecran operațional dedicat, cu progres, echipare, instrucțiuni, carduri de resurse cu modal de detalii și checklist care afișează `Start lucrare` după completare
+- Pagina de view pentru o operațiune pe teren folosește un ecran operațional dedicat, cu progres, echipare, instrucțiuni, carduri de resurse cu modal de detalii și o singură confirmare („Am verificat utilajul și terenul”), nesalvată, care activează `Start lucrare`
 - Activitate recentă (list)
 - Statistici rapide
 
