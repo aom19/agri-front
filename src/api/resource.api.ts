@@ -18,44 +18,32 @@ export type ResourceType = {
   updated_at: string
 }
 
+// Resursa are stocul ei: cantitatea se modifică doar prin mișcări de stoc.
 export type Resource = {
   id: number
   name: string
   resource_type_id: number
   resource_type?: ResourceType
   price_per_unit: number
+  quantity: number
+  minimum_quantity: number
   notes: string | null
   created_at: string
   updated_at: string
 }
 
+// La editare cantitatea lipsește: corecțiile se fac prin mișcări de stoc.
 export type ResourcePayload = {
   name: string
   resource_type_id: number
   price_per_unit: number
+  minimum_quantity: number
   notes: string | null
 }
 
-export type Stock = {
-  id: number
-  resource_id: number
-  resource?: Resource
-  quantity: number
-  minimum_quantity: number
-  created_at: string
-  updated_at: string
-}
-
 // La creare, cantitatea inițială se înregistrează ca ajustare de inventar.
-export type StockPayload = {
-  resource_id: number
+export type ResourceCreatePayload = ResourcePayload & {
   quantity: number
-  minimum_quantity: number
-}
-
-// La editare se schimbă doar pragul minim; cantitatea se modifică prin mișcări de stoc.
-export type StockUpdatePayload = {
-  minimum_quantity: number
 }
 
 export type ResourceTypePayload = {
@@ -75,20 +63,11 @@ export const resourceApi = {
 
   deleteResourceType: (id: string) => api.delete(`/resource-types/${id}`).then((r) => r.data),
 
-  getAllStocks: () => api.get<Stock[]>('/stocks').then((r) => r.data),
-
-  createStock: (payload: StockPayload) => api.post<Stock>('/stocks', payload).then((r) => r.data),
-
-  updateStock: (id: string, payload: StockUpdatePayload) =>
-    api.patch<Stock>(`/stocks/${id}`, payload).then((r) => r.data),
-
-  deleteStock: (id: string) => api.delete(`/stocks/${id}`).then((r) => r.data),
-
   getAllResources: () => api.get<Resource[]>('/resources').then((r) => r.data),
 
   getResourceById: (id: string) => api.get<Resource>(`/resources/${id}`).then((r) => r.data),
 
-  createResource: (payload: ResourcePayload) =>
+  createResource: (payload: ResourceCreatePayload) =>
     api.post<Resource>('/resources', payload).then((r) => r.data),
 
   updateResource: (id: string, payload: ResourcePayload) =>

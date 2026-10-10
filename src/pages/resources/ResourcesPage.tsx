@@ -4,9 +4,11 @@ import {
   DeleteOutlined,
   EditOutlined,
   SearchOutlined,
+  SwapVertOutlined,
   VisibilityOutlined,
 } from '@mui/icons-material'
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -51,6 +53,7 @@ import {
 } from '../../schemas/resource.schema'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
+import StockMovementsDialog from './components/StockMovementsDialog'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -60,6 +63,7 @@ const categoryLabel: Record<string, string> = {
   seed: 'Sămânță',
   pesticide: 'Pesticid',
   water: 'Apă',
+  harvest: 'Recoltă',
   other: 'Altele',
 }
 
@@ -67,6 +71,8 @@ const initialFormState: ResourceFormValues = {
   name: '',
   resourceTypeId: '',
   pricePerUnit: '',
+  quantity: '0',
+  minimumQuantity: '0',
   notes: '',
 }
 
@@ -75,8 +81,19 @@ function mapResourceToFormState(resource: Resource): ResourceFormValues {
     name: resource.name,
     resourceTypeId: String(resource.resource_type_id),
     pricePerUnit: String(resource.price_per_unit),
+    quantity: String(resource.quantity),
+    minimumQuantity: String(resource.minimum_quantity),
     notes: resource.notes ?? '',
   }
+}
+
+function formatQuantity(value: number): string {
+  return new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 4 }).format(value)
+}
+
+// Ca în dashboard și rapoarte: un prag minim 0 înseamnă că stocul nu e urmărit.
+function isLowStock(resource: Resource): boolean {
+  return resource.minimum_quantity > 0 && resource.quantity <= resource.minimum_quantity
 }
 
 export default function ResourcesPage() {
@@ -88,6 +105,7 @@ export default function ResourcesPage() {
   const [formErrors, setFormErrors] = useState<ResourceFormErrors>({})
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null)
+  const [movementsResourceId, setMovementsResourceId] = useState<number | null>(null)
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('resources:write')
@@ -133,6 +151,10 @@ export default function ResourcesPage() {
       .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
   }, [resourcesData, search, resourceTypeById])
 
+  // Resursa din listă, nu o copie: stocul din dialog se actualizează după fiecare mișcare.
+  const movementsResource =
+    (resourcesData ?? []).find((resource) => resource.id === movementsResourceId) ?? null
+
   const openCreateDialog = () => {
     setSelectedResource(null)
     setFormMode('create')
@@ -163,6 +185,12 @@ export default function ResourcesPage() {
     setFormErrors({})
   }
 
+  const openMovementsFromForm = () => {
+    if (!selectedResource) return
+    setFormOpen(false)
+    setMovementsResourceId(selectedResource.id)
+  }
+
   const openDeleteDialog = (resource: Resource) => {
     setResourceToDelete(resource)
     setDeleteOpen(true)
@@ -183,6 +211,9 @@ export default function ResourcesPage() {
       if (fieldErrors.name?.[0]) nextErrors.name = fieldErrors.name[0]
       if (fieldErrors.resourceTypeId?.[0]) nextErrors.resourceTypeId = fieldErrors.resourceTypeId[0]
       if (fieldErrors.pricePerUnit?.[0]) nextErrors.pricePerUnit = fieldErrors.pricePerUnit[0]
+      if (fieldErrors.quantity?.[0]) nextErrors.quantity = fieldErrors.quantity[0]
+      if (fieldErrors.minimumQuantity?.[0])
+        nextErrors.minimumQuantity = fieldErrors.minimumQuantity[0]
       if (fieldErrors.notes?.[0]) nextErrors.notes = fieldErrors.notes[0]
 
       setFormErrors(nextErrors)
@@ -196,14 +227,16 @@ export default function ResourcesPage() {
       name: parsedValues.name,
       resource_type_id: Number(parsedValues.resourceTypeId),
       price_per_unit: Number(parsedValues.pricePerUnit),
+      minimum_quantity: Number(parsedValues.minimumQuantity),
       notes: parsedValues.notes || null,
     }
 
     try {
       if (formMode === 'create') {
-        await createResource.mutateAsync(payload)
+        await createResource.mutateAsync({ ...payload, quantity: Number(parsedValues.quantity) })
         show('Resursa a fost creată.', 'success')
       } else if (formMode === 'edit' && selectedResource) {
+        // Cantitatea nu se editează: corecțiile se fac prin mișcări de stoc.
         await updateResource.mutateAsync({ id: String(selectedResource.id), payload })
         show('Resursa a fost actualizată.', 'success')
       }
@@ -226,6 +259,11 @@ export default function ResourcesPage() {
   }
 
   const isView = formMode === 'view'
+  const isCreate = formMode === 'create'
+  const formUnit = resourceTypeById.get(Number(formState.resourceTypeId))?.defaultUnit ?? ''
+  const unitAdornment = formUnit
+    ? { input: { endAdornment: <InputAdornment position="end">{formUnit}</InputAdornment> } }
+    : undefined
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
@@ -235,10 +273,10 @@ export default function ResourcesPage() {
       >
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Resurse
+            Resurse și stocuri
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Administrare consumabile agricole.
+            Consumabile agricole, cantități disponibile și praguri minime.
           </Typography>
         </Box>
 
@@ -285,10 +323,13 @@ export default function ResourcesPage() {
                     <Typography sx={{ fontWeight: 700 }}>Tip</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Categorie</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>Cantitate</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Unitate</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>Minim</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 700 }}>Status</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography sx={{ fontWeight: 700 }}>Preț / unitate</Typography>
@@ -302,20 +343,37 @@ export default function ResourcesPage() {
               <TableBody>
                 {filteredResources.map((resource) => {
                   const resourceType = resourceTypeById.get(resource.resource_type_id)
+                  const unit = resourceType?.defaultUnit ?? ''
+                  const low = isLowStock(resource)
                   return (
                     <TableRow key={resource.id} hover>
                       <TableCell>{resource.name}</TableCell>
                       <TableCell>{resourceType?.name ?? '-'}</TableCell>
                       <TableCell>
+                        {formatQuantity(resource.quantity)} {unit}
+                      </TableCell>
+                      <TableCell>
+                        {formatQuantity(resource.minimum_quantity)} {unit}
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           size="small"
-                          variant="outlined"
-                          label={resourceType ? categoryLabel[resourceType.category] : '-'}
+                          color={low ? 'warning' : 'success'}
+                          label={low ? 'Stoc redus' : 'În limite'}
                         />
                       </TableCell>
-                      <TableCell>{resourceType?.defaultUnit ?? '-'}</TableCell>
                       <TableCell>{resource.price_per_unit.toFixed(2)}</TableCell>
                       <TableCell align="right">
+                        <Tooltip title="Mișcări de stoc">
+                          <IconButton
+                            size="small"
+                            onClick={() => setMovementsResourceId(resource.id)}
+                            aria-label="Mișcări de stoc"
+                          >
+                            <SwapVertOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+
                         <Tooltip title="Vezi detalii">
                           <IconButton
                             size="small"
@@ -357,7 +415,7 @@ export default function ResourcesPage() {
 
                 {filteredResources.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
                         Nu există resurse pentru filtrul curent.
                       </Box>
@@ -418,20 +476,67 @@ export default function ResourcesPage() {
                   <FormHelperText>{formErrors.resourceTypeId}</FormHelperText>
                 )}
               </FormControl>
+
+              <TextField
+                label="Preț per unitate"
+                required
+                value={formState.pricePerUnit}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, pricePerUnit: event.target.value }))
+                }
+                disabled={submitting || isView}
+                error={Boolean(formErrors.pricePerUnit)}
+                helperText={formErrors.pricePerUnit}
+                fullWidth
+              />
             </Stack>
 
-            <TextField
-              label="Preț per unitate"
-              required
-              value={formState.pricePerUnit}
-              onChange={(event) =>
-                setFormState((prev) => ({ ...prev, pricePerUnit: event.target.value }))
-              }
-              disabled={submitting || isView}
-              error={Boolean(formErrors.pricePerUnit)}
-              helperText={formErrors.pricePerUnit}
-              fullWidth
-            />
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <TextField
+                label={isCreate ? 'Cantitate inițială' : 'Cantitate'}
+                required={isCreate}
+                value={formState.quantity}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, quantity: event.target.value }))
+                }
+                disabled={submitting || !isCreate}
+                error={Boolean(formErrors.quantity)}
+                helperText={
+                  formErrors.quantity ??
+                  (isCreate
+                    ? 'Se înregistrează ca ajustare de inventar.'
+                    : 'Se modifică doar prin mișcări de stoc.')
+                }
+                slotProps={unitAdornment}
+                fullWidth
+              />
+              <TextField
+                label="Cantitate minimă"
+                required
+                value={formState.minimumQuantity}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, minimumQuantity: event.target.value }))
+                }
+                disabled={submitting || isView}
+                error={Boolean(formErrors.minimumQuantity)}
+                helperText={formErrors.minimumQuantity ?? 'Sub acest prag, stocul apare ca redus.'}
+                slotProps={unitAdornment}
+                fullWidth
+              />
+            </Stack>
+
+            {formMode === 'edit' && selectedResource && (
+              <Alert
+                severity="info"
+                action={
+                  <Button color="inherit" size="small" onClick={openMovementsFromForm}>
+                    Mișcări
+                  </Button>
+                }
+              >
+                Pentru a corecta cantitatea, înregistrează o ajustare de inventar.
+              </Alert>
+            )}
 
             <TextField
               label="Notițe"
@@ -458,6 +563,18 @@ export default function ResourcesPage() {
           )}
         </DialogActions>
       </Dialog>
+
+      <StockMovementsDialog
+        open={Boolean(movementsResource)}
+        resource={movementsResource}
+        unit={
+          movementsResource
+            ? (resourceTypeById.get(movementsResource.resource_type_id)?.defaultUnit ?? '')
+            : ''
+        }
+        canUpdate={canWrite}
+        onClose={() => setMovementsResourceId(null)}
+      />
 
       <ModalConfirmAction
         open={deleteOpen}

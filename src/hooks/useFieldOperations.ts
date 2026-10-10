@@ -90,7 +90,7 @@ export function useCompleteFieldOperation() {
       fieldOperationsApi.complete(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FIELD_OPERATIONS_KEY })
-      queryClient.invalidateQueries({ queryKey: ['stocks'] })
+      queryClient.invalidateQueries({ queryKey: ['resources'] })
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-cards'] })

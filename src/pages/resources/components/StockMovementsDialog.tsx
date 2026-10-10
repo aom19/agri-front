@@ -20,7 +20,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import type { Stock } from '../../../api/resource.api'
+import type { Resource } from '../../../api/resource.api'
 import type { StockMovementType } from '../../../api/stockMovement.api'
 import { useCreateStockMovement, useStockMovements } from '../../../hooks/useStockMovements'
 import { useNotificationStore } from '../../../store/notification.store'
@@ -29,9 +29,8 @@ import { formatDateTime } from '../../../utils/dateFormat'
 
 type StockMovementsDialogProps = {
   open: boolean
-  stock: Stock | null
+  resource: Resource | null
   unit: string
-  resourceName: string
   canUpdate: boolean
   onClose: () => void
 }
@@ -54,19 +53,18 @@ function formatQuantity(value: number) {
 
 export default function StockMovementsDialog({
   open,
-  stock,
+  resource,
   unit,
-  resourceName,
   canUpdate,
   onClose,
 }: StockMovementsDialogProps) {
   const show = useNotificationStore((state) => state.show)
-  const stockId = stock ? Number(stock.id) : 0
+  const resourceId = resource?.id ?? 0
   const {
     data: movements,
     isPending,
     isError,
-  } = useStockMovements({ stock_id: stockId }, open && stockId > 0)
+  } = useStockMovements({ resource_id: resourceId }, open && resourceId > 0)
   const createMovement = useCreateStockMovement()
   const [type, setType] = useState<StockMovementType>('in')
   const [quantity, setQuantity] = useState('')
@@ -96,7 +94,7 @@ export default function StockMovementsDialog({
     setError(null)
     createMovement.mutate(
       {
-        stock_id: stockId,
+        resource_id: resourceId,
         movement_type: type,
         quantity: parsedQuantity,
         unit_cost: parsedCost,
@@ -121,11 +119,11 @@ export default function StockMovementsDialog({
         <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem', fontWeight: 700 }}>
           Mișcări de stoc
         </Typography>
-        <Typography sx={{ fontWeight: 900, fontSize: '1.3rem' }}>{resourceName}</Typography>
-        {stock && (
+        <Typography sx={{ fontWeight: 900, fontSize: '1.3rem' }}>{resource?.name}</Typography>
+        {resource && (
           <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
             Stoc curent:{' '}
-            {new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 3 }).format(stock.quantity)}{' '}
+            {new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 3 }).format(resource.quantity)}{' '}
             {unit}
           </Typography>
         )}
@@ -212,7 +210,7 @@ export default function StockMovementsDialog({
               <Typography
                 sx={{ color: 'text.secondary', fontSize: '0.85rem', py: 2, textAlign: 'center' }}
               >
-                Nu există mișcări înregistrate pentru acest stoc.
+                Nu există mișcări înregistrate pentru această resursă.
               </Typography>
             ) : (
               <Box sx={{ overflow: 'auto', maxHeight: 360 }}>

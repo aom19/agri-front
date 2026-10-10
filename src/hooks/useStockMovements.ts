@@ -27,7 +27,7 @@ export function useCreateStockMovement() {
     mutationFn: (payload: StockMovementPayload) => stockMovementsApi.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: STOCK_MOVEMENTS_KEY })
-      queryClient.invalidateQueries({ queryKey: ['stocks'] })
+      queryClient.invalidateQueries({ queryKey: ['resources'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
   })

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 import { DashboardPage } from '../../pages/dashboard'
 import { ProfilePage } from '../../pages/profile/ProfilePage'
 import SettingsPage from '../../pages/settings/SettingsPage'
@@ -11,7 +11,6 @@ import PageLoader from './PageLoader'
 
 const MachinesPage = lazy(() => import('../../pages/machines/MachinesPage'))
 const ResourcesPage = lazy(() => import('../../pages/resources/ResourcesPage'))
-const StocksPage = lazy(() => import('../../pages/stocks/StocksPage'))
 const ResourceTypesPage = lazy(() => import('../../pages/resource-types/ResourceTypesPage'))
 const ImplementsPage = lazy(() => import('../../pages/implements/ImplementsPage'))
 const FieldsPage = lazy(() => import('../../pages/fields/FieldsPage'))
@@ -96,16 +95,8 @@ const PrivateRoutes = () => {
             </RequirePermission>
           }
         />
-        <Route
-          path="/stocks"
-          element={
-            <RequirePermission permission="stock.view">
-              <Suspense fallback={<PageLoader />}>
-                <StocksPage />
-              </Suspense>
-            </RequirePermission>
-          }
-        />
+        {/* Stocurile sunt pe pagina resurselor (T12); vechiul link duce acolo. */}
+        <Route path="/stocks" element={<Navigate to="/resources" replace />} />
         <Route
           path="/admin/resource-types"
           element={

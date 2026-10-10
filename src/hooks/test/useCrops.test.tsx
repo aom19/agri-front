@@ -104,7 +104,6 @@ describe('useCrops', () => {
     expect(invalidatedKeys(invalidate)).toEqual([
       FIELD_CROPS_KEY,
       CROPS_KEY,
-      ['stocks'],
       ['stock-movements'],
       ['resources'],
       ['reports'],

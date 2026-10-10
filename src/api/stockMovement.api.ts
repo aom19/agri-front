@@ -4,7 +4,6 @@ export type StockMovementType = 'in' | 'out' | 'adjustment'
 
 export type StockMovement = {
   id: number
-  stock_id: number
   resource_id: number
   resource_name: string
   category: string
@@ -23,7 +22,6 @@ export type StockMovement = {
 }
 
 export type StockMovementFilter = {
-  stock_id?: number
   resource_id?: number
   field_operation_id?: number
   from?: string
@@ -32,7 +30,7 @@ export type StockMovementFilter = {
 }
 
 export type StockMovementPayload = {
-  stock_id: number
+  resource_id: number
   movement_type: StockMovementType
   quantity: number
   unit_cost?: number | null

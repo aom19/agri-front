@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { resourceApi, type ResourcePayload, type ResourceTypePayload } from '../api/resource.api'
+import {
+  resourceApi,
+  type ResourceCreatePayload,
+  type ResourcePayload,
+  type ResourceTypePayload,
+} from '../api/resource.api'
 import { useAuthStore } from '../store/auth.store'
 
 export const RESOURCES_KEY = ['resources']
@@ -13,7 +18,8 @@ export function useResources() {
     queryKey: RESOURCES_KEY,
     queryFn: resourceApi.getAllResources,
     enabled: initialized && !!accessToken,
-    staleTime: 5 * 60 * 1000,
+    // include stocul, care se schimbă la fiecare mișcare
+    staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })
 }
@@ -70,7 +76,7 @@ export function useCreateResource() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload: ResourcePayload) => resourceApi.createResource(payload),
+    mutationFn: (payload: ResourceCreatePayload) => resourceApi.createResource(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: RESOURCES_KEY }),
   })
 }

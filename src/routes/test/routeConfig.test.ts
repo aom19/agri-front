@@ -14,6 +14,7 @@ describe('routeConfig', () => {
     expect(findNavLabel('/')).toBe('Tablou de bord')
     expect(findNavLabel('/admin/users/5')).toBe('Utilizatori')
     expect(findNavLabel('/admin/resource-types')).toBe('Categorii de resurse')
+    expect(findNavLabel('/resources')).toBe('Resurse și stocuri')
     expect(findNavLabel('/weather-map')).toBe('Hartă meteo')
     expect(findNavLabel('/necunoscut')).toBeUndefined()
   })

@@ -1,5 +1,17 @@
 import { z } from 'zod'
 
+const nonNegativeNumber = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} este obligatorie.`)
+    .refine((value) => !Number.isNaN(Number(value)), {
+      message: `${label} trebuie să fie numerică.`,
+    })
+    .refine((value) => Number(value) >= 0, {
+      message: `${label} trebuie să fie mai mare sau egală cu 0.`,
+    })
+
 export const resourceFormSchema = z.object({
   name: z.string().trim().min(1, 'Numele resursei este obligatoriu.'),
   resourceTypeId: z.string().trim().min(1, 'Tipul resursei este obligatoriu.'),
@@ -13,6 +25,9 @@ export const resourceFormSchema = z.object({
     .refine((value) => Number(value) >= 0, {
       message: 'Prețul per unitate trebuie să fie >= 0.',
     }),
+  // Cantitatea se trimite doar la creare, ca stoc inițial; apoi se schimbă prin mișcări.
+  quantity: nonNegativeNumber('Cantitatea'),
+  minimumQuantity: nonNegativeNumber('Cantitatea minimă'),
   notes: z.string().trim(),
 })
 

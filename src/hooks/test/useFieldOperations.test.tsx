@@ -74,7 +74,7 @@ describe('useFieldOperations', () => {
     expect(fieldOperationsApi.complete).toHaveBeenCalledWith(1, { notes: 'gata' })
     expect(invalidatedKeys(completed.invalidate)).toEqual([
       FIELD_OPERATIONS_KEY,
-      ['stocks'],
+      ['resources'],
       ['stock-movements'],
       ['reports'],
       ['dashboard-cards'],

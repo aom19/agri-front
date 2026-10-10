@@ -137,7 +137,6 @@ export function useRecordHarvest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FIELD_CROPS_KEY })
       queryClient.invalidateQueries({ queryKey: CROPS_KEY })
-      queryClient.invalidateQueries({ queryKey: ['stocks'] })
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] })
       queryClient.invalidateQueries({ queryKey: ['resources'] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })

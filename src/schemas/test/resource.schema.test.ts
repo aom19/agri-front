@@ -5,10 +5,16 @@ import {
   resourceCategoryValues,
   resourceTypeFormSchema,
 } from '../resourceType.schema'
-import { stockFormSchema } from '../stock.schema'
 
 describe('resource.schema', () => {
-  const valid = { name: 'Motorină', resourceTypeId: '1', pricePerUnit: '7.5', notes: '' }
+  const valid = {
+    name: 'Motorină',
+    resourceTypeId: '1',
+    pricePerUnit: '7.5',
+    quantity: '10',
+    minimumQuantity: '0',
+    notes: '',
+  }
 
   it('validează resursa și prețul', () => {
     expect(resourceFormSchema.safeParse(valid).success).toBe(true)
@@ -34,26 +40,25 @@ describe('resourceType.schema', () => {
   })
 })
 
-describe('stock.schema', () => {
+describe('resource.schema – stocul', () => {
+  const valid = {
+    name: 'Motorină',
+    resourceTypeId: '1',
+    pricePerUnit: '7.5',
+    quantity: '10',
+    minimumQuantity: '0',
+    notes: '',
+  }
+
   it('validează cantitățile ca numere >= 0', () => {
-    expect(
-      stockFormSchema.safeParse({ resourceId: '1', quantity: '10', minimumQuantity: '0' }).success
-    ).toBe(true)
-    const result = stockFormSchema.safeParse({
-      resourceId: '',
-      quantity: 'x',
-      minimumQuantity: '-1',
-    })
+    const result = resourceFormSchema.safeParse({ ...valid, quantity: 'x', minimumQuantity: '-1' })
     expect(result.success).toBe(false)
     // zod raportează toate regulile eșuate ale unui câmp, nu doar prima
     expect(result.error!.issues.map((i) => i.message)).toEqual([
-      'Resursa este obligatorie.',
       'Cantitatea trebuie să fie numerică.',
       'Cantitatea trebuie să fie mai mare sau egală cu 0.',
       'Cantitatea minimă trebuie să fie mai mare sau egală cu 0.',
     ])
-    expect(
-      stockFormSchema.safeParse({ resourceId: '1', quantity: '', minimumQuantity: '0' }).success
-    ).toBe(false)
+    expect(resourceFormSchema.safeParse({ ...valid, quantity: '' }).success).toBe(false)
   })
 })

@@ -602,30 +602,6 @@ const cases: Case[] = [
     url: '/resource-types/1',
   },
   {
-    name: 'resource.getAllStocks',
-    call: () => resourceApi.getAllStocks(),
-    method: 'get',
-    url: '/stocks',
-  },
-  {
-    name: 'resource.createStock',
-    call: () => resourceApi.createStock(anyPayload),
-    method: 'post',
-    url: '/stocks',
-  },
-  {
-    name: 'resource.updateStock',
-    call: () => resourceApi.updateStock('1', anyPayload),
-    method: 'patch',
-    url: '/stocks/1',
-  },
-  {
-    name: 'resource.deleteStock',
-    call: () => resourceApi.deleteStock('1'),
-    method: 'delete',
-    url: '/stocks/1',
-  },
-  {
     name: 'resource.getAllResources',
     call: () => resourceApi.getAllResources(),
     method: 'get',
@@ -687,10 +663,10 @@ const cases: Case[] = [
 
   {
     name: 'stockMovements.list filtrează valorile goale',
-    call: () => stockMovementsApi.list({ stock_id: 1, from: '' }),
+    call: () => stockMovementsApi.list({ resource_id: 1, from: '' }),
     method: 'get',
     url: '/stock-movements',
-    args: [{ params: { stock_id: 1 } }],
+    args: [{ params: { resource_id: 1 } }],
   },
   {
     name: 'stockMovements.list fără filtru',
