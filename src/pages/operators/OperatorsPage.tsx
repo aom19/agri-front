@@ -53,8 +53,6 @@ export default function OperatorsPage() {
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('operators:write')
-  const canDelete = useHasPermission('operators:delete')
-  const canDisable = useHasPermission('operators:disable')
 
   const { data: operators, isPending } = useOperators()
   const createOperator = useCreateOperator()
@@ -223,8 +221,8 @@ export default function OperatorsPage() {
           operators={filteredOperators}
           isLoading={isPending}
           canWrite={canWrite}
-          canDelete={canDelete}
-          canDisable={canDisable}
+          canDelete={canWrite}
+          canDisable={canWrite}
           onView={openViewDialog}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}

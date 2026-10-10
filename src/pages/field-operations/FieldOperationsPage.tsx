@@ -13,7 +13,6 @@ export default function FieldOperationsPage() {
   const navigate = useNavigate()
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('field_operations:write')
-  const canDelete = useHasPermission('field_operations:delete')
 
   const { data: items, isPending } = useFieldOperations()
   const deleteMutation = useDeleteFieldOperation()
@@ -62,7 +61,7 @@ export default function FieldOperationsPage() {
           items={items ?? []}
           isLoading={isPending}
           canWrite={canWrite}
-          canDelete={canDelete}
+          canDelete={canWrite}
           onView={openView}
           onEdit={openEdit}
           onDelete={openDeleteDialog}

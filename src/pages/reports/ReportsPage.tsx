@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Box, Button, GlobalStyles, Stack, Tab, Tabs, Typography } from '@mui/material'
+import { Box, Button, GlobalStyles, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material'
 import {
   AgricultureOutlined,
   BuildOutlined,
@@ -8,11 +8,15 @@ import {
   LandscapeOutlined,
   PeopleOutlined,
   PrintOutlined,
+  SendOutlined,
   WarehouseOutlined,
   WbSunnyOutlined,
 } from '@mui/icons-material'
 import { useSearchParams } from 'react-router-dom'
 import type { ReportFilters as ReportFilterParams } from '../../api/reports.api'
+import { useEmailReportSummary } from '../../hooks/useReports'
+import { useNotificationStore } from '../../store/notification.store'
+import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import ReportFilters from './components/ReportFilters'
 import { defaultReportFilterState, type ReportFilterState } from './reportFilterState'
 import SummaryTab from './tabs/SummaryTab'
@@ -23,7 +27,6 @@ import OperatorsTab from './tabs/OperatorsTab'
 import StocksTab from './tabs/StocksTab'
 import CropsTab from './tabs/CropsTab'
 import WeatherTab from './tabs/WeatherTab'
-import ReportSubscriptionCard from './components/ReportSubscriptionCard'
 import { isOperationType } from '../../schemas/operation.schema'
 
 const TABS = [
@@ -60,6 +63,8 @@ function toNumberOrUndefined(value: string) {
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const defaults = useMemo(() => defaultReportFilterState(), [])
+  const show = useNotificationStore((state) => state.show)
+  const emailSummary = useEmailReportSummary()
 
   const tab: TabKey = isTabKey(searchParams.get('tab'))
     ? (searchParams.get('tab') as TabKey)
@@ -114,6 +119,17 @@ export default function ReportsPage() {
     )
   }
 
+  const sendSummaryByEmail = () => {
+    emailSummary.mutate(
+      { from: state.from, to: state.to },
+      {
+        onSuccess: (result) => show(result.message, 'success'),
+        onError: (error) =>
+          show(getApiErrorMessage(error, 'Nu am putut trimite raportul.'), 'error'),
+      }
+    )
+  }
+
   const filters: ReportFilterParams = useMemo(
     () => ({
       from: state.from,
@@ -160,15 +176,24 @@ export default function ReportsPage() {
             din datele fermei · {state.from} – {state.to}
           </Typography>
         </Box>
-        <Button
-          className="no-print"
-          variant="outlined"
-          startIcon={<PrintOutlined />}
-          onClick={() => window.print()}
-          sx={{ flexShrink: 0 }}
-        >
-          Export PDF
-        </Button>
+        <Stack className="no-print" direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+          <Tooltip
+            describeChild
+            title="Trimite pe e-mailul tău sumarul perioadei alese, fără celelalte filtre"
+          >
+            <Button
+              variant="outlined"
+              startIcon={<SendOutlined />}
+              onClick={sendSummaryByEmail}
+              disabled={emailSummary.isPending}
+            >
+              {emailSummary.isPending ? 'Se trimite...' : 'Trimite pe e-mail'}
+            </Button>
+          </Tooltip>
+          <Button variant="outlined" startIcon={<PrintOutlined />} onClick={() => window.print()}>
+            Export PDF
+          </Button>
+        </Stack>
       </Stack>
 
       <Box className="no-print">
@@ -206,10 +231,6 @@ export default function ReportsPage() {
       {tab === 'stocks' && <StocksTab filters={filters} />}
       {tab === 'crops' && <CropsTab filters={filters} />}
       {tab === 'weather' && <WeatherTab filters={filters} />}
-
-      <Box sx={{ mt: 2.5 }}>
-        <ReportSubscriptionCard />
-      </Box>
     </Box>
   )
 }

@@ -80,7 +80,6 @@ export default function MachinesPage() {
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('machines:write')
-  const canDelete = useHasPermission('machines:delete')
 
   const { data: machines, isPending } = useMachines()
   const createMachine = useCreateMachine()
@@ -247,7 +246,7 @@ export default function MachinesPage() {
           machines={filteredMachines}
           isLoading={isPending}
           canWrite={canWrite}
-          canDelete={canDelete}
+          canDelete={canWrite}
           onView={openViewDialog}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}

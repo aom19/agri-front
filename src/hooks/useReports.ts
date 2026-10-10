@@ -1,10 +1,5 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  reportsApi,
-  reportsExtraApi,
-  type ReportFilters,
-  type ReportSubscriptionPayload,
-} from '../api/reports.api'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
+import { reportsApi, reportsExtraApi, type ReportFilters } from '../api/reports.api'
 import { useAuthStore } from '../store/auth.store'
 
 export const REPORTS_KEY = ['reports']
@@ -61,36 +56,9 @@ export function useReportCrops(seasonId: number | undefined, fieldId: string | u
   })
 }
 
-export const REPORT_SUBSCRIPTION_KEY = ['report-subscription']
-
-export function useReportSubscription() {
-  const initialized = useAuthStore((s) => s.initialized)
-  const accessToken = useAuthStore((s) => s.accessToken)
-
-  return useQuery({
-    queryKey: [...REPORT_SUBSCRIPTION_KEY, accessToken],
-    queryFn: reportsExtraApi.getSubscription,
-    enabled: initialized && !!accessToken,
-    staleTime: 60 * 1000,
-  })
-}
-
-export function useSaveReportSubscription() {
-  const queryClient = useQueryClient()
+export function useEmailReportSummary() {
   return useMutation({
-    mutationFn: (payload: ReportSubscriptionPayload) => reportsExtraApi.saveSubscription(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: REPORT_SUBSCRIPTION_KEY }),
+    mutationFn: (period: Pick<ReportFilters, 'from' | 'to'>) =>
+      reportsExtraApi.emailSummary(period),
   })
-}
-
-export function useDeleteReportSubscription() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: () => reportsExtraApi.deleteSubscription(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: REPORT_SUBSCRIPTION_KEY }),
-  })
-}
-
-export function useSendReportNow() {
-  return useMutation({ mutationFn: () => reportsExtraApi.sendNow() })
 }

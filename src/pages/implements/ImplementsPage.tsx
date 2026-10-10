@@ -81,7 +81,6 @@ export default function ImplementsPage() {
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('implements:write')
-  const canDelete = useHasPermission('implements:delete')
 
   const { data: implementsData, isPending } = useImplements()
   const createImplement = useCreateImplement()
@@ -286,7 +285,7 @@ export default function ImplementsPage() {
           implementsData={filteredImplements}
           isLoading={isPending}
           canWrite={canWrite}
-          canDelete={canDelete}
+          canDelete={canWrite}
           onView={openViewDialog}
           onEdit={openEditDialog}
           onDelete={openDeleteDialog}

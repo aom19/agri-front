@@ -9,15 +9,7 @@ import {
   runMutation,
   setAuth,
 } from '../../test/utils'
-import {
-  ROLES_KEY,
-  useCreateRole,
-  useDeleteRole,
-  useRolePermissions,
-  useRoles,
-  useSetRolePermissions,
-  useUpdateRole,
-} from '../useRoles'
+import { useRolePermissions, useRoles } from '../useRoles'
 import {
   USERS_KEY,
   useCreateUser,
@@ -49,27 +41,6 @@ describe('useRoles', () => {
     expectQueryDisabled(() => useRolePermissions('1', false))
     setAuth(null)
     expectQueryDisabled(() => useRoles())
-  })
-
-  it('mutațiile invalidează rolurile, respectiv permisiunile rolului', async () => {
-    vi.mocked(rolesApi.create).mockResolvedValue(role)
-    vi.mocked(rolesApi.update).mockResolvedValue(role)
-    vi.mocked(rolesApi.delete).mockResolvedValue({} as AxiosResponse)
-    vi.mocked(rolesApi.setRolePermissions).mockResolvedValue({ message: 'ok' })
-    const payload = { code: 'admin', name: 'Admin' }
-    for (const run of [
-      await runMutation(() => useCreateRole(), payload),
-      await runMutation(() => useUpdateRole(), { id: '1', payload }),
-      await runMutation(() => useDeleteRole(), '1'),
-    ]) {
-      expect(invalidatedKeys(run.invalidate)).toEqual([ROLES_KEY])
-    }
-    const set = await runMutation(() => useSetRolePermissions(), {
-      id: '1',
-      payload: { permission_ids: [1] },
-    })
-    expect(rolesApi.setRolePermissions).toHaveBeenCalledWith('1', { permission_ids: [1] })
-    expect(invalidatedKeys(set.invalidate)).toEqual([['role-permissions', '1']])
   })
 })
 

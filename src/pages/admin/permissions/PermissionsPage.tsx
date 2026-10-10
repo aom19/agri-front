@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Box } from '@mui/material'
 import { useAllPermissions } from '../../../hooks/usePermissions'
-import { RequirePermission } from '../../../components/RequirePermission'
 import {
   PermissionModal,
   PermissionTable,
@@ -81,7 +80,7 @@ export default function PermissionsPage() {
   const activeFilterCount = Number(Boolean(filterName.trim()))
 
   return (
-    <RequirePermission permission="permissions:read">
+    <>
       <Box sx={{ p: { xs: 2, md: 4 } }}>
         <Box sx={{ mb: 2 }}>
           <PermissionsPageHeader
@@ -120,6 +119,6 @@ export default function PermissionsPage() {
       <PermissionModal open={detailsOpen} title="Detalii permisiune" onClose={closeDetails}>
         {selectedPermission && <SinglePermissionInfo selectedPermission={selectedPermission} />}
       </PermissionModal>
-    </RequirePermission>
+    </>
   )
 }

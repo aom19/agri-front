@@ -345,27 +345,6 @@ export type ReportWeather = {
   latest: WeatherSnapshot[]
 }
 
-export type ReportFrequency = 'daily' | 'weekly' | 'monthly'
-
-export type ReportSubscription = {
-  id: number
-  user_id: number
-  frequency: ReportFrequency
-  send_hour: number
-  weekday: number
-  is_active: boolean
-  last_sent_at?: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type ReportSubscriptionPayload = {
-  frequency: ReportFrequency
-  send_hour: number
-  weekday: number
-  is_active: boolean
-}
-
 export const reportsExtraApi = {
   getCrops: (seasonId?: number, fieldId?: string) =>
     api
@@ -374,13 +353,11 @@ export const reportsExtraApi = {
       })
       .then((r) => r.data),
   getWeather: fetchReport<ReportWeather>('weather'),
-  getSubscription: () =>
+  /** Trimite pe e-mailul utilizatorului curent sumarul perioadei from–to. */
+  emailSummary: (period: Pick<ReportFilters, 'from' | 'to'>) =>
     api
-      .get<ReportSubscription | ''>('/reports/subscription')
-      .then((r) => (r.status === 204 || !r.data ? null : (r.data as ReportSubscription))),
-  saveSubscription: (payload: ReportSubscriptionPayload) =>
-    api.put<ReportSubscription>('/reports/subscription', payload).then((r) => r.data),
-  deleteSubscription: () => api.delete('/reports/subscription').then((r) => r.data),
-  sendNow: () =>
-    api.post<{ message: string }>('/reports/subscription/send-now').then((r) => r.data),
+      .post<{ message: string }>('/reports/summary/email', null, {
+        params: { from: period.from, to: period.to },
+      })
+      .then((r) => r.data),
 }

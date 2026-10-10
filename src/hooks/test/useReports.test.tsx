@@ -8,31 +8,20 @@ import {
   type ReportOperations,
   type ReportOperators,
   type ReportStocks,
-  type ReportSubscription,
   type ReportSummary,
   type ReportWeather,
 } from '../../api/reports.api'
+import { expectQueryData, expectQueryDisabled, runMutation, setAuth } from '../../test/utils'
 import {
-  expectQueryData,
-  expectQueryDisabled,
-  invalidatedKeys,
-  runMutation,
-  setAuth,
-} from '../../test/utils'
-import {
-  REPORT_SUBSCRIPTION_KEY,
-  useDeleteReportSubscription,
+  useEmailReportSummary,
   useReportCrops,
   useReportFields,
   useReportFleet,
   useReportOperations,
   useReportOperators,
   useReportStocks,
-  useReportSubscription,
   useReportSummary,
   useReportWeather,
-  useSaveReportSubscription,
-  useSendReportNow,
 } from '../useReports'
 
 vi.mock('../../api/reports.api')
@@ -78,24 +67,13 @@ describe('useReports', () => {
     setAuth(null)
     expectQueryDisabled(() => useReportSummary(filters))
     expectQueryDisabled(() => useReportCrops(undefined, undefined))
-    expectQueryDisabled(() => useReportSubscription())
   })
 
-  it('gestionează abonamentul la raport', async () => {
-    const subscription = { id: 1, frequency: 'daily' } as ReportSubscription
-    vi.mocked(reportsExtraApi.getSubscription).mockResolvedValue(subscription)
-    vi.mocked(reportsExtraApi.saveSubscription).mockResolvedValue(subscription)
-    vi.mocked(reportsExtraApi.deleteSubscription).mockResolvedValue(undefined)
-    vi.mocked(reportsExtraApi.sendNow).mockResolvedValue({ message: 'trimis' })
+  it('trimite sumarul perioadei pe e-mail', async () => {
+    vi.mocked(reportsExtraApi.emailSummary).mockResolvedValue({ message: 'trimis' })
 
-    await expectQueryData(() => useReportSubscription(), subscription)
-    const payload = { frequency: 'daily' as const, send_hour: 7, weekday: 1, is_active: true }
-    const saved = await runMutation(() => useSaveReportSubscription(), payload)
-    expect(reportsExtraApi.saveSubscription).toHaveBeenCalledWith(payload)
-    expect(invalidatedKeys(saved.invalidate)).toEqual([REPORT_SUBSCRIPTION_KEY])
-    const deleted = await runMutation(() => useDeleteReportSubscription(), undefined)
-    expect(invalidatedKeys(deleted.invalidate)).toEqual([REPORT_SUBSCRIPTION_KEY])
-    const sent = await runMutation(() => useSendReportNow(), undefined)
+    const sent = await runMutation(() => useEmailReportSummary(), filters)
+    expect(reportsExtraApi.emailSummary).toHaveBeenCalledWith(filters)
     expect(sent.data).toEqual({ message: 'trimis' })
   })
 })

@@ -39,7 +39,7 @@ describe('FieldOperationDetailPage – pornirea lucrării', { timeout: 20000 }, 
     vi.clearAllMocks()
     setAuth()
     vi.mocked(permissionsApi.getMyPermissions).mockResolvedValue(
-      permissions('field_operations:read', 'field_operations:start')
+      permissions('field_operations:read', 'field_operations:execute')
     )
     vi.mocked(fieldOperationsApi.start).mockResolvedValue({ ...planned, status: 'in_progress' })
   })

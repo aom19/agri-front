@@ -109,7 +109,6 @@ export default function ResourcesPage() {
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('resources:write')
-  const canDelete = useHasPermission('resources:delete')
 
   const { data: resourcesData, isPending: resourcesLoading } = useResources()
   const { data: resourceTypesData, isPending: resourceTypesLoading } = useResourceTypes()
@@ -396,7 +395,7 @@ export default function ResourcesPage() {
                           </Tooltip>
                         )}
 
-                        {canDelete && (
+                        {canWrite && (
                           <Tooltip title="Șterge resursa">
                             <IconButton
                               size="small"

@@ -1,9 +1,4 @@
-import {
-  DeleteOutlined,
-  EditOutlined,
-  SecurityOutlined,
-  VisibilityOutlined,
-} from '@mui/icons-material'
+import { VisibilityOutlined } from '@mui/icons-material'
 import {
   Box,
   Card,
@@ -22,24 +17,10 @@ import type { Role } from '../../../../api/roles.api'
 type RolesTableProps = {
   roles: Role[]
   isLoading: boolean
-  canWrite: boolean
-  canDelete: boolean
   onView: (role: Role) => void
-  onManagePermissions: (role: Role) => void
-  onEdit: (role: Role) => void
-  onDelete: (role: Role) => void
 }
 
-export default function RolesTable({
-  roles,
-  isLoading,
-  canWrite,
-  canDelete,
-  onView,
-  onManagePermissions,
-  onEdit,
-  onDelete,
-}: RolesTableProps) {
+export default function RolesTable({ roles, isLoading, onView }: RolesTableProps) {
   return (
     <Card>
       <CardContent>
@@ -61,70 +42,24 @@ export default function RolesTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {roles.map((role) => {
-              const adminRole = role.code.toLowerCase() === 'admin'
-
-              return (
-                <TableRow key={role.id} hover>
-                  <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                    {role.code}
-                  </TableCell>
-                  <TableCell>{role.name}</TableCell>
-                  <TableCell sx={{ color: 'text.secondary' }}>{role.description || '—'}</TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Vezi detalii rol">
-                      <IconButton
-                        size="small"
-                        onClick={() => onView(role)}
-                        aria-label="Vezi detalii rol"
-                      >
-                        <VisibilityOutlined fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    {canWrite && (
-                      <Tooltip title="Gestionează permisiuni rol">
-                        <IconButton
-                          size="small"
-                          onClick={() => onManagePermissions(role)}
-                          aria-label="Gestionează permisiuni rol"
-                        >
-                          <SecurityOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-
-                    {canWrite && (
-                      <Tooltip title="Editează rol">
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(role)}
-                          aria-label="Editează rol"
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-
-                    {canDelete && (
-                      <Tooltip title={adminRole ? 'Rolul admin nu poate fi șters.' : 'Șterge rol'}>
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => onDelete(role)}
-                            aria-label="Șterge rol"
-                            disabled={adminRole}
-                          >
-                            <DeleteOutlined fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+            {roles.map((role) => (
+              <TableRow key={role.id} hover>
+                <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>{role.code}</TableCell>
+                <TableCell>{role.name}</TableCell>
+                <TableCell sx={{ color: 'text.secondary' }}>{role.description || '—'}</TableCell>
+                <TableCell align="right">
+                  <Tooltip title="Vezi permisiunile rolului">
+                    <IconButton
+                      size="small"
+                      onClick={() => onView(role)}
+                      aria-label="Vezi permisiunile rolului"
+                    >
+                      <VisibilityOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
 
             {roles.length === 0 && !isLoading && (
               <TableRow>

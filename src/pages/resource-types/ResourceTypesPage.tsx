@@ -84,7 +84,6 @@ export default function ResourceTypesPage() {
 
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('resources:write')
-  const canDelete = useHasPermission('resources:delete')
 
   const { data: resourceTypesData, isPending } = useResourceTypes()
   const createResourceType = useCreateResourceType()
@@ -308,7 +307,7 @@ export default function ResourceTypesPage() {
                           </IconButton>
                         </Tooltip>
                       )}
-                      {canDelete && (
+                      {canWrite && (
                         <Tooltip title="Șterge categoria">
                           <IconButton
                             size="small"

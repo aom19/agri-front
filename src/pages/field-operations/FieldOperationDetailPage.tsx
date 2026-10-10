@@ -268,8 +268,8 @@ export default function FieldOperationDetailPage() {
   const navigate = useNavigate()
   const { show } = useNotificationStore()
   const canWrite = useHasPermission('field_operations:write')
-  const canComplete = useHasPermission('field_operations:complete')
-  const canStart = useHasPermission('field_operations:start')
+  // pornirea și finalizarea țin de aceeași permisiune: operatorul execută lucrarea, nu o planifică
+  const canExecute = useHasPermission('field_operations:execute')
   const id = params.id ? Number(params.id) : null
   const { data: operation, isPending, isError } = useFieldOperation(Number.isFinite(id) ? id : null)
   const startOperation = useStartFieldOperation()
@@ -313,7 +313,7 @@ export default function FieldOperationDetailPage() {
   const startBlocked = resourceIssues.length > 0
   const operationPlanned = operation?.status === 'planned'
   const operationStarted = operation?.status === 'in_progress'
-  const showActions = (operationPlanned || operationStarted) && (canStart || canComplete)
+  const showActions = (operationPlanned || operationStarted) && canExecute
 
   const openResourceDialog = (resource: ResourceDialogData) => {
     setSelectedResource(resource)
@@ -744,7 +744,7 @@ export default function FieldOperationDetailPage() {
                   </Box>
                 </Box>
               )}
-              {operationPlanned && canStart && (
+              {operationPlanned && canExecute && (
                 <>
                   <FormControlLabel
                     control={
@@ -773,7 +773,7 @@ export default function FieldOperationDetailPage() {
                   </Button>
                 </>
               )}
-              {canComplete && (
+              {canExecute && (
                 <Button
                   fullWidth
                   variant="outlined"

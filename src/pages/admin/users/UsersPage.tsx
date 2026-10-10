@@ -45,8 +45,6 @@ export default function UsersPage() {
 
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('users:write')
-  const canDisable = useHasPermission('users:disable')
-  const canEnable = useHasPermission('users:enable')
 
   const { data: users, isPending } = useUsers()
   const { data: roles } = useRoles()
@@ -247,8 +245,8 @@ export default function UsersPage() {
           users={filteredUsers}
           isLoading={isPending}
           canWrite={canWrite}
-          canDisable={canDisable}
-          canEnable={canEnable}
+          canDisable={canWrite}
+          canEnable={canWrite}
           sendingResetForUserId={sendingResetForUserId}
           onView={openViewDialog}
           onResetEmail={handleSendResetEmail}

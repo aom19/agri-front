@@ -553,28 +553,11 @@ const cases: Case[] = [
     args: [{ params: { season_id: undefined, field_id: undefined } }],
   },
   {
-    name: 'reportsExtra.getSubscription',
-    call: () => reportsExtraApi.getSubscription(),
-    method: 'get',
-    url: '/reports/subscription',
-  },
-  {
-    name: 'reportsExtra.saveSubscription',
-    call: () => reportsExtraApi.saveSubscription(anyPayload),
-    method: 'put',
-    url: '/reports/subscription',
-  },
-  {
-    name: 'reportsExtra.deleteSubscription',
-    call: () => reportsExtraApi.deleteSubscription(),
-    method: 'delete',
-    url: '/reports/subscription',
-  },
-  {
-    name: 'reportsExtra.sendNow',
-    call: () => reportsExtraApi.sendNow(),
+    name: 'reportsExtra.emailSummary',
+    call: () => reportsExtraApi.emailSummary({ from: '2026-01-01', to: '2026-01-31' }),
     method: 'post',
-    url: '/reports/subscription/send-now',
+    url: '/reports/summary/email',
+    args: [null, { params: { from: '2026-01-01', to: '2026-01-31' } }],
   },
 
   {
@@ -633,32 +616,11 @@ const cases: Case[] = [
   },
 
   { name: 'roles.getAll', call: () => rolesApi.getAll(), method: 'get', url: '/roles' },
-  { name: 'roles.create', call: () => rolesApi.create(anyPayload), method: 'post', url: '/roles' },
-  {
-    name: 'roles.update',
-    call: () => rolesApi.update('1', anyPayload),
-    method: 'patch',
-    url: '/roles/1',
-  },
-  {
-    name: 'roles.delete',
-    call: () => rolesApi.delete('1'),
-    method: 'delete',
-    url: '/roles/1',
-    expected: { data: DATA, status: 200 },
-  },
   {
     name: 'roles.getRolePermissions',
     call: () => rolesApi.getRolePermissions('1'),
     method: 'get',
     url: '/roles/1/permissions',
-  },
-  {
-    name: 'roles.setRolePermissions',
-    call: () => rolesApi.setRolePermissions('1', { permission_ids: [1] }),
-    method: 'put',
-    url: '/roles/1/permissions',
-    args: [{ permission_ids: [1] }],
   },
 
   {
@@ -748,13 +710,6 @@ describe('wrapperele API', () => {
     expect(url).toBe('/profile/photo')
     expect((form as FormData).get('photo')).toBe(file)
     expect(options).toEqual({ headers: { 'Content-Type': 'multipart/form-data' } })
-  })
-
-  it('reportsExtra.getSubscription întoarce null când nu există abonament', async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: '', status: 204 } as AxiosResponse)
-    expect(await reportsExtraApi.getSubscription()).toBeNull()
-    vi.mocked(api.get).mockResolvedValue({ data: { id: 1 }, status: 200 } as AxiosResponse)
-    expect(await reportsExtraApi.getSubscription()).toEqual({ id: 1 })
   })
 
   it('reportsExtra.getCrops trimite filtrele setate', async () => {

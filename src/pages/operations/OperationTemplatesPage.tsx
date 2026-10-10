@@ -115,7 +115,6 @@ export default function OperationTemplatesPage() {
 
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('operations:write')
-  const canDelete = useHasPermission('operations:delete')
 
   const { data: templates, isPending: templatesLoading } = useOperationTemplates()
   const { data: resources } = useResources()
@@ -414,7 +413,7 @@ export default function OperationTemplatesPage() {
                           </IconButton>
                         </Tooltip>
                       )}
-                      {canDelete && (
+                      {canWrite && (
                         <Tooltip title="Șterge">
                           <IconButton
                             size="small"

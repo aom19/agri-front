@@ -179,7 +179,7 @@ export const navConfig: NavSection[] = [
             label: 'Permisiuni',
             path: '/admin/permissions',
             icon: VpnKeyOutlined,
-            permission: 'permissions:read',
+            permission: 'roles:read',
           },
           {
             type: 'leaf',

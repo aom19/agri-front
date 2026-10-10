@@ -43,7 +43,7 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     vi.clearAllMocks()
     setAuth()
     vi.mocked(permissionsApi.getMyPermissions).mockResolvedValue(
-      permissions('resources:read', 'resources:write', 'resources:delete')
+      permissions('resources:read', 'resources:write')
     )
     vi.mocked(resourceApi.getAllResources).mockResolvedValue([diesel, harvest])
     vi.mocked(resourceApi.getAllResourceTypes).mockResolvedValue([fuel])
