@@ -45,15 +45,17 @@ import {
   useCreateOperationTemplate,
   useDeleteOperationTemplate,
   useOperationTemplates,
-  useOperationTypes,
   useUpdateOperationTemplate,
 } from '../../hooks/useOperations'
 import { useResources } from '../../hooks/useResources'
 import { useCrops } from '../../hooks/useCrops'
 import {
   operationTemplateFormSchema,
+  operationTypeLabel,
+  operationTypeOptions,
   type OperationTemplateFormErrors,
   type OperationTemplateFormValues,
+  type OperationTypeValue,
 } from '../../schemas/operation.schema'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
@@ -84,7 +86,7 @@ const implementTypeOptions = [
 
 const initialFormState: OperationTemplateFormValues = {
   name: '',
-  operationTypeId: '',
+  operationType: '',
   unit: 'ha',
   description: '',
   cropId: '',
@@ -116,7 +118,6 @@ export default function OperationTemplatesPage() {
   const canDelete = useHasPermission('operations:delete')
 
   const { data: templates, isPending: templatesLoading } = useOperationTemplates()
-  const { data: operationTypes, isPending: typesLoading } = useOperationTypes()
   const { data: resources } = useResources()
   const { data: crops } = useCrops()
 
@@ -125,20 +126,14 @@ export default function OperationTemplatesPage() {
   const deleteMutation = useDeleteOperationTemplate()
 
   const submitting = createMutation.isPending || updateMutation.isPending
-  const isPending = templatesLoading || typesLoading
-
-  const operationTypeById = useMemo(() => {
-    const map = new Map<number, string>()
-    for (const ot of operationTypes ?? []) map.set(ot.id, ot.name)
-    return map
-  }, [operationTypes])
+  const isPending = templatesLoading
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return [...(templates ?? [])]
       .filter((t) => {
         if (!q) return true
-        const typeName = operationTypeById.get(t.operation_type_id) ?? ''
+        const typeName = operationTypeLabel(t.operation_type)
         return (
           t.name.toLowerCase().includes(q) ||
           typeName.toLowerCase().includes(q) ||
@@ -146,7 +141,7 @@ export default function OperationTemplatesPage() {
         )
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [templates, search, operationTypeById])
+  }, [templates, search])
 
   const openCreate = () => {
     setSelected(null)
@@ -164,7 +159,7 @@ export default function OperationTemplatesPage() {
     setFormMode(mode)
     setFormState({
       name: item.name,
-      operationTypeId: String(item.operation_type_id),
+      operationType: item.operation_type,
       unit: item.unit,
       description: item.description,
       cropId: item.crop_id ? String(item.crop_id) : '',
@@ -237,8 +232,7 @@ export default function OperationTemplatesPage() {
       const fieldErrors = validation.error.flatten().fieldErrors
       const nextErrors: OperationTemplateFormErrors = {}
       if (fieldErrors.name?.[0]) nextErrors.name = fieldErrors.name[0]
-      if (fieldErrors.operationTypeId?.[0])
-        nextErrors.operationTypeId = fieldErrors.operationTypeId[0]
+      if (fieldErrors.operationType?.[0]) nextErrors.operationType = fieldErrors.operationType[0]
       if (fieldErrors.unit?.[0]) nextErrors.unit = fieldErrors.unit[0]
       if (fieldErrors.description?.[0]) nextErrors.description = fieldErrors.description[0]
       setFormErrors(nextErrors)
@@ -257,7 +251,7 @@ export default function OperationTemplatesPage() {
       }))
 
     const payload = {
-      operation_type_id: Number(validation.data.operationTypeId),
+      operation_type: validation.data.operationType,
       name: validation.data.name,
       description: validation.data.description,
       unit: validation.data.unit,
@@ -373,11 +367,7 @@ export default function OperationTemplatesPage() {
                 {filtered.map((item) => (
                   <TableRow key={item.id} hover>
                     <TableCell>{item.name}</TableCell>
-                    <TableCell>
-                      {item.operation_type?.name ??
-                        operationTypeById.get(item.operation_type_id) ??
-                        '—'}
-                    </TableCell>
+                    <TableCell>{operationTypeLabel(item.operation_type) || '—'}</TableCell>
                     <TableCell>{item.unit}</TableCell>
                     <TableCell>
                       {item.crop_name ? (
@@ -477,23 +467,28 @@ export default function OperationTemplatesPage() {
             />
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <FormControl fullWidth error={Boolean(formErrors.operationTypeId)}>
+              <FormControl fullWidth error={Boolean(formErrors.operationType)}>
                 <InputLabel id="op-type-label">Tip operațiune *</InputLabel>
                 <Select
                   labelId="op-type-label"
                   label="Tip operațiune *"
-                  value={formState.operationTypeId}
-                  onChange={(e) => setFormState((p) => ({ ...p, operationTypeId: e.target.value }))}
+                  value={formState.operationType}
+                  onChange={(e) =>
+                    setFormState((p) => ({
+                      ...p,
+                      operationType: e.target.value as OperationTypeValue,
+                    }))
+                  }
                   disabled={submitting || isView}
                 >
-                  {(operationTypes ?? []).map((ot) => (
-                    <MenuItem key={ot.id} value={String(ot.id)}>
-                      {ot.name}
+                  {operationTypeOptions.map((ot) => (
+                    <MenuItem key={ot.value} value={ot.value}>
+                      {ot.label}
                     </MenuItem>
                   ))}
                 </Select>
-                {formErrors.operationTypeId && (
-                  <FormHelperText>{formErrors.operationTypeId}</FormHelperText>
+                {formErrors.operationType && (
+                  <FormHelperText>{formErrors.operationType}</FormHelperText>
                 )}
               </FormControl>
 

@@ -4,7 +4,7 @@ export type ReportFilterState = {
   from: string
   to: string
   fieldId: string
-  operationTypeId: string
+  operationType: string
   machineId: string
   operatorId: string
 }
@@ -38,5 +38,5 @@ export const REPORT_PRESETS: ReportPreset[] = [
 
 export function defaultReportFilterState(): ReportFilterState {
   const { from, to } = lastDays(30)
-  return { from, to, fieldId: '', operationTypeId: '', machineId: '', operatorId: '' }
+  return { from, to, fieldId: '', operationType: '', machineId: '', operatorId: '' }
 }

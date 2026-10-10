@@ -1,8 +1,10 @@
 import type { FieldOperation, FieldOperationPayload } from '../../api/fieldOperation.api'
+import type { OperationTypeValue } from '../../schemas/operation.schema'
 
 export type FieldOperationFormState = {
   field_id: string
-  operation_type_id: string
+  // filtrează template-urile; cu template ales, tipul operațiunii este al template-ului
+  operation_type: OperationTypeValue | ''
   operation_template_id: string
   machine_id: string
   implement_id: string
@@ -20,7 +22,7 @@ export type FieldOperationFormMode = 'create' | 'edit' | 'view'
 
 export const initialFieldOperationFormState: FieldOperationFormState = {
   field_id: '',
-  operation_type_id: '',
+  operation_type: '',
   operation_template_id: '',
   machine_id: '',
   implement_id: '',
@@ -49,7 +51,7 @@ export function toIsoOrNull(value: string): string | null {
 export function fieldOperationToFormState(item: FieldOperation): FieldOperationFormState {
   return {
     field_id: item.field_id,
-    operation_type_id: String(item.operation_type_id),
+    operation_type: item.operation_type,
     operation_template_id: item.operation_template_id ? String(item.operation_template_id) : '',
     machine_id: item.machine_id ? String(item.machine_id) : '',
     implement_id: item.implement_id ? String(item.implement_id) : '',
@@ -65,7 +67,7 @@ export function fieldOperationToFormState(item: FieldOperation): FieldOperationF
 export function formStateToPayload(state: FieldOperationFormState): FieldOperationPayload {
   return {
     field_id: state.field_id,
-    operation_type_id: Number(state.operation_type_id),
+    operation_type: state.operation_template_id ? null : state.operation_type || null,
     operation_template_id: state.operation_template_id ? Number(state.operation_template_id) : null,
     machine_id: state.machine_id ? Number(state.machine_id) : null,
     implement_id: state.implement_id ? Number(state.implement_id) : null,
@@ -81,7 +83,7 @@ export function formStateToPayload(state: FieldOperationFormState): FieldOperati
 export function validateFieldOperation(state: FieldOperationFormState): FieldOperationFormErrors {
   const errors: FieldOperationFormErrors = {}
   if (!state.field_id) errors.field_id = 'Alege terenul.'
-  if (!state.operation_type_id) errors.operation_type_id = 'Alege tipul operațiunii.'
+  if (!state.operation_type) errors.operation_type = 'Alege tipul operațiunii.'
   if (state.area_planned_ha && Number(state.area_planned_ha) < 0) {
     errors.area_planned_ha = 'Suprafața nu poate fi negativă.'
   }

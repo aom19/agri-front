@@ -1,13 +1,5 @@
 import { api } from './axios'
-
-export type OperationType = {
-  id: number
-  code: string
-  name: string
-  description: string
-  created_at: string
-  updated_at: string
-}
+import type { OperationTypeValue } from '../schemas/operation.schema'
 
 export type TemplateResource = {
   id: number
@@ -30,7 +22,7 @@ export type TemplateResource = {
 
 export type OperationTemplate = {
   id: number
-  operation_type_id: number
+  operation_type: OperationTypeValue
   name: string
   description: string
   unit: string
@@ -38,16 +30,9 @@ export type OperationTemplate = {
   crop_name?: string | null
   created_at: string
   updated_at: string
-  operation_type?: OperationType
   resources?: TemplateResource[]
   machine_types?: string[]
   implement_types?: string[]
-}
-
-export type OperationTypePayload = {
-  code: string
-  name: string
-  description: string
 }
 
 export type TemplateResourcePayload = {
@@ -57,7 +42,7 @@ export type TemplateResourcePayload = {
 }
 
 export type OperationTemplatePayload = {
-  operation_type_id: number
+  operation_type: OperationTypeValue
   name: string
   description: string
   unit: string
@@ -68,27 +53,10 @@ export type OperationTemplatePayload = {
 }
 
 export const operationApi = {
-  // Operation Types
-  getAllTypes: () => api.get<OperationType[]>('/operation-types').then((r) => r.data),
-
-  getTypeById: (id: number) => api.get<OperationType>(`/operation-types/${id}`).then((r) => r.data),
-
-  createType: (payload: OperationTypePayload) =>
-    api.post<OperationType>('/operation-types', payload).then((r) => r.data),
-
-  updateType: (id: number, payload: OperationTypePayload) =>
-    api.patch<OperationType>(`/operation-types/${id}`, payload).then((r) => r.data),
-
-  deleteType: (id: number) => api.delete(`/operation-types/${id}`).then((r) => r.data),
-
-  // Operation Templates
   getAllTemplates: () => api.get<OperationTemplate[]>('/operation-templates').then((r) => r.data),
 
   getTemplateById: (id: number) =>
     api.get<OperationTemplate>(`/operation-templates/${id}`).then((r) => r.data),
-
-  getTemplatesByType: (typeId: number) =>
-    api.get<OperationTemplate[]>(`/operation-types/${typeId}/templates`).then((r) => r.data),
 
   createTemplate: (payload: OperationTemplatePayload) =>
     api.post<OperationTemplate>('/operation-templates', payload).then((r) => r.data),

@@ -1,12 +1,13 @@
 import { api } from './axios'
 import type { GeoJSONPolygon } from './fields.api'
 import type { FieldCrop, Season } from './crops.api'
+import type { OperationTypeValue } from '../schemas/operation.schema'
 
 export type ReportFilters = {
   from?: string
   to?: string
   field_id?: string
-  operation_type_id?: number
+  operation_type?: OperationTypeValue
   machine_id?: number
   operator_id?: number
 }
@@ -76,7 +77,7 @@ export type ReportNamedCount = { key: string; count: number }
 export type ReportNamedValue = { key: string; value: number }
 
 export type ReportOperationTypeStat = {
-  operation_type_id: number
+  operation_type: OperationTypeValue
   operation_type_name: string
   total: number
   completed: number

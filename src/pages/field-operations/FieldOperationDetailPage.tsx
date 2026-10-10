@@ -490,7 +490,7 @@ export default function FieldOperationDetailPage() {
                   label: 'Tip lucrare',
                   title: operation.operation_type_name,
                   details: [
-                    { label: 'Cod', value: operation.operation_type_code },
+                    { label: 'Cod', value: operation.operation_type },
                     {
                       label: 'Template',
                       value: operation.operation_template_name ?? 'Fără template',

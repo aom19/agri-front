@@ -12,7 +12,6 @@ import {
   PeopleOutlined,
   WarehouseOutlined,
   TuneOutlined,
-  CategoryOutlined,
   AccountTreeOutlined,
   Inventory2Outlined,
   LabelOutlined,
@@ -141,13 +140,6 @@ export const navConfig: NavSection[] = [
         label: 'Nomenclatoare',
         icon: TuneOutlined,
         children: [
-          {
-            type: 'leaf',
-            label: 'Tipuri operațiuni',
-            path: '/operation-types',
-            icon: CategoryOutlined,
-            permission: 'operations:read',
-          },
           {
             type: 'leaf',
             label: 'Template-uri',

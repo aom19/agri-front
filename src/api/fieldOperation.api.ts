@@ -1,5 +1,6 @@
 import { api } from './axios'
 import type { GeoJSONPolygon } from './fields.api'
+import type { OperationTypeValue } from '../schemas/operation.schema'
 
 export const FIELD_OPERATION_STATUSES = ['planned', 'in_progress', 'completed', 'canceled'] as const
 export type FieldOperationStatus = (typeof FIELD_OPERATION_STATUSES)[number]
@@ -9,8 +10,8 @@ export type FieldOperation = {
   field_id: string
   field_name: string
   field_geometry?: GeoJSONPolygon | null
-  operation_type_id: number
-  operation_type_code: string
+  // tipul efectiv: al template-ului, sau tipul propriu când operațiunea nu are template
+  operation_type: OperationTypeValue
   operation_type_name: string
   operation_template_id?: number | null
   operation_template_name?: string | null
@@ -96,7 +97,8 @@ export type FieldOperationCompletionResult = {
 
 export type FieldOperationPayload = {
   field_id: string
-  operation_type_id: number
+  // cu template, tipul vine din el; dacă e trimis, trebuie să fie același
+  operation_type?: OperationTypeValue | null
   operation_template_id?: number | null
   machine_id?: number | null
   implement_id?: number | null
@@ -112,7 +114,7 @@ export type FieldOperationPayload = {
 export type FieldOperationsFilter = {
   status?: FieldOperationStatus
   field_id?: string
-  operation_type_id?: number
+  operation_type?: OperationTypeValue
   machine_id?: number
   operator_id?: number
 }

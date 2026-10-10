@@ -26,7 +26,7 @@ import {
 vi.mock('../../api/fieldOperation.api')
 
 const operation = { id: 1, status: 'planned' } as FieldOperation
-const payload = { field_id: 'f1', operation_type_id: 1 } as FieldOperationPayload
+const payload = { field_id: 'f1', operation_type: 'seeding' } as FieldOperationPayload
 
 describe('useFieldOperations', () => {
   beforeEach(() => {

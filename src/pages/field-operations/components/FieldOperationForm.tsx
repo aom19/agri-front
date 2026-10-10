@@ -9,7 +9,8 @@ import type { Field } from '../../../api/fields.api'
 import type { Machine } from '../../../api/machine.api'
 import type { Implement } from '../../../api/implement.api'
 import type { Operator } from '../../../api/operator.api'
-import type { OperationTemplate, OperationType } from '../../../api/operation.api'
+import type { OperationTemplate } from '../../../api/operation.api'
+import { operationTypeOptions, type OperationTypeValue } from '../../../schemas/operation.schema'
 import type { FieldCrop } from '../../../api/crops.api'
 import {
   FIELD_OPERATION_STATUSES,
@@ -26,7 +27,6 @@ type Props = {
   state: FieldOperationFormState
   errors: FieldOperationFormErrors
   fields: Field[]
-  operationTypes: OperationType[]
   operationTemplates: OperationTemplate[]
   machines: Machine[]
   implementItems: Implement[]
@@ -47,7 +47,6 @@ export default function FieldOperationForm({
   state,
   errors,
   fields,
-  operationTypes,
   operationTemplates,
   machines,
   implementItems,
@@ -81,10 +80,8 @@ export default function FieldOperationForm({
     )
   }, [fieldCrops, state.field_id, state.planned_start_at])
   const templateOptions = useMemo(() => {
-    if (!state.operation_type_id) return []
-    const forType = operationTemplates.filter(
-      (t) => String(t.operation_type_id) === state.operation_type_id
-    )
+    if (!state.operation_type) return []
+    const forType = operationTemplates.filter((t) => t.operation_type === state.operation_type)
     const rank = (t: OperationTemplate) => {
       if (!t.crop_id) return 1
       if (detectedCrop && t.crop_id === detectedCrop.crop_id) return 0
@@ -102,7 +99,7 @@ export default function FieldOperationForm({
               : '',
       }))
       .sort((a, b) => a.rank - b.rank || a.template.name.localeCompare(b.template.name, 'ro'))
-  }, [operationTemplates, state.operation_type_id, detectedCrop])
+  }, [operationTemplates, state.operation_type, detectedCrop])
 
   const filteredMachines = useMemo(() => {
     if (!selectedTemplate?.machine_types || selectedTemplate.machine_types.length === 0) {
@@ -138,10 +135,10 @@ export default function FieldOperationForm({
     })
   }
 
-  const handleOperationTypeChange = (value: string) => {
+  const handleOperationTypeChange = (value: OperationTypeValue) => {
     onChange({
       ...state,
-      operation_type_id: value,
+      operation_type: value,
       operation_template_id: '',
       machine_id: '',
       implement_id: '',
@@ -195,15 +192,15 @@ export default function FieldOperationForm({
             fullWidth
             required
             label="Tip operațiune"
-            value={state.operation_type_id}
-            onChange={(e) => handleOperationTypeChange(e.target.value)}
-            error={!!errors.operation_type_id}
-            helperText={errors.operation_type_id}
+            value={state.operation_type}
+            onChange={(e) => handleOperationTypeChange(e.target.value as OperationTypeValue)}
+            error={!!errors.operation_type}
+            helperText={errors.operation_type}
             disabled={readOnly}
           >
-            {operationTypes.map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.name}
+            {operationTypeOptions.map((t) => (
+              <MenuItem key={t.value} value={t.value}>
+                {t.label}
               </MenuItem>
             ))}
           </TextField>
@@ -217,11 +214,11 @@ export default function FieldOperationForm({
             value={state.operation_template_id}
             onChange={(e) => handleTemplateChange(e.target.value)}
             helperText={
-              !state.operation_type_id
+              !state.operation_type
                 ? 'Alege întâi tipul operațiunii'
                 : 'Lasă gol pentru operațiune manuală (fără template)'
             }
-            disabled={readOnly || !state.operation_type_id}
+            disabled={readOnly || !state.operation_type}
           >
             <MenuItem value="">
               <em>Fără template (manual)</em>

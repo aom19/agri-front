@@ -232,7 +232,7 @@ export default function OperationsTab({ filters }: OperationsTabProps) {
         subtitle={`${formatHa(data.metrics.planned_area_ha)} planificate · ${formatHa(data.metrics.realized_area_ha)} realizate · cost estimat ${formatDecimal(data.metrics.estimated_cost, 2)} · cost real ${formatDecimal(data.metrics.real_cost, 2)}`}
         columns={typeColumns}
         rows={data.by_type}
-        rowKey={(row) => row.operation_type_id}
+        rowKey={(row) => row.operation_type}
         csvName="raport-operatiuni-pe-tip"
         maxHeight={320}
       />

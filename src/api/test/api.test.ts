@@ -394,36 +394,6 @@ const cases: Case[] = [
   },
 
   {
-    name: 'operation.getAllTypes',
-    call: () => operationApi.getAllTypes(),
-    method: 'get',
-    url: '/operation-types',
-  },
-  {
-    name: 'operation.getTypeById',
-    call: () => operationApi.getTypeById(1),
-    method: 'get',
-    url: '/operation-types/1',
-  },
-  {
-    name: 'operation.createType',
-    call: () => operationApi.createType(anyPayload),
-    method: 'post',
-    url: '/operation-types',
-  },
-  {
-    name: 'operation.updateType',
-    call: () => operationApi.updateType(1, anyPayload),
-    method: 'patch',
-    url: '/operation-types/1',
-  },
-  {
-    name: 'operation.deleteType',
-    call: () => operationApi.deleteType(1),
-    method: 'delete',
-    url: '/operation-types/1',
-  },
-  {
     name: 'operation.getAllTemplates',
     call: () => operationApi.getAllTemplates(),
     method: 'get',
@@ -434,12 +404,6 @@ const cases: Case[] = [
     call: () => operationApi.getTemplateById(2),
     method: 'get',
     url: '/operation-templates/2',
-  },
-  {
-    name: 'operation.getTemplatesByType',
-    call: () => operationApi.getTemplatesByType(1),
-    method: 'get',
-    url: '/operation-types/1/templates',
   },
   {
     name: 'operation.createTemplate',

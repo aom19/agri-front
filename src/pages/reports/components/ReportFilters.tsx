@@ -8,7 +8,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { useFields } from '../../../hooks/useFields'
 import { useMachines } from '../../../hooks/useMachines'
 import { useOperators } from '../../../hooks/useOperators'
-import { useOperationTypes } from '../../../hooks/useOperations'
+import { operationTypeOptions } from '../../../schemas/operation.schema'
 import { REPORT_PRESETS, type ReportFilterState } from '../reportFilterState'
 
 type ReportFiltersProps = {
@@ -21,7 +21,6 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 export default function ReportFilters({ value, onChange, onReset }: ReportFiltersProps) {
   const { data: fields } = useFields()
-  const { data: operationTypes } = useOperationTypes()
   const { data: machines } = useMachines()
   const { data: operators } = useOperators()
 
@@ -90,14 +89,14 @@ export default function ReportFilters({ value, onChange, onReset }: ReportFilter
               select
               size="small"
               label="Tip operațiune"
-              value={value.operationTypeId}
-              onChange={(event) => onChange({ operationTypeId: event.target.value })}
+              value={value.operationType}
+              onChange={(event) => onChange({ operationType: event.target.value })}
               sx={{ minWidth: 180 }}
             >
               <MenuItem value="">Toate tipurile</MenuItem>
-              {(operationTypes ?? []).map((type) => (
-                <MenuItem key={type.id} value={String(type.id)}>
-                  {type.name}
+              {operationTypeOptions.map((type) => (
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
                 </MenuItem>
               ))}
             </TextField>

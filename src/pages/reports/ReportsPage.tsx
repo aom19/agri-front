@@ -24,6 +24,7 @@ import StocksTab from './tabs/StocksTab'
 import CropsTab from './tabs/CropsTab'
 import WeatherTab from './tabs/WeatherTab'
 import ReportSubscriptionCard from './components/ReportSubscriptionCard'
+import { isOperationType } from '../../schemas/operation.schema'
 
 const TABS = [
   { key: 'summary', label: 'Sumar', icon: DashboardOutlined },
@@ -42,7 +43,7 @@ const PARAM_NAMES: Record<keyof ReportFilterState, string> = {
   from: 'from',
   to: 'to',
   fieldId: 'field_id',
-  operationTypeId: 'operation_type_id',
+  operationType: 'operation_type',
   machineId: 'machine_id',
   operatorId: 'operator_id',
 }
@@ -67,7 +68,7 @@ export default function ReportsPage() {
     from: searchParams.get(PARAM_NAMES.from) ?? defaults.from,
     to: searchParams.get(PARAM_NAMES.to) ?? defaults.to,
     fieldId: searchParams.get(PARAM_NAMES.fieldId) ?? '',
-    operationTypeId: searchParams.get(PARAM_NAMES.operationTypeId) ?? '',
+    operationType: searchParams.get(PARAM_NAMES.operationType) ?? '',
     machineId: searchParams.get(PARAM_NAMES.machineId) ?? '',
     operatorId: searchParams.get(PARAM_NAMES.operatorId) ?? '',
   }
@@ -118,11 +119,11 @@ export default function ReportsPage() {
       from: state.from,
       to: state.to,
       field_id: state.fieldId || undefined,
-      operation_type_id: toNumberOrUndefined(state.operationTypeId),
+      operation_type: isOperationType(state.operationType) ? state.operationType : undefined,
       machine_id: toNumberOrUndefined(state.machineId),
       operator_id: toNumberOrUndefined(state.operatorId),
     }),
-    [state.from, state.to, state.fieldId, state.operationTypeId, state.machineId, state.operatorId]
+    [state.from, state.to, state.fieldId, state.operationType, state.machineId, state.operatorId]
   )
 
   return (
