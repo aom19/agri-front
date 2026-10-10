@@ -628,7 +628,7 @@ export default function CropsPage() {
 
   const deleteDescription = deleteTarget
     ? deleteTarget.kind === 'season'
-      ? `Sezonul „${deleteTarget.item.name}” și toate culturile pe terenuri asociate vor fi șterse.`
+      ? `Sezonul „${deleteTarget.item.name}” va fi șters. Un sezon cu culturi pe terenuri nu se poate șterge.`
       : deleteTarget.kind === 'crop'
         ? `Cultura „${deleteTarget.item.name}” va fi ștearsă din catalog.`
         : `Cultura „${deleteTarget.item.crop_name}” de pe terenul „${deleteTarget.item.field_name}” va fi ștearsă.`
