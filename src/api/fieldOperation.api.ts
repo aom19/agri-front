@@ -5,6 +5,28 @@ import type { OperationTypeValue } from '../schemas/operation.schema'
 export const FIELD_OPERATION_STATUSES = ['planned', 'in_progress', 'completed', 'canceled'] as const
 export type FieldOperationStatus = (typeof FIELD_OPERATION_STATUSES)[number]
 
+export type ConflictResource = 'operator' | 'machine' | 'implement'
+
+/** Altă lucrare planificată sau în lucru care ține ocupată, în același interval, o resursă a lucrării. */
+export type FieldOperationConflict = {
+  operation_id: number
+  field_name: string
+  operation_type_name: string
+  status: FieldOperationStatus
+  start_at: string
+  end_at: string
+  resources: ConflictResource[]
+}
+
+export type FieldOperationConflictParams = {
+  exclude_id?: number
+  operator_id?: number
+  machine_id?: number
+  implement_id?: number
+  planned_start_at: string
+  planned_end_at?: string
+}
+
 export type FieldOperation = {
   id: number
   field_id: string
@@ -38,6 +60,8 @@ export type FieldOperation = {
   fuel_used_l?: number | null
   machine_hours?: number | null
   completion_notes: string
+  /** Suprapuneri cu alte lucrări pe operator, mașină sau echipament (doar avertisment). */
+  conflicts?: FieldOperationConflict[]
   created_at: string
   updated_at: string
 }
@@ -124,6 +148,11 @@ export const fieldOperationsApi = {
     api.get<FieldOperation[]>('/field-operations', { params: filter }).then((r) => r.data),
 
   getById: (id: number) => api.get<FieldOperation>(`/field-operations/${id}`).then((r) => r.data),
+
+  getConflicts: (params: FieldOperationConflictParams) =>
+    api
+      .get<FieldOperationConflict[]>('/field-operations/conflicts', { params })
+      .then((r) => r.data),
 
   create: (payload: FieldOperationPayload) =>
     api.post<FieldOperation>('/field-operations', payload).then((r) => r.data),

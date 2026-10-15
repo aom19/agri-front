@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom'
 import type { FieldOperation, FieldOperationStatus } from '../../api/fieldOperation.api'
 import { useFieldOperations } from '../../hooks/useFieldOperations'
 import { formatDateTime } from '../../utils/dateFormat'
+import OperationConflictChip from '../field-operations/components/OperationConflictChip'
 
 const statusLabels: Record<FieldOperationStatus, string> = {
   planned: 'Planificată',
@@ -177,11 +178,14 @@ export default function AssignmentsPage() {
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={statusLabels[operation.status]}
-                          size="small"
-                          color={statusColor(operation.status)}
-                        />
+                        <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                          <Chip
+                            label={statusLabels[operation.status]}
+                            size="small"
+                            color={statusColor(operation.status)}
+                          />
+                          <OperationConflictChip conflicts={operation.conflicts} />
+                        </Stack>
                       </TableCell>
                       <TableCell align="right">
                         <Tooltip title="Vezi operațiunea">

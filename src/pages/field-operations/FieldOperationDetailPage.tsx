@@ -44,6 +44,8 @@ import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import { FieldMapModal } from '../fields/components'
 import CompleteOperationDialog from './components/CompleteOperationDialog'
 import { formatDateTime, formatTime } from '../../utils/dateFormat'
+import OperationConflictChip from './components/OperationConflictChip'
+import { conflictResourcesLabel } from './conflict.helpers'
 
 const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
 
@@ -310,7 +312,9 @@ export default function FieldOperationDetailPage() {
   const resourceIssues = [machineIssue, implementIssue].filter((issue): issue is ResourceIssue =>
     Boolean(issue)
   )
-  const startBlocked = resourceIssues.length > 0
+  // o lucrare în lucru care folosește aceleași resurse blochează pornirea (API-ul o refuză cu 409)
+  const busyConflicts = (operation?.conflicts ?? []).filter((c) => c.status === 'in_progress')
+  const startBlocked = resourceIssues.length > 0 || busyConflicts.length > 0
   const operationPlanned = operation?.status === 'planned'
   const operationStarted = operation?.status === 'in_progress'
   const showActions = (operationPlanned || operationStarted) && canExecute
@@ -403,10 +407,15 @@ export default function FieldOperationDetailPage() {
             sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}
           >
             <Box>
-              <Chip
-                label={statusLabels[operation.status]}
-                sx={{ bgcolor: tone.bg, color: tone.color, fontWeight: 800, mb: 1.5 }}
-              />
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
+                <Chip
+                  label={statusLabels[operation.status]}
+                  sx={{ bgcolor: tone.bg, color: tone.color, fontWeight: 800 }}
+                />
+                <Box sx={{ bgcolor: '#fff', borderRadius: '16px' }}>
+                  <OperationConflictChip conflicts={operation.conflicts} />
+                </Box>
+              </Stack>
               <Typography
                 sx={{ fontWeight: 900, fontSize: { xs: '2rem', md: '3.2rem' }, lineHeight: 1.05 }}
               >
@@ -739,6 +748,13 @@ export default function FieldOperationDetailPage() {
                     {resourceIssues.map((issue) => (
                       <Typography key={issue.resource} sx={{ fontSize: '0.82rem' }}>
                         {issue.resource}: {issue.statusLabel}. Necesită modificări.
+                      </Typography>
+                    ))}
+                    {busyConflicts.map((conflict) => (
+                      <Typography key={conflict.operation_id} sx={{ fontSize: '0.82rem' }}>
+                        Lucrarea #{conflict.operation_id} ({conflict.operation_type_name} –{' '}
+                        {conflict.field_name}) e în lucru și folosește{' '}
+                        {conflictResourcesLabel(conflict.resources)}. Finalizeaz-o întâi.
                       </Typography>
                     ))}
                   </Box>

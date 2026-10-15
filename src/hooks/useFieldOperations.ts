@@ -4,6 +4,7 @@ import {
   type FieldOperationPayload,
   type FieldOperationsFilter,
   type FieldOperationCompletionPayload,
+  type FieldOperationConflictParams,
 } from '../api/fieldOperation.api'
 import { useAuthStore } from '../store/auth.store'
 
@@ -32,6 +33,20 @@ export function useFieldOperation(id: number | null) {
     enabled: initialized && !!accessToken && id != null,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  })
+}
+
+/** Suprapunerile lucrării din formular cu alte lucrări (null = nimic de verificat). */
+export function useFieldOperationConflicts(params: FieldOperationConflictParams | null) {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: [...FIELD_OPERATIONS_KEY, accessToken, 'conflicts', params],
+    queryFn: () => fieldOperationsApi.getConflicts(params!),
+    enabled: initialized && !!accessToken && params != null,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
   })
 }
 

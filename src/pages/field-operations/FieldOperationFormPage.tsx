@@ -138,6 +138,7 @@ export default function FieldOperationFormPage({ mode }: Props) {
               implementItems={implementsData ?? []}
               operators={operators ?? []}
               fieldCrops={fieldCrops ?? []}
+              operationId={id}
               onChange={setFormState}
             />
 

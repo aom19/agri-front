@@ -12,6 +12,9 @@ import type { Operator } from '../../../api/operator.api'
 import type { OperationTemplate } from '../../../api/operation.api'
 import { operationTypeOptions, type OperationTypeValue } from '../../../schemas/operation.schema'
 import type { FieldCrop } from '../../../api/crops.api'
+import { useFieldOperationConflicts } from '../../../hooks/useFieldOperations'
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue'
+import { conflictParamsFromForm, describeConflict } from '../conflict.helpers'
 import {
   FIELD_OPERATION_STATUSES,
   type FieldOperationStatus,
@@ -32,6 +35,8 @@ type Props = {
   implementItems: Implement[]
   operators: Operator[]
   fieldCrops?: FieldCrop[]
+  /** Lucrarea editată: nu intră în verificarea suprapunerilor cu ea însăși. */
+  operationId?: number | null
   onChange: (next: FieldOperationFormState) => void
 }
 
@@ -52,9 +57,29 @@ export default function FieldOperationForm({
   implementItems,
   operators,
   fieldCrops = [],
+  operationId = null,
   onChange,
 }: Props) {
   const readOnly = mode === 'view'
+  // Suprapunerile cu alte lucrări pe operator, mașină sau echipament: doar avertisment, salvarea
+  // nu e blocată (orele planificate sunt estimări). Pornirea e cea refuzată de API.
+  const conflictParamsNow = useMemo(
+    () => (readOnly ? null : conflictParamsFromForm(state, operationId)),
+    // doar câmpurile care contează: un obiect nou la fiecare randare ar reporni debounce-ul
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      readOnly,
+      operationId,
+      state.status,
+      state.operator_id,
+      state.machine_id,
+      state.implement_id,
+      state.planned_start_at,
+      state.planned_end_at,
+    ]
+  )
+  const conflictParams = useDebouncedValue(conflictParamsNow, 400)
+  const { data: conflicts } = useFieldOperationConflicts(conflictParams)
 
   const selectedTemplate = useMemo(
     () =>
@@ -443,6 +468,24 @@ export default function FieldOperationForm({
             }}
           />
         </Stack>
+
+        {conflictParams && conflicts && conflicts.length > 0 ? (
+          <Alert severity="warning">
+            <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
+              Intervalul se suprapune cu{' '}
+              {conflicts.length === 1 ? 'o lucrare' : `${conflicts.length} lucrări`} care folosesc
+              aceleași resurse:
+            </Typography>
+            {conflicts.map((conflict) => (
+              <Typography key={conflict.operation_id} sx={{ fontSize: '0.82rem' }}>
+                {describeConflict(conflict)}
+              </Typography>
+            ))}
+            <Typography sx={{ fontSize: '0.78rem', mt: 0.5 }}>
+              Poți salva oricum; lucrarea nu va putea porni cât timp una dintre ele e în lucru.
+            </Typography>
+          </Alert>
+        ) : null}
 
         <TextField
           fullWidth

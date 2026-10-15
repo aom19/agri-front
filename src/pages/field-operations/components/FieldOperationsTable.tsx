@@ -5,6 +5,7 @@ import {
   CardContent,
   Chip,
   IconButton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -15,6 +16,7 @@ import {
 } from '@mui/material'
 import type { FieldOperation, FieldOperationStatus } from '../../../api/fieldOperation.api'
 import { formatDateTime } from '../../../utils/dateFormat'
+import OperationConflictChip from './OperationConflictChip'
 
 type Props = {
   items: FieldOperation[]
@@ -101,11 +103,14 @@ export default function FieldOperationsTable({
                 <TableCell>{formatDateTime(item.planned_start_at)}</TableCell>
                 <TableCell>{formatArea(item.area_planned_ha)}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={statusLabels[item.status]}
-                    size="small"
-                    color={statusColor(item.status)}
-                  />
+                  <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                    <Chip
+                      label={statusLabels[item.status]}
+                      size="small"
+                      color={statusColor(item.status)}
+                    />
+                    <OperationConflictChip conflicts={item.conflicts} />
+                  </Stack>
                 </TableCell>
                 <TableCell align="right">
                   <Tooltip title="Vezi detalii">

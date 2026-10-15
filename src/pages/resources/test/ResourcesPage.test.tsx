@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { cropsApi } from '../../../api/crops.api'
+import { cropsApi, type FieldCrop } from '../../../api/crops.api'
 import { permissionsApi, type Permission } from '../../../api/permissions.api'
 import { resourceApi, type Resource, type ResourceType } from '../../../api/resource.api'
 import { stockMovementsApi, type StockMovement } from '../../../api/stockMovement.api'
@@ -143,5 +143,42 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
         notes: '',
       })
     )
+  })
+
+  it('dialogul de mișcări: stocul rezultat, ieșirea peste stoc și culturile închise', async () => {
+    vi.mocked(cropsApi.getFieldCrops).mockResolvedValue([
+      {
+        id: 31,
+        field_name: 'Tarla Mica',
+        crop_name: 'Grâu',
+        season_name: 'Sezon 2025/2026',
+        status: 'closed',
+        closed_at: '2026-07-10',
+      } as FieldCrop,
+    ])
+    renderWithProviders(<ResourcesPage />)
+
+    const dieselRow = (await screen.findByText('Motorină')).closest('tr')!
+    await userEvent.click(within(dieselRow).getByRole('button', { name: 'Mișcări de stoc' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Sub pragul minim')).toBeInTheDocument()
+
+    const quantity = within(dialog).getByRole('textbox', { name: 'Cantitate (l)' })
+    await userEvent.type(quantity, '3')
+    expect(within(dialog).getByText('Stoc după mișcare: 8 l')).toBeInTheDocument()
+
+    // paiele balotate după închiderea culturii se pot lega de ea
+    await userEvent.click(within(dialog).getByRole('combobox', { name: /Cultură pe teren/ }))
+    expect(
+      await screen.findByRole('option', { name: 'Grâu · Tarla Mica · Sezon 2025/2026' })
+    ).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Ieșire' }))
+    await userEvent.clear(quantity)
+    await userEvent.type(quantity, '7')
+    expect(within(dialog).getAllByText(/Ieșirea depășește stocul curent/).length).toBeGreaterThan(0)
+    expect(within(dialog).getByRole('button', { name: 'Salvează' })).toBeDisabled()
+    expect(stockMovementsApi.create).not.toHaveBeenCalled()
   })
 })

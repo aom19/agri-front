@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  ListSubheader,
   MenuItem,
   Stack,
   Table,
@@ -18,6 +19,8 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material'
 import type { Resource } from '../../../api/resource.api'
@@ -38,11 +41,30 @@ type StockMovementsDialogProps = {
 
 const typeMeta: Record<
   StockMovementType,
-  { label: string; color: 'success' | 'warning' | 'default' }
+  { label: string; color: 'success' | 'warning' | 'default'; hint: string }
 > = {
-  in: { label: 'Intrare', color: 'success' },
-  out: { label: 'Ieșire', color: 'warning' },
-  adjustment: { label: 'Ajustare', color: 'default' },
+  in: {
+    label: 'Intrare',
+    color: 'success',
+    hint: 'Recepție de la furnizor, recoltă sau produs secundar.',
+  },
+  out: {
+    label: 'Ieșire',
+    color: 'warning',
+    hint: 'Consum în afara unei lucrări, vânzare sau pierdere.',
+  },
+  adjustment: {
+    label: 'Ajustare',
+    color: 'default',
+    hint: 'Inventar: introduci nivelul numărat, iar diferența se înregistrează automat.',
+  },
+}
+
+const quantityFormat = new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 3 })
+const moneyFormat = new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 2 })
+
+function parseDecimal(value: string) {
+  return Number(value.replace(',', '.'))
 }
 
 function formatQuantity(value: number) {
@@ -73,12 +95,43 @@ export default function StockMovementsDialog({
   const [notes, setNotes] = useState('')
   const [fieldCropId, setFieldCropId] = useState('')
   const [error, setError] = useState<string | null>(null)
-  // produs secundar (ex. paie): intrarea se leagă de cultura pe teren care l-a produs
+  // produs secundar (ex. paie): intrarea se leagă de cultura pe teren care l-a produs. Paiele se
+  // balotează adesea după ce grâul a fost închis, deci culturile închise rămân disponibile.
   const { data: fieldCrops } = useFieldCrops()
-  const cropOptions = (fieldCrops ?? []).filter((fc) => fc.status === 'open')
+  const openCrops = (fieldCrops ?? []).filter((fc) => fc.status === 'open')
+  const closedCrops = (fieldCrops ?? [])
+    .filter((fc) => fc.status !== 'open')
+    .sort((a, b) => (b.closed_at ?? '').localeCompare(a.closed_at ?? ''))
+  const hasCrops = openCrops.length + closedCrops.length > 0
+
+  // stocul după mișcare, calculat ca în API: intrarea adună, ieșirea scade, ajustarea fixează nivelul
+  const currentQuantity = resource?.quantity ?? 0
+  const parsedPreview = quantity.trim() === '' ? null : parseDecimal(quantity)
+  const resultingQuantity =
+    parsedPreview == null || !Number.isFinite(parsedPreview)
+      ? null
+      : type === 'in'
+        ? currentQuantity + parsedPreview
+        : type === 'out'
+          ? currentQuantity - parsedPreview
+          : parsedPreview
+  const belowZero = resultingQuantity != null && resultingQuantity < 0
+  const belowMinimum =
+    resource != null &&
+    resource.minimum_quantity > 0 &&
+    resultingQuantity != null &&
+    resultingQuantity >= 0 &&
+    resultingQuantity < resource.minimum_quantity
+
+  const changeType = (next: StockMovementType | null) => {
+    if (!next) return
+    setType(next)
+    setError(null)
+    if (next !== 'in') setFieldCropId('')
+  }
 
   const submit = () => {
-    const parsedQuantity = Number(quantity.replace(',', '.'))
+    const parsedQuantity = parseDecimal(quantity)
     if (
       !Number.isFinite(parsedQuantity) ||
       parsedQuantity < 0 ||
@@ -91,7 +144,13 @@ export default function StockMovementsDialog({
       )
       return
     }
-    const parsedCost = unitCost.trim() === '' ? null : Number(unitCost.replace(',', '.'))
+    if (type === 'out' && parsedQuantity > currentQuantity) {
+      setError(
+        `Ieșirea depășește stocul curent (${quantityFormat.format(currentQuantity)} ${unit}).`
+      )
+      return
+    }
+    const parsedCost = unitCost.trim() === '' ? null : parseDecimal(unitCost)
     if (parsedCost !== null && (!Number.isFinite(parsedCost) || parsedCost < 0)) {
       setError('Costul unitar trebuie să fie un număr pozitiv.')
       return
@@ -128,11 +187,17 @@ export default function StockMovementsDialog({
         </Typography>
         <Typography sx={{ fontWeight: 900, fontSize: '1.3rem' }}>{resource?.name}</Typography>
         {resource && (
-          <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-            Stoc curent:{' '}
-            {new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 3 }).format(resource.quantity)}{' '}
-            {unit}
-          </Typography>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+              Stoc curent: {quantityFormat.format(resource.quantity)} {unit}
+              {resource.minimum_quantity > 0
+                ? ` · prag minim ${quantityFormat.format(resource.minimum_quantity)} ${unit}`
+                : ''}
+            </Typography>
+            {resource.minimum_quantity > 0 && resource.quantity < resource.minimum_quantity && (
+              <Chip size="small" color="error" variant="outlined" label="Sub pragul minim" />
+            )}
+          </Stack>
         )}
         <IconButton
           aria-label="Închide"
@@ -147,75 +212,120 @@ export default function StockMovementsDialog({
           {canUpdate && (
             <Box sx={{ p: 2, borderRadius: '14px', bgcolor: '#f5f8f5' }}>
               <Typography sx={{ fontWeight: 700, mb: 1.5 }}>Înregistrează o mișcare</Typography>
-              <Stack
-                direction={{ xs: 'column', md: 'row' }}
-                spacing={1.5}
-                sx={{ alignItems: 'flex-start' }}
-              >
-                <TextField
-                  select
-                  size="small"
-                  label="Tip"
-                  value={type}
-                  onChange={(event) => setType(event.target.value as StockMovementType)}
-                  sx={{ minWidth: 150 }}
-                >
-                  <MenuItem value="in">Intrare (recepție)</MenuItem>
-                  <MenuItem value="out">Ieșire (consum)</MenuItem>
-                  <MenuItem value="adjustment">Ajustare (nivel nou)</MenuItem>
-                </TextField>
-                <TextField
-                  size="small"
-                  label={type === 'adjustment' ? `Nivel nou (${unit})` : `Cantitate (${unit})`}
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-                  sx={{ minWidth: 160 }}
-                />
-                <TextField
-                  size="small"
-                  label="Cost unitar (opțional)"
-                  value={unitCost}
-                  onChange={(event) => setUnitCost(event.target.value)}
-                  slotProps={{ htmlInput: { inputMode: 'decimal' } }}
-                  sx={{ minWidth: 160 }}
-                  helperText="Implicit prețul resursei"
-                />
-                {type === 'in' && cropOptions.length > 0 && (
-                  <TextField
-                    select
+              <Stack spacing={1.5}>
+                <Box>
+                  <ToggleButtonGroup
+                    exclusive
                     size="small"
-                    label="Cultură pe teren (opțional)"
-                    value={fieldCropId}
-                    onChange={(event) => setFieldCropId(event.target.value)}
-                    sx={{ minWidth: 220 }}
-                    helperText="Pentru produse secundare: paie, furaj"
+                    color="primary"
+                    value={type}
+                    onChange={(_, next: StockMovementType | null) => changeType(next)}
+                    aria-label="Tip mișcare"
                   >
-                    <MenuItem value="">
-                      <em>Fără</em>
-                    </MenuItem>
-                    {cropOptions.map((fc) => (
-                      <MenuItem key={fc.id} value={String(fc.id)}>
-                        {fc.crop_name} · {fc.field_name}
+                    <ToggleButton value="in">Intrare</ToggleButton>
+                    <ToggleButton value="out">Ieșire</ToggleButton>
+                    <ToggleButton value="adjustment">Ajustare</ToggleButton>
+                  </ToggleButtonGroup>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.78rem', mt: 0.5 }}>
+                    {typeMeta[type].hint}
+                  </Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+                  <TextField
+                    size="small"
+                    label={type === 'adjustment' ? `Nivel nou (${unit})` : `Cantitate (${unit})`}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                    slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+                    error={belowZero}
+                    helperText={
+                      resultingQuantity == null
+                        ? ' '
+                        : `Stoc după mișcare: ${quantityFormat.format(resultingQuantity)} ${unit}`
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    size="small"
+                    label="Cost unitar (opțional)"
+                    value={unitCost}
+                    onChange={(event) => setUnitCost(event.target.value)}
+                    slotProps={{ htmlInput: { inputMode: 'decimal' } }}
+                    helperText={
+                      resource
+                        ? `Implicit prețul resursei: ${moneyFormat.format(resource.price_per_unit)} lei`
+                        : ' '
+                    }
+                    fullWidth
+                  />
+                  {type === 'in' && hasCrops && (
+                    <TextField
+                      select
+                      size="small"
+                      label="Cultură pe teren (opțional)"
+                      value={fieldCropId}
+                      onChange={(event) => setFieldCropId(event.target.value)}
+                      helperText="Pentru produse secundare: paie, furaj"
+                      fullWidth
+                    >
+                      <MenuItem value="">
+                        <em>Fără cultură</em>
                       </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-                <TextField
-                  size="small"
-                  label="Observații"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  fullWidth
-                />
-                <Button
-                  variant="contained"
-                  onClick={submit}
-                  disabled={createMovement.isPending}
-                  sx={{ flexShrink: 0 }}
+                      {openCrops.length > 0 && <ListSubheader>Deschise</ListSubheader>}
+                      {openCrops.map((fc) => (
+                        <MenuItem key={fc.id} value={String(fc.id)}>
+                          {fc.crop_name} · {fc.field_name} · {fc.season_name}
+                        </MenuItem>
+                      ))}
+                      {closedCrops.length > 0 && <ListSubheader>Închise</ListSubheader>}
+                      {closedCrops.map((fc) => (
+                        <MenuItem key={fc.id} value={String(fc.id)}>
+                          {fc.crop_name} · {fc.field_name} · {fc.season_name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
+                </Stack>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={1.5}
+                  sx={{ alignItems: { md: 'flex-start' } }}
                 >
-                  {createMovement.isPending ? 'Se salvează...' : 'Salvează'}
-                </Button>
+                  <TextField
+                    size="small"
+                    label="Observații"
+                    placeholder={
+                      type === 'in'
+                        ? 'ex. factura 1182/2026'
+                        : type === 'out'
+                          ? 'ex. vânzare, contract 45'
+                          : 'ex. inventar 15.10'
+                    }
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    fullWidth
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={submit}
+                    disabled={createMovement.isPending || belowZero}
+                    sx={{ flexShrink: 0, minWidth: 120 }}
+                  >
+                    {createMovement.isPending ? 'Se salvează...' : 'Salvează'}
+                  </Button>
+                </Stack>
+                {belowZero && (
+                  <Alert severity="error" sx={{ py: 0 }}>
+                    Ieșirea depășește stocul curent ({quantityFormat.format(currentQuantity)} {unit}
+                    ).
+                  </Alert>
+                )}
+                {belowMinimum && (
+                  <Alert severity="warning" sx={{ py: 0 }}>
+                    După mișcare, stocul scade sub pragul minim (
+                    {quantityFormat.format(resource!.minimum_quantity)} {unit}).
+                  </Alert>
+                )}
               </Stack>
               {error && (
                 <Alert severity="error" sx={{ mt: 1.5 }}>
@@ -248,8 +358,8 @@ export default function StockMovementsDialog({
                       <TableCell>Tip</TableCell>
                       <TableCell align="right">Variație</TableCell>
                       <TableCell align="right">Rămas</TableCell>
-                      <TableCell align="right">Valoare</TableCell>
-                      <TableCell>Lucrare</TableCell>
+                      <TableCell align="right">Valoare (lei)</TableCell>
+                      <TableCell>Sursă</TableCell>
                       <TableCell>Autor</TableCell>
                       <TableCell>Observații</TableCell>
                     </TableRow>
@@ -274,18 +384,16 @@ export default function StockMovementsDialog({
                           {formatQuantity(movement.quantity_delta)} {movement.unit}
                         </TableCell>
                         <TableCell align="right" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 3 }).format(
-                            movement.resulting_quantity
-                          )}
+                          {quantityFormat.format(movement.resulting_quantity)}
                         </TableCell>
                         <TableCell align="right" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                           {movement.total_cost == null
                             ? '-'
-                            : new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 2 }).format(
-                                movement.total_cost
-                              )}
+                            : moneyFormat.format(movement.total_cost)}
                         </TableCell>
-                        <TableCell>{movement.field_operation_label ?? '-'}</TableCell>
+                        <TableCell sx={{ maxWidth: 200, whiteSpace: 'normal' }}>
+                          {movement.field_operation_label ?? 'Manuală'}
+                        </TableCell>
                         <TableCell>{movement.actor_name ?? 'Sistem'}</TableCell>
                         <TableCell sx={{ maxWidth: 220, whiteSpace: 'normal' }}>
                           {movement.notes || '-'}
