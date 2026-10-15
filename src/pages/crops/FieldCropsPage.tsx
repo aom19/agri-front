@@ -95,6 +95,25 @@ export default function FieldCropsPage() {
     })
   }
 
+  // Înregistrarea mută în stoc doar diferența față de ce e deja înregistrat: fără producție sau
+  // cu recolta deja în stoc la cantitatea curentă nu mai e nimic de înregistrat.
+  const harvestAlreadyRecorded = (item: FieldCrop) =>
+    item.harvest_recorded_quantity != null &&
+    item.harvest_recorded_quantity === item.production_total
+  const canRecordHarvest = (item: FieldCrop) =>
+    !!item.production_total && item.production_total > 0 && !harvestAlreadyRecorded(item)
+  const harvestTooltip = (item: FieldCrop) => {
+    if (!item.production_total || item.production_total <= 0) {
+      return 'Introdu mai întâi producția obținută'
+    }
+    if (harvestAlreadyRecorded(item)) {
+      return 'Recolta este deja înregistrată în stoc la această cantitate'
+    }
+    return item.harvest_recorded_quantity != null
+      ? 'Înregistrează în stoc diferența față de cantitatea deja înregistrată'
+      : 'Înregistrează recolta în stoc'
+  }
+
   const handleHarvest = (item: FieldCrop) => {
     recordHarvest.mutate(item.id, {
       onSuccess: (result) => {
@@ -298,22 +317,12 @@ export default function FieldCropsPage() {
                             </span>
                           </Tooltip>
                         )}
-                        <Tooltip
-                          title={
-                            item.production_total && item.production_total > 0
-                              ? 'Înregistrează recolta în stoc'
-                              : 'Introdu mai întâi producția obținută'
-                          }
-                        >
+                        <Tooltip title={harvestTooltip(item)}>
                           <span>
                             <IconButton
                               size="small"
                               color="primary"
-                              disabled={
-                                !item.production_total ||
-                                item.production_total <= 0 ||
-                                recordHarvest.isPending
-                              }
+                              disabled={!canRecordHarvest(item) || recordHarvest.isPending}
                               onClick={() => handleHarvest(item)}
                               aria-label="Înregistrează recolta în stoc"
                             >
