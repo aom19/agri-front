@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { cropsApi } from '../../../api/crops.api'
 import { permissionsApi, type Permission } from '../../../api/permissions.api'
 import { resourceApi, type Resource, type ResourceType } from '../../../api/resource.api'
 import { stockMovementsApi, type StockMovement } from '../../../api/stockMovement.api'
@@ -10,6 +11,7 @@ import ResourcesPage from '../ResourcesPage'
 vi.mock('../../../api/permissions.api')
 vi.mock('../../../api/resource.api')
 vi.mock('../../../api/stockMovement.api')
+vi.mock('../../../api/crops.api')
 
 const fuel = { id: 1, name: 'Combustibil', category: 'fuel', default_unit: 'l' } as ResourceType
 
@@ -47,6 +49,11 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     )
     vi.mocked(resourceApi.getAllResources).mockResolvedValue([diesel, harvest])
     vi.mocked(resourceApi.getAllResourceTypes).mockResolvedValue([fuel])
+    vi.mocked(resourceApi.getResourceCategoryCounts).mockResolvedValue({
+      total: 2,
+      by_category: [{ category: 'fuel', count: 2 }],
+    })
+    vi.mocked(cropsApi.getFieldCrops).mockResolvedValue([])
     vi.mocked(resourceApi.createResource).mockResolvedValue(diesel)
     vi.mocked(resourceApi.updateResource).mockResolvedValue(diesel)
     vi.mocked(stockMovementsApi.list).mockResolvedValue([])
@@ -132,6 +139,7 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
         movement_type: 'in',
         quantity: 50,
         unit_cost: null,
+        field_crop_id: null,
         notes: '',
       })
     )

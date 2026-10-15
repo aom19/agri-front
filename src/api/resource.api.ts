@@ -52,6 +52,23 @@ export type ResourceTypePayload = {
   default_unit: string
 }
 
+/** Filtrul de listare aplicat în API (SQL): categoria tipului de resursă și text în nume/tip/unitate. */
+export type ResourceListFilter = {
+  category?: string
+  q?: string
+}
+
+export type CategoryCounts = {
+  total: number
+  by_category: { category: string; count: number }[]
+}
+
+function filterParams(filter: ResourceListFilter = {}) {
+  return Object.fromEntries(
+    Object.entries(filter).filter(([, value]) => value !== undefined && value !== '')
+  )
+}
+
 export const resourceApi = {
   getAllResourceTypes: () => api.get<ResourceType[]>('/resource-types').then((r) => r.data),
 
@@ -63,7 +80,10 @@ export const resourceApi = {
 
   deleteResourceType: (id: string) => api.delete(`/resource-types/${id}`).then((r) => r.data),
 
-  getAllResources: () => api.get<Resource[]>('/resources').then((r) => r.data),
+  getAllResources: (filter: ResourceListFilter = {}) =>
+    api.get<Resource[]>('/resources', { params: filterParams(filter) }).then((r) => r.data),
+  getResourceCategoryCounts: () =>
+    api.get<CategoryCounts>('/resources/category-counts').then((r) => r.data),
 
   getResourceById: (id: string) => api.get<Resource>(`/resources/${id}`).then((r) => r.data),
 

@@ -279,11 +279,21 @@ export type ReportCropStat = {
   cost_per_ha?: number | null
 }
 
+export type ReportSecondaryProduct = {
+  resource_id: number
+  resource_name: string
+  unit: string
+  quantity: number
+  total_value: number
+}
+
 export type ReportFieldCropRow = FieldCrop & {
   operations_count: number
   estimated_cost: number
   real_cost: number
   cost_per_ha?: number | null
+  /** Intrări manuale legate de cultură pe altă resursă decât cea de recoltă (ex. paie). */
+  secondary_products: ReportSecondaryProduct[]
 }
 
 export type ReportCrops = {

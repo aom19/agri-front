@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   resourceApi,
   type ResourceCreatePayload,
+  type ResourceListFilter,
   type ResourcePayload,
   type ResourceTypePayload,
 } from '../api/resource.api'
@@ -10,17 +11,33 @@ import { useAuthStore } from '../store/auth.store'
 export const RESOURCES_KEY = ['resources']
 export const RESOURCE_TYPES_KEY = ['resource-types']
 
-export function useResources() {
+/** Lista de resurse; cu filtru, filtrarea se face în API (categorie, text). */
+export function useResources(filter: ResourceListFilter = {}) {
   const initialized = useAuthStore((s) => s.initialized)
   const accessToken = useAuthStore((s) => s.accessToken)
 
   return useQuery({
-    queryKey: RESOURCES_KEY,
-    queryFn: resourceApi.getAllResources,
+    queryKey: [...RESOURCES_KEY, filter],
+    queryFn: () => resourceApi.getAllResources(filter),
     enabled: initialized && !!accessToken,
+    // la schimbarea filtrului rămâne lista veche pe ecran până vine cea nouă
+    placeholderData: keepPreviousData,
     // include stocul, care se schimbă la fiecare mișcare
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
+  })
+}
+
+/** Numărul de resurse pe categorie, pentru butoanele de filtrare. */
+export function useResourceCategoryCounts() {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: [...RESOURCES_KEY, 'category-counts'],
+    queryFn: resourceApi.getResourceCategoryCounts,
+    enabled: initialized && !!accessToken,
+    staleTime: 5 * 60 * 1000,
   })
 }
 

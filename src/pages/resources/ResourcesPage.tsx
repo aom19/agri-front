@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react'
+import ResourceCategoryChips from '../../components/ResourceCategoryChips'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import { RESOURCE_CATEGORY_LABELS } from '../../utils/resourceCategories'
 import {
   AddOutlined,
   DeleteOutlined,
@@ -42,6 +45,7 @@ import { useHasPermission } from '../../hooks/usePermissions'
 import {
   useCreateResource,
   useDeleteResource,
+  useResourceCategoryCounts,
   useResources,
   useResourceTypes,
   useUpdateResource,
@@ -57,15 +61,7 @@ import StockMovementsDialog from './components/StockMovementsDialog'
 
 type FormMode = 'create' | 'edit' | 'view'
 
-const categoryLabel: Record<string, string> = {
-  fuel: 'Combustibil',
-  fertilizer: 'Îngrășământ',
-  seed: 'Sămânță',
-  pesticide: 'Pesticid',
-  water: 'Apă',
-  harvest: 'Recoltă',
-  other: 'Altele',
-}
+const categoryLabel = RESOURCE_CATEGORY_LABELS
 
 const initialFormState: ResourceFormValues = {
   name: '',
@@ -98,6 +94,7 @@ function isLowStock(resource: Resource): boolean {
 
 export default function ResourcesPage() {
   const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<FormMode>('create')
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null)
@@ -110,7 +107,14 @@ export default function ResourcesPage() {
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('resources:write')
 
-  const { data: resourcesData, isPending: resourcesLoading } = useResources()
+  // filtrarea (categorie + text) se face în API; textul e trimis cu întârziere, ca să nu facă
+  // câte o cerere la fiecare tastă
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const { data: resourcesData, isPending: resourcesLoading } = useResources({
+    category: categoryFilter,
+    q: debouncedSearch,
+  })
+  const { data: categoryCounts } = useResourceCategoryCounts()
   const { data: resourceTypesData, isPending: resourceTypesLoading } = useResourceTypes()
 
   const createResource = useCreateResource()
@@ -134,21 +138,8 @@ export default function ResourcesPage() {
     return map
   }, [resourceTypesData])
 
-  const filteredResources = useMemo(() => {
-    const value = search.trim().toLowerCase()
-    return [...(resourcesData ?? [])]
-      .filter((resource) => {
-        if (!value) return true
-        const resourceType = resourceTypeById.get(resource.resource_type_id)
-        return (
-          resource.name.toLowerCase().includes(value) ||
-          resourceType?.defaultUnit.toLowerCase().includes(value) ||
-          resourceType?.name.toLowerCase().includes(value) ||
-          resourceType?.category.toLowerCase().includes(value)
-        )
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [resourcesData, search, resourceTypeById])
+  // lista vine deja filtrată și ordonată din API
+  const filteredResources = resourcesData ?? []
 
   // Resursa din listă, nu o copie: stocul din dialog se actualizează după fiecare mișcare.
   const movementsResource =
@@ -303,6 +294,13 @@ export default function ResourcesPage() {
             },
           }}
         />
+        <Box sx={{ mt: 1.5 }}>
+          <ResourceCategoryChips
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            counts={categoryCounts}
+          />
+        </Box>
       </Box>
 
       {isPending ? (

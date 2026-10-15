@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   cropsApi,
   type CropPayload,
+  type FieldCropClosePayload,
   type FieldCropFilter,
   type FieldCropPayload,
   type SeasonPayload,
@@ -55,6 +56,8 @@ function useInvalidateCrops() {
     queryClient.invalidateQueries({ queryKey: CROPS_KEY })
     queryClient.invalidateQueries({ queryKey: FIELD_CROPS_KEY })
     queryClient.invalidateQueries({ queryKey: ['reports'] })
+    // lucrările afișează cultura: după închidere/redeschidere, lista lor se reîncarcă
+    queryClient.invalidateQueries({ queryKey: ['field-operations'] })
   }
 }
 
@@ -126,6 +129,23 @@ export function useDeleteFieldCrop() {
   const invalidate = useInvalidateCrops()
   return useMutation({
     mutationFn: (id: number) => cropsApi.deleteFieldCrop(id),
+    onSuccess: invalidate,
+  })
+}
+
+export function useCloseFieldCrop() {
+  const invalidate = useInvalidateCrops()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: FieldCropClosePayload }) =>
+      cropsApi.closeFieldCrop(id, payload),
+    onSuccess: invalidate,
+  })
+}
+
+export function useReopenFieldCrop() {
+  const invalidate = useInvalidateCrops()
+  return useMutation({
+    mutationFn: (id: number) => cropsApi.reopenFieldCrop(id),
     onSuccess: invalidate,
   })
 }

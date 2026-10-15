@@ -4,7 +4,8 @@ export type Season = {
   id: number
   name: string
   start_date: string
-  end_date: string
+  /** null cât timp sezonul e în curs */
+  end_date?: string | null
   is_active: boolean
   notes: string
   created_at: string
@@ -14,7 +15,7 @@ export type Season = {
 export type SeasonPayload = {
   name: string
   start_date: string
-  end_date: string
+  end_date?: string | null
   is_active: boolean
   notes: string
 }
@@ -39,6 +40,9 @@ export type CropPayload = {
   notes: string
 }
 
+/** Pe un teren e cel mult o cultură deschisă; lucrările noi merg implicit la ea. */
+export type FieldCropStatus = 'open' | 'closed' | 'compromised'
+
 export type FieldCrop = {
   id: number
   field_id: string
@@ -51,6 +55,8 @@ export type FieldCrop = {
   crop_id: number
   crop_name: string
   yield_unit: string
+  status: FieldCropStatus
+  closed_at?: string | null
   planted_area_ha?: number | null
   planted_at?: string | null
   harvested_at?: string | null
@@ -84,12 +90,23 @@ export type FieldCropPayload = {
   production_total?: number | null
   expected_yield_per_ha?: number | null
   notes: string
+  /** Doar la creare: o cultură istorică se poate crea direct închisă (cu closed_at). */
+  status?: FieldCropStatus
+  closed_at?: string | null
+}
+
+export type FieldCropClosePayload = {
+  status: Exclude<FieldCropStatus, 'open'>
+  closed_at: string
+  production_total?: number | null
+  notes?: string | null
 }
 
 export type FieldCropFilter = {
   season_id?: number
   crop_id?: number
   field_id?: string
+  status?: FieldCropStatus
 }
 
 export const cropsApi = {
@@ -121,4 +138,8 @@ export const cropsApi = {
   deleteFieldCrop: (id: number) => api.delete(`/field-crops/${id}`).then((r) => r.data),
   recordHarvest: (id: number) =>
     api.post<HarvestResult>(`/field-crops/${id}/harvest`).then((r) => r.data),
+  closeFieldCrop: (id: number, payload: FieldCropClosePayload) =>
+    api.post<FieldCrop>(`/field-crops/${id}/close`, payload).then((r) => r.data),
+  reopenFieldCrop: (id: number) =>
+    api.post<FieldCrop>(`/field-crops/${id}/reopen`).then((r) => r.data),
 }

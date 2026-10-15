@@ -10,6 +10,7 @@ export type StockMovement = {
   unit: string
   field_operation_id?: number | null
   field_operation_label?: string | null
+  field_crop_id?: number | null
   movement_type: StockMovementType
   quantity_delta: number
   resulting_quantity: number
@@ -35,6 +36,8 @@ export type StockMovementPayload = {
   quantity: number
   unit_cost?: number | null
   field_operation_id?: number | null
+  /** Leagă intrarea de cultura pe teren care a produs-o (ex. paie după grâu). */
+  field_crop_id?: number | null
   notes?: string
 }
 

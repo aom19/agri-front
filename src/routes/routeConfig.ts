@@ -19,6 +19,7 @@ import {
   SecurityOutlined,
   VpnKeyOutlined,
   HistoryOutlined,
+  SpaOutlined,
 } from '@mui/icons-material'
 type IconComponent = FC<SvgIconProps>
 export type NavLeaf = {
@@ -89,6 +90,13 @@ export const navConfig: NavSection[] = [
         icon: GrassOutlined,
         permission: 'crops:read',
       },
+      {
+        type: 'leaf',
+        label: 'Sezoane',
+        path: '/seasons',
+        icon: EventNoteOutlined,
+        permission: 'crops:read',
+      },
     ],
   },
   {
@@ -139,6 +147,13 @@ export const navConfig: NavSection[] = [
         label: 'Nomenclatoare',
         icon: TuneOutlined,
         children: [
+          {
+            type: 'leaf',
+            label: 'Catalog culturi',
+            path: '/crop-catalog',
+            icon: SpaOutlined,
+            permission: 'crops:read',
+          },
           {
             type: 'leaf',
             label: 'Template-uri',

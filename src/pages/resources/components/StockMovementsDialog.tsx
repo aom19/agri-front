@@ -23,6 +23,7 @@ import {
 import type { Resource } from '../../../api/resource.api'
 import type { StockMovementType } from '../../../api/stockMovement.api'
 import { useCreateStockMovement, useStockMovements } from '../../../hooks/useStockMovements'
+import { useFieldCrops } from '../../../hooks/useCrops'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
 import { formatDateTime } from '../../../utils/dateFormat'
@@ -70,7 +71,11 @@ export default function StockMovementsDialog({
   const [quantity, setQuantity] = useState('')
   const [unitCost, setUnitCost] = useState('')
   const [notes, setNotes] = useState('')
+  const [fieldCropId, setFieldCropId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  // produs secundar (ex. paie): intrarea se leagă de cultura pe teren care l-a produs
+  const { data: fieldCrops } = useFieldCrops()
+  const cropOptions = (fieldCrops ?? []).filter((fc) => fc.status === 'open')
 
   const submit = () => {
     const parsedQuantity = Number(quantity.replace(',', '.'))
@@ -98,6 +103,7 @@ export default function StockMovementsDialog({
         movement_type: type,
         quantity: parsedQuantity,
         unit_cost: parsedCost,
+        field_crop_id: type === 'in' && fieldCropId ? Number(fieldCropId) : null,
         notes,
       },
       {
@@ -106,6 +112,7 @@ export default function StockMovementsDialog({
           setQuantity('')
           setUnitCost('')
           setNotes('')
+          setFieldCropId('')
         },
         onError: (mutationError) =>
           setError(getApiErrorMessage(mutationError, 'Nu am putut înregistra mișcarea.')),
@@ -174,6 +181,26 @@ export default function StockMovementsDialog({
                   sx={{ minWidth: 160 }}
                   helperText="Implicit prețul resursei"
                 />
+                {type === 'in' && cropOptions.length > 0 && (
+                  <TextField
+                    select
+                    size="small"
+                    label="Cultură pe teren (opțional)"
+                    value={fieldCropId}
+                    onChange={(event) => setFieldCropId(event.target.value)}
+                    sx={{ minWidth: 220 }}
+                    helperText="Pentru produse secundare: paie, furaj"
+                  >
+                    <MenuItem value="">
+                      <em>Fără</em>
+                    </MenuItem>
+                    {cropOptions.map((fc) => (
+                      <MenuItem key={fc.id} value={String(fc.id)}>
+                        {fc.crop_name} · {fc.field_name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
                 <TextField
                   size="small"
                   label="Observații"

@@ -1,4 +1,4 @@
-import { Button, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Button, Chip, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { ReportCropStat, ReportFieldCropRow, ReportFilters } from '../../../api/reports.api'
@@ -83,9 +83,28 @@ const cropColumns: ReportColumn<ReportCropStat>[] = [
   },
 ]
 
+const statusMeta: Record<string, { label: string; color: 'success' | 'default' | 'warning' }> = {
+  open: { label: 'Deschisă', color: 'success' },
+  closed: { label: 'Închisă', color: 'default' },
+  compromised: { label: 'Compromisă', color: 'warning' },
+}
+
 const itemColumns: ReportColumn<ReportFieldCropRow>[] = [
   { key: 'field', label: 'Teren', render: (row) => row.field_name },
   { key: 'crop', label: 'Cultură', render: (row) => row.crop_name },
+  {
+    key: 'status',
+    label: 'Stare',
+    render: (row) => {
+      const meta = statusMeta[row.status] ?? statusMeta.open
+      const label =
+        row.status === 'open' || !row.closed_at
+          ? meta.label
+          : `${meta.label} · ${formatIsoDay(row.closed_at)}`
+      return <Chip size="small" color={meta.color} label={label} />
+    },
+    csv: (row) => row.status,
+  },
   {
     key: 'area',
     label: 'Suprafață cultivată',
@@ -132,6 +151,18 @@ const itemColumns: ReportColumn<ReportFieldCropRow>[] = [
         ? '-'
         : `${formatDecimal(row.harvest_recorded_quantity, 2)} ${row.yield_unit}`,
     csv: (row) => row.harvest_recorded_quantity,
+  },
+  {
+    key: 'secondary',
+    label: 'Produse secundare',
+    render: (row) =>
+      row.secondary_products.length === 0
+        ? '-'
+        : row.secondary_products
+            .map((p) => `${p.resource_name}: ${formatDecimal(p.quantity, 2)} ${p.unit}`)
+            .join(' · '),
+    csv: (row) =>
+      row.secondary_products.map((p) => `${p.resource_name}: ${p.quantity} ${p.unit}`).join(' | '),
   },
   {
     key: 'ops',
@@ -221,13 +252,15 @@ export default function CropsTab({ filters }: CropsTabProps) {
         >
           {data.seasons.map((season) => (
             <MenuItem key={season.id} value={String(season.id)}>
-              {season.name} ({formatIsoDay(season.start_date)} – {formatIsoDay(season.end_date)})
+              {season.name} ({formatIsoDay(season.start_date)} –{' '}
+              {season.end_date ? formatIsoDay(season.end_date) : 'în curs'})
               {season.is_active ? ' · activ' : ''}
             </MenuItem>
           ))}
         </TextField>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-          Costurile includ operațiunile din intervalul sezonului, pe fiecare teren cultivat.
+          Costurile includ lucrările legate de fiecare cultură pe teren; paiele și alte produse
+          secundare apar separat, nu în producție.
         </Typography>
         <Button
           size="small"

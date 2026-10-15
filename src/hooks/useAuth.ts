@@ -7,91 +7,109 @@ import { DASHBOARD_CARDS_KEY } from './useDashboardCards'
 import { FIELD_OPERATIONS_KEY } from './useFieldOperations'
 import { PERMISSIONS_KEY } from './usePermissions'
 import { PROFILE_KEY } from './useProfile'
-import type { LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm } from '../schemas/auth.schema'
+import type {
+  LoginForm,
+  RegisterForm,
+  ForgotPasswordForm,
+  ResetPasswordForm,
+} from '../schemas/auth.schema'
 
 export function useLogin() {
-    const navigate = useNavigate()
-    const queryClient = useQueryClient()
-    const setTokens = useAuthStore((s) => s.setTokens)
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const setTokens = useAuthStore((s) => s.setTokens)
+  const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword)
 
-    return useMutation({
-        mutationFn: (data: LoginForm) => authApi.login(data),
-        onSuccess: ({ data }) => {
-            queryClient.removeQueries({ queryKey: DASHBOARD_CARDS_KEY })
-            queryClient.removeQueries({ queryKey: FIELD_OPERATIONS_KEY })
-            queryClient.removeQueries({ queryKey: PERMISSIONS_KEY })
-            queryClient.removeQueries({ queryKey: PROFILE_KEY })
-            setTokens(data.access_token, data.refresh_token)
-            navigate('/', { replace: true })
-        },
-    })
+  return useMutation({
+    mutationFn: (data: LoginForm) => authApi.login(data),
+    onSuccess: ({ data }) => {
+      queryClient.removeQueries({ queryKey: DASHBOARD_CARDS_KEY })
+      queryClient.removeQueries({ queryKey: FIELD_OPERATIONS_KEY })
+      queryClient.removeQueries({ queryKey: PERMISSIONS_KEY })
+      queryClient.removeQueries({ queryKey: PROFILE_KEY })
+      setTokens(data.access_token, data.refresh_token)
+      const mustChange = Boolean(data.must_change_password)
+      setMustChangePassword(mustChange)
+      navigate(mustChange ? '/change-password' : '/', { replace: true })
+    },
+  })
 }
 
 export function useRegister() {
-    return useMutation({
-        mutationFn: (data: RegisterForm) =>
-            authApi.register({ email: data.email, password: data.password }),
-    })
+  return useMutation({
+    mutationFn: (data: RegisterForm) =>
+      authApi.register({ email: data.email, password: data.password }),
+  })
 }
 
 export function useConfirmEmail() {
-    return useMutation({
-        mutationFn: (token: string) => authApi.confirmEmail(token),
-    })
+  return useMutation({
+    mutationFn: (token: string) => authApi.confirmEmail(token),
+  })
 }
 
 export function useResendConfirmation() {
-    return useMutation({
-        mutationFn: (email: string) => authApi.resendConfirmation(email),
-    })
+  return useMutation({
+    mutationFn: (email: string) => authApi.resendConfirmation(email),
+  })
 }
 
 export function useForgotPassword() {
-    return useMutation({
-        mutationFn: (data: ForgotPasswordForm) => authApi.forgotPassword(data),
-    })
+  return useMutation({
+    mutationFn: (data: ForgotPasswordForm) => authApi.forgotPassword(data),
+  })
 }
 
 export function useResetPassword(token: string) {
-    const navigate = useNavigate()
-    const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const navigate = useNavigate()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-    useEffect(() => {
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current)
-        }
-    }, [])
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
-    return useMutation({
-        mutationFn: (data: ResetPasswordForm) =>
-            authApi.resetPassword(token, {
-                password: data.password,
-                confirm_password: data.confirmPassword,
-            }),
-        onSuccess: () => {
-            timerRef.current = setTimeout(() => navigate('/login', { replace: true }), 2000)
-        },
-    })
+  return useMutation({
+    mutationFn: (data: ResetPasswordForm) =>
+      authApi.resetPassword(token, {
+        password: data.password,
+        confirm_password: data.confirmPassword,
+      }),
+    onSuccess: () => {
+      timerRef.current = setTimeout(() => navigate('/login', { replace: true }), 2000)
+    },
+  })
 }
 
 export function useLogout() {
-    const logout = useAuthStore((s) => s.logout)
-    const refreshToken = useAuthStore((s) => s.refreshToken)
+  const logout = useAuthStore((s) => s.logout)
+  const refreshToken = useAuthStore((s) => s.refreshToken)
 
-    return useCallback(async () => {
-        try {
-            if (refreshToken) {
-                await authApi.logout(refreshToken)
-            }
-        } finally {
-            logout()
-        }
-    }, [logout, refreshToken])
+  return useCallback(async () => {
+    try {
+      if (refreshToken) {
+        await authApi.logout(refreshToken)
+      }
+    } finally {
+      logout()
+    }
+  }, [logout, refreshToken])
 }
 
 export function useChangePassword() {
-    return useMutation({
-        mutationFn: (data: { old_password: string; new_password: string; confirm_password: string }) =>
-            authApi.changePassword(data),
-    })
+  const setTokens = useAuthStore((s) => s.setTokens)
+  const setMustChangePassword = useAuthStore((s) => s.setMustChangePassword)
+
+  return useMutation({
+    mutationFn: (data: { old_password: string; new_password: string; confirm_password: string }) =>
+      authApi.changePassword(data),
+    onSuccess: ({ data }) => {
+      // sesiunile vechi sunt revocate pe server; continuăm cu perechea nouă
+      if (data.access_token && data.refresh_token) {
+        setTokens(data.access_token, data.refresh_token)
+      }
+      setMustChangePassword(false)
+    },
+  })
 }

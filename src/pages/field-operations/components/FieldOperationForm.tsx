@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { useEffect, useMemo } from 'react'
+import { Alert, Chip, ListSubheader, MenuItem, Stack, TextField, Typography } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -64,27 +64,36 @@ export default function FieldOperationForm({
     [operationTemplates, state.operation_template_id]
   )
 
-  // Cultura de pe terenul ales, în sezonul în care cade data planificată (sau azi).
-  const detectedCrop = useMemo(() => {
-    if (!state.field_id) return null
-    const reference = state.planned_start_at
-      ? state.planned_start_at.slice(0, 10)
-      : new Date().toISOString().slice(0, 10)
-    return (
-      fieldCrops.find(
-        (fc) =>
-          fc.field_id === state.field_id &&
-          fc.season_start <= reference &&
-          fc.season_end >= reference
-      ) ?? null
-    )
-  }, [fieldCrops, state.field_id, state.planned_start_at])
+  // Culturile terenului ales: cea deschisă e implicită; cele închise rămân disponibile pentru
+  // lucrări introduse târziu. Data planificată nu influențează nimic.
+  const fieldCropOptions = useMemo(
+    () => fieldCrops.filter((fc) => fc.field_id === state.field_id),
+    [fieldCrops, state.field_id]
+  )
+  const openCrop = useMemo(
+    () => fieldCropOptions.find((fc) => fc.status === 'open') ?? null,
+    [fieldCropOptions]
+  )
+  const closedCrops = useMemo(
+    () => fieldCropOptions.filter((fc) => fc.status !== 'open'),
+    [fieldCropOptions]
+  )
+  const selectedCrop = useMemo(
+    () => fieldCropOptions.find((fc) => String(fc.id) === state.field_crop_id) ?? null,
+    [fieldCropOptions, state.field_crop_id]
+  )
+  // la creare, cultura deschisă a terenului se preselectează când lista de culturi ajunge
+  useEffect(() => {
+    if (mode !== 'create' || state.field_crop_id || !openCrop) return
+    onChange({ ...state, field_crop_id: String(openCrop.id) })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, openCrop?.id, state.field_id])
   const templateOptions = useMemo(() => {
     if (!state.operation_type) return []
     const forType = operationTemplates.filter((t) => t.operation_type === state.operation_type)
     const rank = (t: OperationTemplate) => {
       if (!t.crop_id) return 1
-      if (detectedCrop && t.crop_id === detectedCrop.crop_id) return 0
+      if (selectedCrop && t.crop_id === selectedCrop.crop_id) return 0
       return 2
     }
     return forType
@@ -99,7 +108,7 @@ export default function FieldOperationForm({
               : '',
       }))
       .sort((a, b) => a.rank - b.rank || a.template.name.localeCompare(b.template.name, 'ro'))
-  }, [operationTemplates, state.operation_type, detectedCrop])
+  }, [operationTemplates, state.operation_type, selectedCrop])
 
   const filteredMachines = useMemo(() => {
     if (!selectedTemplate?.machine_types || selectedTemplate.machine_types.length === 0) {
@@ -128,10 +137,12 @@ export default function FieldOperationForm({
       !state.area_planned_ha && field?.area_ha != null
         ? String(field.area_ha)
         : state.area_planned_ha
+    const nextOpenCrop = fieldCrops.find((fc) => fc.field_id === value && fc.status === 'open')
     onChange({
       ...state,
       field_id: value,
       area_planned_ha: nextArea,
+      field_crop_id: nextOpenCrop ? String(nextOpenCrop.id) : '',
     })
   }
 
@@ -260,11 +271,60 @@ export default function FieldOperationForm({
         </Stack>
 
         {state.field_id ? (
-          <Typography variant="caption" sx={{ color: detectedCrop ? '#1a5c38' : 'text.secondary' }}>
-            {detectedCrop
-              ? `Cultură pe teren: ${detectedCrop.crop_name} (${detectedCrop.season_name}). Operațiunea va fi legată automat de această cultură.`
-              : 'Terenul nu are o cultură atribuită în sezonul datei planificate; operațiunea nu va fi legată de o cultură.'}
-          </Typography>
+          <Stack spacing={1}>
+            <TextField
+              select
+              fullWidth
+              label="Cultură"
+              value={state.field_crop_id}
+              onChange={(e) => patch('field_crop_id', e.target.value)}
+              disabled={readOnly}
+              helperText={
+                selectedCrop
+                  ? selectedCrop.status === 'open'
+                    ? 'Cultura deschisă a terenului. Costul lucrării intră la ea.'
+                    : 'Cultură închisă: folosește-o doar pentru lucrări introduse târziu.'
+                  : 'Lucrarea nu intră în costul niciunei culturi.'
+              }
+            >
+              <ListSubheader>Deschisă · implicit</ListSubheader>
+              {openCrop ? (
+                <MenuItem value={String(openCrop.id)}>
+                  {openCrop.crop_name}
+                  <Chip size="small" color="success" label={openCrop.season_name} sx={{ ml: 1 }} />
+                </MenuItem>
+              ) : (
+                <MenuItem disabled value="__none_open">
+                  <em>Terenul nu are nicio cultură deschisă</em>
+                </MenuItem>
+              )}
+              {closedCrops.length > 0 && (
+                <ListSubheader>Închise · pentru lucrări introduse târziu</ListSubheader>
+              )}
+              {closedCrops.map((fc) => (
+                <MenuItem key={fc.id} value={String(fc.id)}>
+                  {fc.crop_name}
+                  <Chip
+                    size="small"
+                    color={fc.status === 'compromised' ? 'warning' : 'default'}
+                    label={`${fc.season_name} · ${fc.status === 'compromised' ? 'compromisă' : 'închisă'}`}
+                    sx={{ ml: 1 }}
+                  />
+                </MenuItem>
+              ))}
+              <ListSubheader>Fără cultură</ListSubheader>
+              <MenuItem value="">
+                <em>Fără cultură · nu intră în niciun cost</em>
+              </MenuItem>
+            </TextField>
+            {!openCrop && !state.field_crop_id && !readOnly ? (
+              <Alert severity="warning" sx={{ py: 0 }}>
+                Terenul nu are nicio cultură deschisă. Lucrarea se salvează fără cultură și nu intră
+                în niciun cost. Deschide o cultură în pagina Culturi sau alege una închisă din
+                listă.
+              </Alert>
+            ) : null}
+          </Stack>
         ) : null}
 
         {selectedTemplate &&

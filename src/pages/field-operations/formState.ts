@@ -14,6 +14,8 @@ export type FieldOperationFormState = {
   area_planned_ha: string
   notes: string
   status: FieldOperation['status']
+  /** Cultura pe teren ('' = fără cultură). Implicit: cultura deschisă a terenului. */
+  field_crop_id: string
 }
 
 export type FieldOperationFormErrors = Partial<Record<keyof FieldOperationFormState, string>>
@@ -32,6 +34,7 @@ export const initialFieldOperationFormState: FieldOperationFormState = {
   area_planned_ha: '',
   notes: '',
   status: 'planned',
+  field_crop_id: '',
 }
 
 export function toDateTimeLocal(value: string | null | undefined): string {
@@ -61,6 +64,7 @@ export function fieldOperationToFormState(item: FieldOperation): FieldOperationF
     area_planned_ha: item.area_planned_ha != null ? String(item.area_planned_ha) : '',
     notes: item.notes ?? '',
     status: item.status,
+    field_crop_id: item.field_crop_id ? String(item.field_crop_id) : '',
   }
 }
 
@@ -77,6 +81,8 @@ export function formStateToPayload(state: FieldOperationFormState): FieldOperati
     area_planned_ha: state.area_planned_ha ? Number(state.area_planned_ha) : null,
     notes: state.notes,
     status: state.status,
+    // 0 = explicit fără cultură; serverul nu mai alege nimic după dată
+    field_crop_id: state.field_crop_id ? Number(state.field_crop_id) : 0,
   }
 }
 

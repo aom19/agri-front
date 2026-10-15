@@ -3,7 +3,8 @@ import { Navigate, Route } from 'react-router-dom'
 import { DashboardPage } from '../../pages/dashboard'
 import { ProfilePage } from '../../pages/profile/ProfilePage'
 import SettingsPage from '../../pages/settings/SettingsPage'
-import { ProtectedRoute } from '../../components/RouteGuards'
+import { CHANGE_PASSWORD_PATH, ProtectedRoute } from '../../components/RouteGuards'
+import ChangePasswordPage from '../../pages/auth/ChangePasswordPage'
 import { RequirePermission } from '../../components/RequirePermission'
 import DashboardLayout from '../../layouts/DashboardLayout'
 import ForbiddenPage from '../../pages/ForbiddenPage'
@@ -31,12 +32,16 @@ const PermissionsPage = lazy(() => import('../../pages/admin/permissions/Permiss
 const NotificationsPage = lazy(() => import('../../pages/notifications/NotificationsPage'))
 const AuditLogPage = lazy(() => import('../../pages/admin/audit/AuditLogPage'))
 const ReportsPage = lazy(() => import('../../pages/reports/ReportsPage'))
-const CropsPage = lazy(() => import('../../pages/crops/CropsPage'))
+const FieldCropsPage = lazy(() => import('../../pages/crops/FieldCropsPage'))
+const SeasonsPage = lazy(() => import('../../pages/crops/SeasonsPage'))
+const CropCatalogPage = lazy(() => import('../../pages/crops/CropCatalogPage'))
 
 // ─── Private Routes ─────────────────────────────────────────────────────────────
 const PrivateRoutes = () => {
   return (
     <Route element={<ProtectedRoute />}>
+      {/* parolă provizorie: fără meniu, doar formularul de schimbare */}
+      <Route path={CHANGE_PASSWORD_PATH} element={<ChangePasswordPage />} />
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -48,7 +53,27 @@ const PrivateRoutes = () => {
           element={
             <RequirePermission permission="crops:read">
               <Suspense fallback={<PageLoader />}>
-                <CropsPage />
+                <FieldCropsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/seasons"
+          element={
+            <RequirePermission permission="crops:read">
+              <Suspense fallback={<PageLoader />}>
+                <SeasonsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="/crop-catalog"
+          element={
+            <RequirePermission permission="crops:read">
+              <Suspense fallback={<PageLoader />}>
+                <CropCatalogPage />
               </Suspense>
             </RequirePermission>
           }

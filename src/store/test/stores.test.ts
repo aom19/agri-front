@@ -30,11 +30,20 @@ describe('auth.store', () => {
     expect(state.initialized).toBe(true)
   })
 
-  it('persistă doar token-urile și utilizatorul în localStorage', () => {
+  it('persistă token-urile, utilizatorul și obligația de schimbare a parolei', () => {
     useAuthStore.getState().setTokens('access', 'refresh')
+    useAuthStore.getState().setMustChangePassword(true)
     useAuthStore.getState().setInitialized()
     const persisted = JSON.parse(window.localStorage.getItem('auth-storage') ?? '{}')
-    expect(persisted.state).toEqual({ accessToken: 'access', refreshToken: 'refresh', user: null })
+    expect(persisted.state).toEqual({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: null,
+      mustChangePassword: true,
+    })
+    // logout-ul ridică și obligația: următorul cont nu moștenește starea
+    useAuthStore.getState().logout()
+    expect(useAuthStore.getState().mustChangePassword).toBe(false)
   })
 })
 

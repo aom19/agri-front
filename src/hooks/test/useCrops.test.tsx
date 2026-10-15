@@ -18,6 +18,7 @@ import {
   FIELD_CROPS_KEY,
   SEASONS_KEY,
   useCreateCrop,
+  useCloseFieldCrop,
   useCreateFieldCrop,
   useCreateSeason,
   useCrops,
@@ -26,6 +27,7 @@ import {
   useDeleteSeason,
   useFieldCrops,
   useRecordHarvest,
+  useReopenFieldCrop,
   useSeasons,
   useUpdateCrop,
   useUpdateFieldCrop,
@@ -37,7 +39,7 @@ vi.mock('../../api/crops.api')
 const season = { id: 1, name: '2026' } as Season
 const crop = { id: 1, name: 'Grâu' } as Crop
 const fieldCrop = { id: 1, crop_id: 1 } as FieldCrop
-const allKeys = [SEASONS_KEY, CROPS_KEY, FIELD_CROPS_KEY, ['reports']]
+const allKeys = [SEASONS_KEY, CROPS_KEY, FIELD_CROPS_KEY, ['reports'], ['field-operations']]
 
 describe('useCrops', () => {
   beforeEach(() => {
@@ -69,6 +71,8 @@ describe('useCrops', () => {
     vi.mocked(cropsApi.createFieldCrop).mockResolvedValue(fieldCrop)
     vi.mocked(cropsApi.updateFieldCrop).mockResolvedValue(fieldCrop)
     vi.mocked(cropsApi.deleteFieldCrop).mockResolvedValue(undefined)
+    vi.mocked(cropsApi.closeFieldCrop).mockResolvedValue(fieldCrop)
+    vi.mocked(cropsApi.reopenFieldCrop).mockResolvedValue(fieldCrop)
 
     const seasonPayload = {
       name: '2026',
@@ -89,11 +93,22 @@ describe('useCrops', () => {
       await runMutation(() => useCreateFieldCrop(), fieldCropPayload),
       await runMutation(() => useUpdateFieldCrop(), { id: 1, payload: fieldCropPayload }),
       await runMutation(() => useDeleteFieldCrop(), 1),
+      await runMutation(() => useCloseFieldCrop(), {
+        id: 1,
+        payload: { status: 'closed' as const, closed_at: '2026-07-10', production_total: 56.5 },
+      }),
+      await runMutation(() => useReopenFieldCrop(), 1),
     ]
     for (const run of runs) {
       expect(invalidatedKeys(run.invalidate)).toEqual(allKeys)
     }
     expect(cropsApi.updateSeason).toHaveBeenCalledWith(1, seasonPayload)
+    expect(cropsApi.closeFieldCrop).toHaveBeenCalledWith(1, {
+      status: 'closed',
+      closed_at: '2026-07-10',
+      production_total: 56.5,
+    })
+    expect(cropsApi.reopenFieldCrop).toHaveBeenCalledWith(1)
     expect(cropsApi.updateFieldCrop).toHaveBeenCalledWith(1, fieldCropPayload)
   })
 
