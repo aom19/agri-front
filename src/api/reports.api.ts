@@ -373,3 +373,39 @@ export const reportsExtraApi = {
       })
       .then((r) => r.data),
 }
+
+export type ReportCompareKind = 'operators' | 'machines' | 'seasons'
+
+export type ReportCompareSide = {
+  id: number
+  name: string
+  metrics: ReportOperationsMetrics
+  by_type: ReportOperationTypeStat[]
+  /** operatori și mașini */
+  timeline?: ReportTimeBucket[]
+  /** sezoane */
+  season?: Season
+  crop_totals?: ReportCrops['totals']
+  by_crop?: ReportCropStat[]
+}
+
+export type ReportCompare = {
+  kind: ReportCompareKind
+  /** lipsește la sezoane: se compară tot sezonul */
+  period?: ReportPeriod
+  a: ReportCompareSide
+  b: ReportCompareSide
+}
+
+export type ReportCompareParams = ReportFilters & {
+  kind: ReportCompareKind
+  a: number
+  b: number
+}
+
+export const reportsCompareApi = {
+  compare: ({ kind, a, b, ...filters }: ReportCompareParams) =>
+    api
+      .get<ReportCompare>('/reports/compare', { params: { ...toParams(filters), kind, a, b } })
+      .then((r) => r.data),
+}

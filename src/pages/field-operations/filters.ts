@@ -1,3 +1,5 @@
+import type { FieldOperationSort } from '../../api/fieldOperation.api'
+
 /** Filtrele listei, așa cum stau în URL; toate se aplică în API. */
 export type FieldOperationsFilterState = {
   q: string
@@ -41,4 +43,18 @@ export function dayStart(day: string, addDays = 0) {
   const date = new Date(`${day}T00:00:00`)
   date.setDate(date.getDate() + addDays)
   return date.toISOString()
+}
+
+const SORTS: FieldOperationSort[] = [
+  'planned_asc',
+  'planned_desc',
+  'area_asc',
+  'area_desc',
+  'field_asc',
+  'field_desc',
+]
+
+/** Ordonarea din URL; orice altă valoare = implicit (cele mai recente primele). */
+export function parseSort(value: string | null): FieldOperationSort | '' {
+  return SORTS.includes(value as FieldOperationSort) ? (value as FieldOperationSort) : ''
 }

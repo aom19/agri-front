@@ -136,6 +136,17 @@ export type FieldOperationPayload = {
   field_crop_id?: number | null
 }
 
+export type FieldOperationSort =
+  | 'planned_asc'
+  | 'planned_desc'
+  | 'area_asc'
+  | 'area_desc'
+  | 'field_asc'
+  | 'field_desc'
+
+/** Numărul lucrărilor pe status, pentru aceleași filtre ca lista (fără status). */
+export type FieldOperationStatusCounts = Record<FieldOperationStatus | 'total', number>
+
 export type FieldOperationsFilter = {
   /** Un status sau o listă separată prin virgulă (planned,in_progress). */
   status?: FieldOperationStatus | string
@@ -146,8 +157,8 @@ export type FieldOperationsFilter = {
   /** Începutul planificat în [planned_from, planned_to), ISO 8601. */
   planned_from?: string
   planned_to?: string
-  /** planned_asc = cele mai apropiate primele; implicit cele mai recente primele. */
-  sort?: 'planned_asc'
+  /** Ordonarea; implicit cele mai recente primele. */
+  sort?: FieldOperationSort
 }
 
 export type FieldOperationsPageFilter = FieldOperationsFilter & {
@@ -160,6 +171,12 @@ export const fieldOperationsApi = {
   getPage: (params: FieldOperationsPageFilter & PageParams) =>
     api
       .get<Paginated<FieldOperation>>('/field-operations', { params: listParams(params) })
+      .then((r) => r.data),
+  getStatusCounts: (params: Omit<FieldOperationsPageFilter, 'status' | 'sort'>) =>
+    api
+      .get<FieldOperationStatusCounts>('/field-operations/status-counts', {
+        params: listParams(params),
+      })
       .then((r) => r.data),
   getAll: (filter?: FieldOperationsFilter) =>
     api.get<FieldOperation[]>('/field-operations', { params: filter }).then((r) => r.data),

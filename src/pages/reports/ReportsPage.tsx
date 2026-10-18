@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Box, Button, GlobalStyles, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material'
 import {
   AgricultureOutlined,
+  BalanceOutlined,
   BuildOutlined,
   DashboardOutlined,
   GrassOutlined,
@@ -27,6 +28,7 @@ import OperatorsTab from './tabs/OperatorsTab'
 import StocksTab from './tabs/StocksTab'
 import CropsTab from './tabs/CropsTab'
 import WeatherTab from './tabs/WeatherTab'
+import CompareTab from './tabs/CompareTab'
 import { isOperationType } from '../../schemas/operation.schema'
 
 const TABS = [
@@ -40,7 +42,11 @@ const TABS = [
   { key: 'weather', label: 'Meteo', icon: WbSunnyOutlined },
 ] as const
 
-type TabKey = (typeof TABS)[number]['key']
+// Comparația nu e un tab, ci o vedere deschisă din butonul de lângă „Trimite pe e-mail”.
+type TabKey = (typeof TABS)[number]['key'] | 'compare'
+
+// Alegerea din comparație (tip, cele două entități) supraviețuiește resetării filtrelor.
+const COMPARE_PARAMS = ['tab', 'cmp', 'a', 'b']
 
 const PARAM_NAMES: Record<keyof ReportFilterState, string> = {
   from: 'from',
@@ -52,7 +58,7 @@ const PARAM_NAMES: Record<keyof ReportFilterState, string> = {
 }
 
 function isTabKey(value: string | null): value is TabKey {
-  return TABS.some((tab) => tab.key === value)
+  return value === 'compare' || TABS.some((tab) => tab.key === value)
 }
 
 function toNumberOrUndefined(value: string) {
@@ -99,8 +105,10 @@ export default function ReportsPage() {
     setSearchParams(
       (previous) => {
         const next = new URLSearchParams()
-        const currentTab = previous.get('tab')
-        if (currentTab) next.set('tab', currentTab)
+        for (const param of COMPARE_PARAMS) {
+          const value = previous.get(param)
+          if (value) next.set(param, value)
+        }
         return next
       },
       { replace: true }
@@ -176,7 +184,12 @@ export default function ReportsPage() {
             din datele fermei · {state.from} – {state.to}
           </Typography>
         </Box>
-        <Stack className="no-print" direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+        <Stack
+          className="no-print"
+          direction="row"
+          spacing={1}
+          sx={{ flexShrink: 0, flexWrap: 'wrap', rowGap: 1 }}
+        >
           <Tooltip
             describeChild
             title="Trimite pe e-mailul tău sumarul perioadei alese, fără celelalte filtre"
@@ -190,6 +203,14 @@ export default function ReportsPage() {
               {emailSummary.isPending ? 'Se trimite...' : 'Trimite pe e-mail'}
             </Button>
           </Tooltip>
+          <Button
+            variant={tab === 'compare' ? 'contained' : 'outlined'}
+            startIcon={<BalanceOutlined />}
+            onClick={() => changeTab(tab === 'compare' ? 'summary' : 'compare')}
+            aria-pressed={tab === 'compare'}
+          >
+            Comparație
+          </Button>
           <Button variant="outlined" startIcon={<PrintOutlined />} onClick={() => window.print()}>
             Export PDF
           </Button>
@@ -201,7 +222,7 @@ export default function ReportsPage() {
       </Box>
 
       <Tabs
-        value={tab}
+        value={tab === 'compare' ? false : tab}
         onChange={(_, value: TabKey) => changeTab(value)}
         variant="scrollable"
         allowScrollButtonsMobile
@@ -231,6 +252,7 @@ export default function ReportsPage() {
       {tab === 'stocks' && <StocksTab filters={filters} />}
       {tab === 'crops' && <CropsTab filters={filters} />}
       {tab === 'weather' && <WeatherTab filters={filters} />}
+      {tab === 'compare' && <CompareTab filters={filters} />}
     </Box>
   )
 }

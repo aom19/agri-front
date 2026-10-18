@@ -1,5 +1,11 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
-import { reportsApi, reportsExtraApi, type ReportFilters } from '../api/reports.api'
+import {
+  reportsApi,
+  reportsCompareApi,
+  reportsExtraApi,
+  type ReportCompareParams,
+  type ReportFilters,
+} from '../api/reports.api'
 import { useAuthStore } from '../store/auth.store'
 
 export const REPORTS_KEY = ['reports']
@@ -63,5 +69,19 @@ export function useEmailReportSummary() {
   return useMutation({
     mutationFn: (period: Pick<ReportFilters, 'from' | 'to'>) =>
       reportsExtraApi.emailSummary(period),
+  })
+}
+
+/** Comparația a două entități; `params` null cât timp nu sunt alese amândouă. */
+export function useReportCompare(params: ReportCompareParams | null) {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: [...REPORTS_KEY, 'compare', accessToken, params],
+    queryFn: () => reportsCompareApi.compare(params!),
+    enabled: initialized && !!accessToken && params != null,
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
   })
 }

@@ -4,9 +4,11 @@ import { Box, Button, Stack, Typography } from '@mui/material'
 type Props = {
   onCreate: () => void
   canWrite: boolean
+  /** Numărul lucrărilor pentru filtrele curente (fără status). */
+  total?: number
 }
 
-export default function FieldOperationsPageHeader({ onCreate, canWrite }: Props) {
+export default function FieldOperationsPageHeader({ onCreate, canWrite, total }: Props) {
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
@@ -19,9 +21,17 @@ export default function FieldOperationsPageHeader({ onCreate, canWrite }: Props)
           <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#0d1f17' }}>
             Operațiuni pe teren
           </Typography>
+          {total != null && (
+            <Typography
+              component="span"
+              sx={{ fontSize: '1.45rem', fontWeight: 400, color: 'text.secondary' }}
+            >
+              · {total}
+            </Typography>
+          )}
         </Stack>
-        <Typography sx={{ color: 'text.secondary', maxWidth: 720 }}>
-          Planifică operațiunile agricole pe terenuri, alege template sau introdu manual.
+        <Typography sx={{ color: 'text.secondary', maxWidth: 720, fontSize: '0.9rem' }}>
+          Planificarea și urmărirea lucrărilor pe terenuri.
         </Typography>
       </Box>
 

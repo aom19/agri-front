@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Box, CircularProgress } from '@mui/material'
+import { Box } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
 import { useHasPermission } from '../../hooks/usePermissions'
-import { FIELD_OPERATIONS_KEY, useDeleteFieldOperation } from '../../hooks/useFieldOperations'
+import {
+  FIELD_OPERATIONS_KEY,
+  useDeleteFieldOperation,
+  useFieldOperationStatusCounts,
+} from '../../hooks/useFieldOperations'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import {
   fieldOperationsApi,
   type FieldOperation,
+  type FieldOperationSort,
   type FieldOperationsPageFilter,
 } from '../../api/fieldOperation.api'
 import {
@@ -20,6 +25,7 @@ import {
   EMPTY_FIELD_OPERATIONS_FILTERS,
   FILTER_PARAMS,
   dayStart,
+  parseSort,
   type FieldOperationsFilterState,
 } from './filters'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
@@ -76,12 +82,27 @@ export default function FieldOperationsPage() {
     [debouncedQ, status, operationType, fieldId, machineId, operatorId, from, to]
   )
   const hasFilters = Object.values(filterState).some(Boolean)
+  const sort = parseSort(searchParams.get('sort'))
+  const setSort = (next: FieldOperationSort | '') =>
+    setSearchParams(
+      (previous) => {
+        const params = new URLSearchParams(previous)
+        if (next) params.set('sort', next)
+        else params.delete('sort')
+        return params
+      },
+      { replace: true }
+    )
 
-  const pagination = usePagination(filters)
+  // Numărătorile tab-urilor: aceleași filtre, fără status (fiecare tab își arată numărul).
+  const countFilters = useMemo(() => ({ ...filters, status: undefined }), [filters])
+  const { data: statusCounts } = useFieldOperationStatusCounts(countFilters)
+
+  const pagination = usePagination({ filters, sort })
   const { data: itemsPage, isPending } = usePagedQuery(
     FIELD_OPERATIONS_KEY,
     fieldOperationsApi.getPage,
-    { ...filters, ...pagination.params }
+    { ...filters, sort: sort || undefined, ...pagination.params }
   )
   const items = itemsPage?.items
   const deleteMutation = useDeleteFieldOperation()
@@ -119,30 +140,35 @@ export default function FieldOperationsPage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <FieldOperationsPageHeader onCreate={openCreate} canWrite={canWrite} />
+      <FieldOperationsPageHeader
+        onCreate={openCreate}
+        canWrite={canWrite}
+        total={statusCounts?.total}
+      />
       <FieldOperationsFilters
         value={filterState}
         onChange={updateFilters}
-        onReset={() => updateFilters(EMPTY_FIELD_OPERATIONS_FILTERS)}
+        onReset={() =>
+          updateFilters({ ...EMPTY_FIELD_OPERATIONS_FILTERS, status: filterState.status })
+        }
       />
 
-      {isPending ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={28} />
-        </Box>
-      ) : (
-        <FieldOperationsTable
-          items={items ?? []}
-          isLoading={isPending}
-          canWrite={canWrite}
-          canDelete={canWrite}
-          onView={openView}
-          onEdit={openEdit}
-          onDelete={openDeleteDialog}
-          footer={<TablePaginationBar pagination={pagination} total={itemsPage?.total} />}
-          emptyText={hasFilters ? 'Nicio operațiune nu corespunde filtrelor.' : undefined}
-        />
-      )}
+      <FieldOperationsTable
+        items={items ?? []}
+        isLoading={isPending}
+        canWrite={canWrite}
+        canDelete={canWrite}
+        onView={openView}
+        onEdit={openEdit}
+        onDelete={openDeleteDialog}
+        footer={<TablePaginationBar pagination={pagination} total={itemsPage?.total} />}
+        emptyText={hasFilters ? 'Nicio operațiune nu corespunde filtrelor.' : undefined}
+        status={filterState.status}
+        onStatusChange={(next) => updateFilters({ status: next })}
+        statusCounts={statusCounts}
+        sort={sort}
+        onSortChange={setSort}
+      />
 
       <ModalConfirmAction
         open={deleteOpen}

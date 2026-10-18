@@ -3,6 +3,7 @@ import {
   fieldOperationsApi,
   type FieldOperationPayload,
   type FieldOperationsFilter,
+  type FieldOperationsPageFilter,
   type FieldOperationCompletionPayload,
   type FieldOperationConflictParams,
 } from '../api/fieldOperation.api'
@@ -20,6 +21,22 @@ export function useFieldOperations(filter?: FieldOperationsFilter) {
     enabled: initialized && !!accessToken,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  })
+}
+
+/** Numărul lucrărilor pe status pentru filtrele listei (tab-urile de status). */
+export function useFieldOperationStatusCounts(
+  filter: Omit<FieldOperationsPageFilter, 'status' | 'sort'>
+) {
+  const initialized = useAuthStore((s) => s.initialized)
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  return useQuery({
+    queryKey: [...FIELD_OPERATIONS_KEY, 'status-counts', accessToken, filter],
+    queryFn: () => fieldOperationsApi.getStatusCounts(filter),
+    enabled: initialized && !!accessToken,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
   })
 }
 
