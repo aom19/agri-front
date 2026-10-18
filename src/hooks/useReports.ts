@@ -28,6 +28,9 @@ export const useReportSummary = (filters: ReportFilters) =>
 export const useReportOperations = (filters: ReportFilters) =>
   useReportQuery('operations', filters, reportsApi.getOperations)
 
+export const useMyReportOperations = (filters: ReportFilters) =>
+  useReportQuery('my-operations', filters, reportsApi.getMyOperations)
+
 export const useReportFields = (filters: ReportFilters) =>
   useReportQuery('fields', filters, reportsApi.getFields)
 

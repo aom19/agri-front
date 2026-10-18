@@ -189,6 +189,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const permSet = useMemo(() => new Set(permissions?.map((p) => p.name) ?? []), [permissions])
   const isMenuLoading = Boolean(accessToken) && permissionsPending
   const can = (perm?: string) => !perm || permSet.has(perm)
+  const role = (profile?.role_code ?? profile?.role ?? user?.role)?.toLowerCase()
+  const hiddenForRole = (item: { hiddenForRoles?: string[]; onlyForRoles?: string[] }) =>
+    Boolean(role && item.hiddenForRoles?.includes(role)) ||
+    Boolean(item.onlyForRoles && !(role && item.onlyForRoles.includes(role)))
   const canOpenWeather = !isMenuLoading && can('fields:read')
 
   const handleNav = (path: string) => {
@@ -226,8 +230,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           navConfig.map((section, sectionIndex) => {
             // Drop items the user can't see; a section with nothing left is hidden entirely.
             const visibleItems = section.items.flatMap((item): NavItem[] => {
+              if (hiddenForRole(item)) return []
               if (item.type === 'leaf') return can(item.permission) ? [item] : []
-              const children = item.children.filter((c) => can(c.permission))
+              const children = item.children.filter((c) => can(c.permission) && !hiddenForRole(c))
               return children.length > 0 ? [{ ...item, children }] : []
             })
             if (visibleItems.length === 0) return null

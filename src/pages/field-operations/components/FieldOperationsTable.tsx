@@ -18,6 +18,7 @@ import {
 import type { FieldOperation, FieldOperationStatus } from '../../../api/fieldOperation.api'
 import { formatDateTime } from '../../../utils/dateFormat'
 import OperationConflictChip from './OperationConflictChip'
+import { statusLabels } from '../status'
 
 type Props = {
   items: FieldOperation[]
@@ -29,13 +30,8 @@ type Props = {
   onDelete: (item: FieldOperation) => void
   /** Sub tabel, în același card (ex. paginarea). */
   footer?: ReactNode
-}
-
-const statusLabels: Record<FieldOperationStatus, string> = {
-  planned: 'Planificată',
-  in_progress: 'În lucru',
-  completed: 'Finalizată',
-  canceled: 'Anulată',
+  /** Mesajul pentru lista goală (ex. când filtrele nu potrivesc nimic). */
+  emptyText?: string
 }
 
 function statusColor(status: FieldOperationStatus): 'info' | 'warning' | 'success' | 'default' {
@@ -59,6 +55,7 @@ export default function FieldOperationsTable({
   onEdit,
   onDelete,
   footer,
+  emptyText = 'Nu există operațiuni pe teren.',
 }: Props) {
   return (
     <Card>
@@ -151,7 +148,7 @@ export default function FieldOperationsTable({
               <TableRow>
                 <TableCell colSpan={9}>
                   <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
-                    Nu există operațiuni pe teren.
+                    {emptyText}
                   </Box>
                 </TableCell>
               </TableRow>

@@ -32,6 +32,7 @@ const PermissionsPage = lazy(() => import('../../pages/admin/permissions/Permiss
 const NotificationsPage = lazy(() => import('../../pages/notifications/NotificationsPage'))
 const AuditLogPage = lazy(() => import('../../pages/admin/audit/AuditLogPage'))
 const ReportsPage = lazy(() => import('../../pages/reports/ReportsPage'))
+const MyReportsPage = lazy(() => import('../../pages/my-reports/MyReportsPage'))
 const FieldCropsPage = lazy(() => import('../../pages/crops/FieldCropsPage'))
 const SeasonsPage = lazy(() => import('../../pages/crops/SeasonsPage'))
 const CropCatalogPage = lazy(() => import('../../pages/crops/CropCatalogPage'))
@@ -84,6 +85,17 @@ const PrivateRoutes = () => {
             <RequirePermission permission="reports:read">
               <Suspense fallback={<PageLoader />}>
                 <ReportsPage />
+              </Suspense>
+            </RequirePermission>
+          }
+        />
+
+        <Route
+          path="/my-reports"
+          element={
+            <RequirePermission permission="field_operations:read">
+              <Suspense fallback={<PageLoader />}>
+                <MyReportsPage />
               </Suspense>
             </RequirePermission>
           }

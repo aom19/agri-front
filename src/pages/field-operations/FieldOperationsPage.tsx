@@ -1,13 +1,29 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { FIELD_OPERATIONS_KEY, useDeleteFieldOperation } from '../../hooks/useFieldOperations'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
-import { fieldOperationsApi, type FieldOperation } from '../../api/fieldOperation.api'
-import { FieldOperationsPageHeader, FieldOperationsTable } from './components'
+import {
+  fieldOperationsApi,
+  type FieldOperation,
+  type FieldOperationsPageFilter,
+} from '../../api/fieldOperation.api'
+import {
+  FieldOperationsFilters,
+  FieldOperationsPageHeader,
+  FieldOperationsTable,
+} from './components'
+import {
+  EMPTY_FIELD_OPERATIONS_FILTERS,
+  FILTER_PARAMS,
+  dayStart,
+  type FieldOperationsFilterState,
+} from './filters'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import { isOperationType } from '../../schemas/operation.schema'
 import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
 import TablePaginationBar from '../../components/TablePaginationBar'
@@ -17,11 +33,55 @@ export default function FieldOperationsPage() {
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('field_operations:write')
 
-  const pagination = usePagination()
+  // Filtrele stau în URL (revenirea din detalii le păstrează) și se aplică toate în API.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filterState: FieldOperationsFilterState = {
+    q: searchParams.get('q') ?? '',
+    status: searchParams.get('status') ?? '',
+    operationType: searchParams.get('operation_type') ?? '',
+    fieldId: searchParams.get('field_id') ?? '',
+    machineId: searchParams.get('machine_id') ?? '',
+    operatorId: searchParams.get('operator_id') ?? '',
+    from: searchParams.get('from') ?? '',
+    to: searchParams.get('to') ?? '',
+  }
+  const updateFilters = (patch: Partial<FieldOperationsFilterState>) => {
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        for (const [key, value] of Object.entries(patch)) {
+          const param = FILTER_PARAMS[key as keyof FieldOperationsFilterState]
+          if (value) next.set(param, value)
+          else next.delete(param)
+        }
+        return next
+      },
+      { replace: true }
+    )
+  }
+
+  const debouncedQ = useDebouncedValue(filterState.q.trim(), 300)
+  const { status, operationType, fieldId, machineId, operatorId, from, to } = filterState
+  const filters: FieldOperationsPageFilter = useMemo(
+    () => ({
+      q: debouncedQ || undefined,
+      status: status || undefined,
+      operation_type: isOperationType(operationType) ? operationType : undefined,
+      field_id: fieldId || undefined,
+      machine_id: Number(machineId) || undefined,
+      operator_id: Number(operatorId) || undefined,
+      planned_from: from ? dayStart(from) : undefined,
+      planned_to: to ? dayStart(to, 1) : undefined,
+    }),
+    [debouncedQ, status, operationType, fieldId, machineId, operatorId, from, to]
+  )
+  const hasFilters = Object.values(filterState).some(Boolean)
+
+  const pagination = usePagination(filters)
   const { data: itemsPage, isPending } = usePagedQuery(
     FIELD_OPERATIONS_KEY,
     fieldOperationsApi.getPage,
-    pagination.params
+    { ...filters, ...pagination.params }
   )
   const items = itemsPage?.items
   const deleteMutation = useDeleteFieldOperation()
@@ -60,6 +120,11 @@ export default function FieldOperationsPage() {
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <FieldOperationsPageHeader onCreate={openCreate} canWrite={canWrite} />
+      <FieldOperationsFilters
+        value={filterState}
+        onChange={updateFilters}
+        onReset={() => updateFilters(EMPTY_FIELD_OPERATIONS_FILTERS)}
+      />
 
       {isPending ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -75,6 +140,7 @@ export default function FieldOperationsPage() {
           onEdit={openEdit}
           onDelete={openDeleteDialog}
           footer={<TablePaginationBar pagination={pagination} total={itemsPage?.total} />}
+          emptyText={hasFilters ? 'Nicio operațiune nu corespunde filtrelor.' : undefined}
         />
       )}
 

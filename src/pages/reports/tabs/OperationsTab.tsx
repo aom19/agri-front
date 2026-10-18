@@ -1,4 +1,4 @@
-import { Chip, Grid, Stack, Typography } from '@mui/material'
+import { Grid, Stack, Typography } from '@mui/material'
 import { BarChart } from '@mui/x-charts/BarChart'
 import { useNavigate } from 'react-router-dom'
 import type {
@@ -10,8 +10,8 @@ import { useReportOperations } from '../../../hooks/useReports'
 import ChartCard from '../components/ChartCard'
 import { ReportError, ReportLoading } from '../components/ReportStates'
 import ReportTable, { type ReportColumn } from '../components/ReportTable'
+import StatusChip from '../components/StatusChip'
 import {
-  NEUTRAL_INK,
   OPERATION_STATUS_META,
   OPERATION_STATUS_SINGULAR,
   SERIES_COLORS,
@@ -31,31 +31,6 @@ type OperationsTabProps = {
 }
 
 const STATUS_KEYS = ['planned', 'in_progress', 'completed', 'canceled'] as const
-
-function StatusChip({ status }: { status: string }) {
-  const meta = OPERATION_STATUS_META[status]
-  return (
-    <Chip
-      size="small"
-      label={OPERATION_STATUS_SINGULAR[status] ?? status}
-      sx={{
-        bgcolor: `${meta?.color ?? NEUTRAL_INK}1f`,
-        color: '#0d1f17',
-        fontWeight: 600,
-        '&::before': {
-          content: '""',
-          display: 'inline-block',
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          bgcolor: meta?.color ?? NEUTRAL_INK,
-          ml: 1,
-          mr: -0.5,
-        },
-      }}
-    />
-  )
-}
 
 const typeColumns: ReportColumn<ReportOperationTypeStat>[] = [
   { key: 'name', label: 'Tip operațiune', render: (row) => row.operation_type_name },

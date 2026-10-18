@@ -259,6 +259,8 @@ function fetchReport<T>(path: string) {
 export const reportsApi = {
   getSummary: fetchReport<ReportSummary>('summary'),
   getOperations: fetchReport<ReportOperations>('operations'),
+  /** Operațiunile contului curent (operator), fără costuri; operator_id e ignorat de server. */
+  getMyOperations: fetchReport<ReportOperations>('my-operations'),
   getFields: fetchReport<ReportFields>('fields'),
   getFleet: fetchReport<ReportFleet>('fleet'),
   getOperators: fetchReport<ReportOperators>('operators'),

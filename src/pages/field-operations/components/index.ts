@@ -2,3 +2,4 @@ export { default as FieldOperationsPageHeader } from './FieldOperationsPageHeade
 export { default as FieldOperationsTable } from './FieldOperationsTable'
 export { default as FieldOperationForm } from './FieldOperationForm'
 export { default as OperationConflictChip } from './OperationConflictChip'
+export { default as FieldOperationsFilters } from './FieldOperationsFilters'

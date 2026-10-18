@@ -3,7 +3,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/auth.store'
 import { NOTIFICATIONS_KEY } from './useNotifications'
 
-const WS_BASE = window.location.origin.replace(/^http/, 'ws').replace(':3000', ':8080')
+// /ws trece prin proxy-ul Vite spre API, ca restul cererilor (vezi vite.config.ts).
+const WS_BASE = window.location.origin.replace(/^http/, 'ws')
 
 export function useNotificationSocket() {
   const accessToken = useAuthStore((s) => s.accessToken)

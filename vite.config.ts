@@ -5,12 +5,22 @@ import babel from '@rolldown/plugin-babel'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  // API-ul e servit prin același port ca aplicația: merge și de pe telefon (din rețea), fără CORS.
+  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:8080'
+  const proxy = {
+    '/api': apiTarget,
+    '/uploads': apiTarget,
+    '/ws': { target: apiTarget, ws: true },
+  }
 
   return {
     plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
     server: {
       port: Number(env.VITE_APP_PORT) || 3000,
+      host: true,
+      proxy,
     },
+    preview: { host: true, proxy },
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],

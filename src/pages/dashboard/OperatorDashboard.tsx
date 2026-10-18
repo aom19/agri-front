@@ -39,8 +39,6 @@ type DetailItemProps = {
   value: string
 }
 
-const activeStatuses = new Set(['planned', 'in_progress'])
-
 function formatEstimatedWorkTime(
   startValue: string | null | undefined,
   endValue: string | null | undefined
@@ -61,27 +59,13 @@ function formatEstimatedWorkTime(
   return `${hours} h ${minutes} min`
 }
 
-function isToday(value: string | null | undefined) {
-  if (!value) return false
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return false
-
-  const today = new Date()
-  return (
-    date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  )
-}
-
-function byPlannedStart(first: FieldOperation, second: FieldOperation) {
-  const firstTime = first.planned_start_at
-    ? new Date(first.planned_start_at).getTime()
-    : Number.MAX_SAFE_INTEGER
-  const secondTime = second.planned_start_at
-    ? new Date(second.planned_start_at).getTime()
-    : Number.MAX_SAFE_INTEGER
-  return firstTime - secondTime
+/** Ziua curentă (ora locală), ca interval [from, to) pentru filtrul API pe începutul planificat. */
+function todayRange() {
+  const from = new Date()
+  from.setHours(0, 0, 0, 0)
+  const to = new Date(from)
+  to.setDate(to.getDate() + 1)
+  return { planned_from: from.toISOString(), planned_to: to.toISOString() }
 }
 
 function statusLabel(status: FieldOperation['status']) {
@@ -143,24 +127,28 @@ function DetailItem({ icon, label, value }: DetailItemProps) {
 
 export default function OperatorDashboard({ displayName, greeting }: OperatorDashboardProps) {
   const navigate = useNavigate()
-  const { data: operations, isPending, isError } = useFieldOperations()
-  const items = operations ?? []
-  const activeOperations = items
-    .filter((operation) => activeStatuses.has(operation.status))
-    .sort(byPlannedStart)
-  const todayOperations = activeOperations.filter((operation) =>
-    isToday(operation.planned_start_at)
+  // Filtrarea și ordonarea se fac în API; operatorul primește oricum doar lucrările proprii.
+  const today = todayRange()
+  const activeQuery = useFieldOperations({ status: 'planned,in_progress', sort: 'planned_asc' })
+  const todayQuery = useFieldOperations({
+    status: 'planned,in_progress',
+    sort: 'planned_asc',
+    ...today,
+  })
+  const inProgressQuery = useFieldOperations({ status: 'in_progress', sort: 'planned_asc' })
+  const completedTodayQuery = useFieldOperations({ status: 'completed', ...today })
+  const isPending = activeQuery.isPending
+  const isError = [activeQuery, todayQuery, inProgressQuery, completedTodayQuery].some(
+    (query) => query.isError
   )
-  const inProgressOperation = activeOperations.find(
-    (operation) => operation.status === 'in_progress'
-  )
-  const nextOperation = inProgressOperation ?? activeOperations[0]
+  const activeOperations = activeQuery.data ?? []
+  const todayOperations = todayQuery.data ?? []
+  const inProgressOperations = inProgressQuery.data ?? []
+  const completedToday = completedTodayQuery.data ?? []
+  const nextOperation = inProgressOperations[0] ?? activeOperations[0]
   const nextOperations = activeOperations
     .filter((operation) => operation.id !== nextOperation?.id)
     .slice(0, 4)
-  const completedToday = items.filter(
-    (operation) => operation.status === 'completed' && isToday(operation.planned_start_at)
-  )
   const progress = getProgress(nextOperation)
   const nextTone = statusTone(nextOperation?.status ?? 'planned')
   const operatorName = displayName.trim() || 'Operator'
@@ -502,7 +490,7 @@ export default function OperatorDashboard({ displayName, greeting }: OperatorDas
                 <Typography>În lucru</Typography>
               </Stack>
               <Typography sx={{ fontWeight: 900 }}>
-                {items.filter((operation) => operation.status === 'in_progress').length}
+                {inProgressOperations.length}
               </Typography>
             </Stack>
             <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>

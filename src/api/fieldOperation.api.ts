@@ -137,15 +137,22 @@ export type FieldOperationPayload = {
 }
 
 export type FieldOperationsFilter = {
-  status?: FieldOperationStatus
+  /** Un status sau o listă separată prin virgulă (planned,in_progress). */
+  status?: FieldOperationStatus | string
   field_id?: string
   operation_type?: OperationTypeValue
   machine_id?: number
   operator_id?: number
+  /** Începutul planificat în [planned_from, planned_to), ISO 8601. */
+  planned_from?: string
+  planned_to?: string
+  /** planned_asc = cele mai apropiate primele; implicit cele mai recente primele. */
+  sort?: 'planned_asc'
 }
 
-export type FieldOperationsPageFilter = Omit<FieldOperationsFilter, 'status'> & {
-  status?: FieldOperationStatus | string
+export type FieldOperationsPageFilter = FieldOperationsFilter & {
+  /** Căutare text: teren, template, mașină, echipament, operator, cultură, note. */
+  q?: string
 }
 
 export const fieldOperationsApi = {

@@ -28,6 +28,10 @@ export type NavLeaf = {
   path: string
   icon: IconComponent
   permission?: string
+  /** Role codes (lowercase) for which the entry is hidden even if the permission is granted. */
+  hiddenForRoles?: string[]
+  /** Role codes (lowercase) that alone see the entry; others don't, whatever their permissions. */
+  onlyForRoles?: string[]
 }
 
 export type NavGroup = {
@@ -35,6 +39,7 @@ export type NavGroup = {
   label: string
   icon: IconComponent
   children: NavLeaf[]
+  hiddenForRoles?: string[]
 }
 
 export type NavItem = NavLeaf | NavGroup
@@ -64,6 +69,14 @@ export const navConfig: NavSection[] = [
         icon: AssessmentOutlined,
         permission: 'reports:read',
       },
+      {
+        type: 'leaf',
+        label: 'Rapoartele mele',
+        path: '/my-reports',
+        icon: AssessmentOutlined,
+        permission: 'field_operations:read',
+        onlyForRoles: ['operator'],
+      },
     ],
   },
   {
@@ -89,6 +102,7 @@ export const navConfig: NavSection[] = [
         path: '/crops',
         icon: GrassOutlined,
         permission: 'crops:read',
+        hiddenForRoles: ['operator'],
       },
       {
         type: 'leaf',
@@ -96,6 +110,7 @@ export const navConfig: NavSection[] = [
         path: '/seasons',
         icon: EventNoteOutlined,
         permission: 'crops:read',
+        hiddenForRoles: ['operator'],
       },
     ],
   },
@@ -146,6 +161,7 @@ export const navConfig: NavSection[] = [
         type: 'group',
         label: 'Nomenclatoare',
         icon: TuneOutlined,
+        hiddenForRoles: ['operator'],
         children: [
           {
             type: 'leaf',
