@@ -21,6 +21,7 @@ import { formatNumber, toOptionalNumber } from './cropFormat'
 type FieldCropDialogProps = {
   open: boolean
   item: FieldCrop | null
+  defaultFieldId?: string
   defaultSeasonId: number | null
   seasons: Season[]
   crops: Crop[]
@@ -35,19 +36,32 @@ export default function FieldCropDialog(props: FieldCropDialogProps) {
   )
 }
 
-function FieldCropForm({ item, defaultSeasonId, seasons, crops, onClose }: FieldCropDialogProps) {
+function FieldCropForm({
+  item,
+  defaultFieldId,
+  defaultSeasonId,
+  seasons,
+  crops,
+  onClose,
+}: FieldCropDialogProps) {
   const show = useNotificationStore((state) => state.show)
   const { data: fields } = useFields()
   const create = useCreateFieldCrop()
   const update = useUpdateFieldCrop()
-  const [fieldId, setFieldId] = useState(item?.field_id ?? '')
+  const [fieldId, setFieldId] = useState(item?.field_id ?? defaultFieldId ?? '')
   const [seasonId, setSeasonId] = useState(
     String(item?.season_id ?? defaultSeasonId ?? seasons[0]?.id ?? '')
   )
   const [cropId, setCropId] = useState(String(item?.crop_id ?? crops[0]?.id ?? ''))
   const isEdit = Boolean(item)
+  // deschis de pe rândul unui teren fără cultură: suprafața se preia din teren, ca la alegerea lui
+  const defaultFieldArea = (fields ?? []).find((field) => field.id === defaultFieldId)?.area_ha
   const [plantedArea, setPlantedArea] = useState(
-    item?.planted_area_ha != null ? String(item.planted_area_ha) : ''
+    item?.planted_area_ha != null
+      ? String(item.planted_area_ha)
+      : defaultFieldArea != null
+        ? String(defaultFieldArea)
+        : ''
   )
   const [plantedAt, setPlantedAt] = useState(item?.planted_at ?? '')
   const [harvestedAt, setHarvestedAt] = useState(item?.harvested_at ?? '')

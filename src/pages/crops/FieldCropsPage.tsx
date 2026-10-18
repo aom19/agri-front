@@ -26,15 +26,18 @@ import {
   Typography,
 } from '@mui/material'
 import { cropsApi, type FieldCrop } from '../../api/crops.api'
+import type { Field } from '../../api/fields.api'
 import { ModalConfirmAction } from '../../components'
 import {
   useCrops,
   useDeleteFieldCrop,
   FIELD_CROPS_KEY,
+  useFieldCrops,
   useRecordHarvest,
   useReopenFieldCrop,
   useSeasons,
 } from '../../hooks/useCrops'
+import { useFields } from '../../hooks/useFields'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
@@ -59,6 +62,7 @@ export default function FieldCropsPage() {
   const canWrite = useHasPermission('crops:write')
   const { data: seasons } = useSeasons()
   const { data: crops } = useCrops()
+  const { data: fields, isPending: fieldsPending } = useFields()
   // sezonul filtrat vine din URL (?season_id=), ca pagina Sezoane să poată deschide direct un sezon
   const [searchParams, setSearchParams] = useSearchParams()
   const seasonFilter = searchParams.get('season_id') ?? ''
@@ -85,15 +89,33 @@ export default function FieldCropsPage() {
     { ...(effectiveSeasonId ? { season_id: effectiveSeasonId } : {}), ...pagination.params }
   )
   const fieldCrops = fieldCropsPage?.items
+  // toate culturile sezonului (nepaginat), ca să știm ce terenuri nu au cultură, oricare ar fi pagina
+  const { data: seasonFieldCrops, isPending: seasonFieldCropsPending } = useFieldCrops(
+    effectiveSeasonId ? { season_id: effectiveSeasonId } : {}
+  )
   const deleteFieldCrop = useDeleteFieldCrop()
   const recordHarvest = useRecordHarvest()
   const reopenFieldCrop = useReopenFieldCrop()
   const [closeTarget, setCloseTarget] = useState<FieldCrop | null>(null)
-  const [fieldCropDialog, setFieldCropDialog] = useState<{ open: boolean; item: FieldCrop | null }>(
-    { open: false, item: null }
-  )
+  const [fieldCropDialog, setFieldCropDialog] = useState<{
+    open: boolean
+    item: FieldCrop | null
+    fieldId?: string
+  }>({ open: false, item: null })
   const [deleteTarget, setDeleteTarget] = useState<FieldCrop | null>(null)
   const missingSetup = (seasons ?? []).length === 0 || (crops ?? []).length === 0
+  // terenurile fără nicio cultură în sezonul selectat apar după ultima pagină de culturi, ca lista
+  // să cuprindă toate terenurile
+  const fieldsWithoutCrop = useMemo(() => {
+    const withCrop = new Set((seasonFieldCrops ?? []).map((item) => item.field_id))
+    return (fields ?? [])
+      .filter((field) => !withCrop.has(field.id))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
+  }, [fields, seasonFieldCrops])
+  const onLastCropsPage =
+    (pagination.page + 1) * pagination.pageSize >= (fieldCropsPage?.total ?? 0)
+  const visibleFieldsWithoutCrop = onLastCropsPage ? fieldsWithoutCrop : []
+  const canAssign = (seasons ?? []).length > 0 && (crops ?? []).length > 0
 
   const handleReopen = (item: FieldCrop) => {
     reopenFieldCrop.mutate(item.id, {
@@ -214,7 +236,7 @@ export default function FieldCropsPage() {
                 size="small"
                 variant="contained"
                 startIcon={<AddOutlined />}
-                disabled={(seasons ?? []).length === 0 || (crops ?? []).length === 0}
+                disabled={!canAssign}
                 onClick={() => setFieldCropDialog({ open: true, item: null })}
               >
                 Atribuie cultură
@@ -223,13 +245,13 @@ export default function FieldCropsPage() {
           </Stack>
         }
       >
-        {fieldCropsPending ? (
+        {fieldCropsPending || fieldsPending || seasonFieldCropsPending ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
             <CircularProgress size={24} />
           </Box>
-        ) : (fieldCrops ?? []).length === 0 ? (
+        ) : (fieldCrops ?? []).length === 0 && visibleFieldsWithoutCrop.length === 0 ? (
           <Typography sx={{ color: 'text.secondary', fontSize: '0.85rem', py: 2 }}>
-            Nu există culturi atribuite în sezonul selectat.
+            Nu există terenuri. Adaugă-le din pagina Terenuri.
           </Typography>
         ) : (
           <Box sx={{ overflow: 'auto' }}>
@@ -361,6 +383,17 @@ export default function FieldCropsPage() {
                     )}
                   </TableRow>
                 ))}
+                {visibleFieldsWithoutCrop.map((field) => (
+                  <FieldWithoutCropRow
+                    key={field.id}
+                    field={field}
+                    canWrite={canWrite}
+                    canAssign={canAssign}
+                    onAssign={() =>
+                      setFieldCropDialog({ open: true, item: null, fieldId: field.id })
+                    }
+                  />
+                ))}
               </TableBody>
             </Table>
           </Box>
@@ -371,6 +404,7 @@ export default function FieldCropsPage() {
       <FieldCropDialog
         open={fieldCropDialog.open}
         item={fieldCropDialog.item}
+        defaultFieldId={fieldCropDialog.fieldId}
         defaultSeasonId={effectiveSeasonId ?? null}
         seasons={seasons ?? []}
         crops={crops ?? []}
@@ -391,5 +425,51 @@ export default function FieldCropsPage() {
         onConfirm={confirmDelete}
       />
     </Stack>
+  )
+}
+
+function FieldWithoutCropRow({
+  field,
+  canWrite,
+  canAssign,
+  onAssign,
+}: {
+  field: Field
+  canWrite: boolean
+  canAssign: boolean
+  onAssign: () => void
+}) {
+  return (
+    <TableRow hover sx={{ '& td': { color: 'text.secondary' } }}>
+      <TableCell sx={{ fontWeight: 600 }}>{field.name}</TableCell>
+      <TableCell sx={{ fontStyle: 'italic' }}>Fără cultură</TableCell>
+      <TableCell>-</TableCell>
+      <TableCell align="right">
+        {field.area_ha == null ? '-' : formatNumber(field.area_ha, 2)}
+      </TableCell>
+      <TableCell>-</TableCell>
+      <TableCell>-</TableCell>
+      <TableCell align="right">-</TableCell>
+      <TableCell align="right">-</TableCell>
+      <TableCell align="right">-</TableCell>
+      <TableCell>-</TableCell>
+      {canWrite && (
+        <TableCell align="right">
+          <Tooltip title="Atribuie o cultură acestui teren">
+            <span>
+              <IconButton
+                size="small"
+                color="primary"
+                disabled={!canAssign}
+                onClick={onAssign}
+                aria-label="Atribuie cultură"
+              >
+                <AddOutlined fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </TableCell>
+      )}
+    </TableRow>
   )
 }
