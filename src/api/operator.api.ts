@@ -1,4 +1,5 @@
 import { api } from './axios'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 /**
  * Operatorul este un utilizator cu rolul `operator`: `id` este id-ul contului. `email` e gol când
@@ -21,6 +22,9 @@ export type OperatorPayload = Pick<
 >
 
 export const operatorApi = {
+  /** O pagină de operatori; căutarea `q` e în nume, telefon, e-mail. */
+  getOperatorsPage: (params: PageParams & { q?: string }) =>
+    api.get<Paginated<Operator>>('/operators', { params: listParams(params) }).then((r) => r.data),
   getAllOperators: () => api.get<Operator[]>('/operators').then((r) => r.data),
 
   getOperatorById: (id: string) => api.get<Operator>(`/operators/${id}`).then((r) => r.data),

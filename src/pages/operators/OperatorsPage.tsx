@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { SearchOutlined } from '@mui/icons-material'
 import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
@@ -8,8 +8,8 @@ import {
   useDeleteOperator,
   useDisableOperator,
   useEnableOperator,
-  useOperators,
   useUpdateOperator,
+  OPERATOR_KEY,
 } from '../../hooks/useOperators'
 import type { Operator } from '../../api/operator.api'
 import { useNotificationStore } from '../../store/notification.store'
@@ -20,6 +20,11 @@ import {
   type OperatorFormValues,
 } from '../../schemas/operator.schema'
 import { OperatorFormModal, OperatorsPageHeader, OperatorsTable } from './components'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../components/TablePaginationBar'
+import { operatorApi } from '../../api/operator.api'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -54,7 +59,17 @@ export default function OperatorsPage() {
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('operators:write')
 
-  const { data: operators, isPending } = useOperators()
+  // căutarea și paginarea se fac în API; la o căutare nouă tabelul revine la prima pagină
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const pagination = usePagination(debouncedSearch)
+  const { data: operatorsPage, isPending } = usePagedQuery(
+    OPERATOR_KEY,
+    operatorApi.getOperatorsPage,
+    {
+      q: debouncedSearch,
+      ...pagination.params,
+    }
+  )
   const createOperator = useCreateOperator()
   const updateOperator = useUpdateOperator()
   const deleteOperator = useDeleteOperator()
@@ -64,19 +79,7 @@ export default function OperatorsPage() {
   const submitting = createOperator.isPending || updateOperator.isPending
   const deleting = deleteOperator.isPending
 
-  const filteredOperators = useMemo(() => {
-    const value = search.trim().toLowerCase()
-    return [...(operators ?? [])]
-      .filter((operator) => {
-        if (!value) return true
-        return (
-          operator.name.toLowerCase().includes(value) ||
-          operator.phone?.toLowerCase().includes(value) ||
-          operator.email?.toLowerCase().includes(value)
-        )
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [operators, search])
+  const filteredOperators = operatorsPage?.items ?? []
 
   const openCreateDialog = () => {
     setSelectedOperator(null)
@@ -220,6 +223,7 @@ export default function OperatorsPage() {
         <OperatorsTable
           operators={filteredOperators}
           isLoading={isPending}
+          footer={<TablePaginationBar pagination={pagination} total={operatorsPage?.total} />}
           canWrite={canWrite}
           canDelete={canWrite}
           canDisable={canWrite}

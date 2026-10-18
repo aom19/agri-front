@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   BlockOutlined,
   CheckCircleOutlined,
@@ -32,6 +33,8 @@ type OperatorsTableProps = {
   onDelete: (operator: Operator) => void
   onDisable: (operator: Operator) => void
   onEnable: (operator: Operator) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 function statusColor(status: string): 'success' | 'default' {
@@ -53,6 +56,7 @@ export default function OperatorsTable({
   onDelete,
   onDisable,
   onEnable,
+  footer,
 }: OperatorsTableProps) {
   return (
     <Card>
@@ -167,6 +171,7 @@ export default function OperatorsTable({
             )}
           </TableBody>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

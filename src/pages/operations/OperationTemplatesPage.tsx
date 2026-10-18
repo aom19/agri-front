@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   AddOutlined,
   DeleteOutlined,
@@ -44,7 +44,7 @@ import { useHasPermission } from '../../hooks/usePermissions'
 import {
   useCreateOperationTemplate,
   useDeleteOperationTemplate,
-  useOperationTemplates,
+  OPERATION_TEMPLATES_KEY,
   useUpdateOperationTemplate,
 } from '../../hooks/useOperations'
 import { useResources } from '../../hooks/useResources'
@@ -59,6 +59,10 @@ import {
 } from '../../schemas/operation.schema'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -116,7 +120,14 @@ export default function OperationTemplatesPage() {
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('operations:write')
 
-  const { data: templates, isPending: templatesLoading } = useOperationTemplates()
+  // căutarea și paginarea se fac în API; la o căutare nouă tabelul revine la prima pagină
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const pagination = usePagination(debouncedSearch)
+  const { data: templatesPage, isPending: templatesLoading } = usePagedQuery(
+    OPERATION_TEMPLATES_KEY,
+    operationApi.getTemplatesPage,
+    { q: debouncedSearch, ...pagination.params }
+  )
   const { data: resources } = useResources()
   const { data: crops } = useCrops()
 
@@ -127,20 +138,7 @@ export default function OperationTemplatesPage() {
   const submitting = createMutation.isPending || updateMutation.isPending
   const isPending = templatesLoading
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return [...(templates ?? [])]
-      .filter((t) => {
-        if (!q) return true
-        const typeName = operationTypeLabel(t.operation_type)
-        return (
-          t.name.toLowerCase().includes(q) ||
-          typeName.toLowerCase().includes(q) ||
-          t.unit.toLowerCase().includes(q)
-        )
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [templates, search])
+  const filtered = templatesPage?.items ?? []
 
   const openCreate = () => {
     setSelected(null)
@@ -438,6 +436,7 @@ export default function OperationTemplatesPage() {
                 )}
               </TableBody>
             </Table>
+            <TablePaginationBar pagination={pagination} total={templatesPage?.total} />
           </CardContent>
         </Card>
       )}

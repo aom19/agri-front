@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   BlockOutlined,
   CheckCircleOutlineOutlined,
@@ -33,6 +34,8 @@ type UsersTableProps = {
   onEdit: (user: User) => void
   onDisable: (user: User) => void
   onEnable: (user: User) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 export default function UsersTable({
@@ -47,6 +50,7 @@ export default function UsersTable({
   onEdit,
   onDisable,
   onEnable,
+  footer,
 }: UsersTableProps) {
   return (
     <Card>
@@ -184,6 +188,7 @@ export default function UsersTable({
             )}
           </TableBody>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

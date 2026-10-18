@@ -1,6 +1,7 @@
 import { api } from './axios'
 import type { GeoJSONPolygon } from './fields.api'
 import type { OperationTypeValue } from '../schemas/operation.schema'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 export const FIELD_OPERATION_STATUSES = ['planned', 'in_progress', 'completed', 'canceled'] as const
 export type FieldOperationStatus = (typeof FIELD_OPERATION_STATUSES)[number]
@@ -143,7 +144,16 @@ export type FieldOperationsFilter = {
   operator_id?: number
 }
 
+export type FieldOperationsPageFilter = Omit<FieldOperationsFilter, 'status'> & {
+  status?: FieldOperationStatus | string
+}
+
 export const fieldOperationsApi = {
+  /** O pagină de lucrări; `status` poate fi o listă separată prin virgulă (planned,in_progress). */
+  getPage: (params: FieldOperationsPageFilter & PageParams) =>
+    api
+      .get<Paginated<FieldOperation>>('/field-operations', { params: listParams(params) })
+      .then((r) => r.data),
   getAll: (filter?: FieldOperationsFilter) =>
     api.get<FieldOperation[]>('/field-operations', { params: filter }).then((r) => r.data),
 

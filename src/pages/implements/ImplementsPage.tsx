@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { SearchOutlined } from '@mui/icons-material'
 import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
@@ -7,8 +7,8 @@ import {
   useCreateImplement,
   useDeactivateImplement,
   useDeleteImplement,
-  useImplements,
   useUpdateImplement,
+  IMPLEMENTS_KEY,
 } from '../../hooks/useImplements'
 import { useHasPermission } from '../../hooks/usePermissions'
 import type { Implement } from '../../api/implement.api'
@@ -22,6 +22,11 @@ import {
   type ImplementFormValues,
 } from '../../schemas/implement.schema'
 import { ImplementFormModal, ImplementsPageHeader, ImplementsTable } from './components'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../components/TablePaginationBar'
+import { implementApi } from '../../api/implement.api'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -82,7 +87,17 @@ export default function ImplementsPage() {
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('implements:write')
 
-  const { data: implementsData, isPending } = useImplements()
+  // căutarea și paginarea se fac în API; la o căutare nouă tabelul revine la prima pagină
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const pagination = usePagination(debouncedSearch)
+  const { data: implementsDataPage, isPending } = usePagedQuery(
+    IMPLEMENTS_KEY,
+    implementApi.getImplementsPage,
+    {
+      q: debouncedSearch,
+      ...pagination.params,
+    }
+  )
   const createImplement = useCreateImplement()
   const updateImplement = useUpdateImplement()
   const deactivateImplement = useDeactivateImplement()
@@ -93,21 +108,7 @@ export default function ImplementsPage() {
   const deleting = deleteImplement.isPending
   const toggling = deactivateImplement.isPending || activateImplement.isPending
 
-  const filteredImplements = useMemo(() => {
-    const value = search.trim().toLowerCase()
-    return [...(implementsData ?? [])]
-      .filter((implementData) => {
-        if (!value) return true
-        return (
-          implementData.name.toLowerCase().includes(value) ||
-          implementData.code.toLowerCase().includes(value) ||
-          implementData.type.toLowerCase().includes(value) ||
-          implementData.brand?.toLowerCase().includes(value) ||
-          implementData.model?.toLowerCase().includes(value)
-        )
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [implementsData, search])
+  const filteredImplements = implementsDataPage?.items ?? []
 
   const openCreateDialog = () => {
     setSelectedImplement(null)
@@ -284,6 +285,7 @@ export default function ImplementsPage() {
         <ImplementsTable
           implementsData={filteredImplements}
           isLoading={isPending}
+          footer={<TablePaginationBar pagination={pagination} total={implementsDataPage?.total} />}
           canWrite={canWrite}
           canDelete={canWrite}
           onView={openViewDialog}

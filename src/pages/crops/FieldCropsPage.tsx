@@ -25,12 +25,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import type { FieldCrop } from '../../api/crops.api'
+import { cropsApi, type FieldCrop } from '../../api/crops.api'
 import { ModalConfirmAction } from '../../components'
 import {
   useCrops,
   useDeleteFieldCrop,
-  useFieldCrops,
+  FIELD_CROPS_KEY,
   useRecordHarvest,
   useReopenFieldCrop,
   useSeasons,
@@ -44,6 +44,9 @@ import FieldCropDialog from './components/FieldCropDialog'
 import FieldCropStatusChip from './components/FieldCropStatusChip'
 import Section from './components/Section'
 import { formatNumber } from './components/cropFormat'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 /**
  * Culturile pe terenuri: ce crește pe fiecare teren, în ce stare, cu producția și recolta.
@@ -74,9 +77,14 @@ export default function FieldCropsPage() {
     [seasons]
   )
   const effectiveSeasonId = seasonFilter ? Number(seasonFilter) : (activeSeason?.id ?? undefined)
-  const { data: fieldCrops, isPending: fieldCropsPending } = useFieldCrops(
-    effectiveSeasonId ? { season_id: effectiveSeasonId } : {}
+  // filtrul de sezon și paginarea se fac în API; la alt sezon tabelul revine la prima pagină
+  const pagination = usePagination(effectiveSeasonId ?? null)
+  const { data: fieldCropsPage, isPending: fieldCropsPending } = usePagedQuery(
+    FIELD_CROPS_KEY,
+    cropsApi.getFieldCropsPage,
+    { ...(effectiveSeasonId ? { season_id: effectiveSeasonId } : {}), ...pagination.params }
   )
+  const fieldCrops = fieldCropsPage?.items
   const deleteFieldCrop = useDeleteFieldCrop()
   const recordHarvest = useRecordHarvest()
   const reopenFieldCrop = useReopenFieldCrop()
@@ -357,6 +365,7 @@ export default function FieldCropsPage() {
             </Table>
           </Box>
         )}
+        <TablePaginationBar pagination={pagination} total={fieldCropsPage?.total} />
       </Section>
 
       <FieldCropDialog

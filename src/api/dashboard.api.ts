@@ -44,8 +44,7 @@ export type DashboardActivityItem = {
 export const dashboardApi = {
   getCards: () => api.get<DashboardCardsResponse>('/dashboard/cards').then((r) => r.data.cards),
 
-  getQuickStats: () =>
-    api.get<DashboardQuickStats>('/dashboard/quick-stats').then((r) => r.data),
+  getQuickStats: () => api.get<DashboardQuickStats>('/dashboard/quick-stats').then((r) => r.data),
 
   getActivity: (limit = 5) =>
     api

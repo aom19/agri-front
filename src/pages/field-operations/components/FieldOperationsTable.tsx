@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { DeleteOutlined, EditOutlined, VisibilityOutlined } from '@mui/icons-material'
 import {
   Box,
@@ -26,6 +27,8 @@ type Props = {
   onView: (item: FieldOperation) => void
   onEdit: (item: FieldOperation) => void
   onDelete: (item: FieldOperation) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 const statusLabels: Record<FieldOperationStatus, string> = {
@@ -55,6 +58,7 @@ export default function FieldOperationsTable({
   onView,
   onEdit,
   onDelete,
+  footer,
 }: Props) {
   return (
     <Card>
@@ -154,6 +158,7 @@ export default function FieldOperationsTable({
             )}
           </TableBody>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

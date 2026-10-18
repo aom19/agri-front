@@ -1,4 +1,5 @@
 import { api } from './axios'
+import { type PageParams, type Paginated } from './pagination'
 
 export type ResourceCategory =
   | 'fuel'
@@ -80,6 +81,11 @@ export const resourceApi = {
 
   deleteResourceType: (id: string) => api.delete(`/resource-types/${id}`).then((r) => r.data),
 
+  /** O pagină de resurse, filtrată în API după categorie și text. */
+  getResourcesPage: (params: ResourceListFilter & PageParams) =>
+    api
+      .get<Paginated<Resource>>('/resources', { params: filterParams(params) })
+      .then((r) => r.data),
   getAllResources: (filter: ResourceListFilter = {}) =>
     api.get<Resource[]>('/resources', { params: filterParams(filter) }).then((r) => r.data),
   getResourceCategoryCounts: () =>

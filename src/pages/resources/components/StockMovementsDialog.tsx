@@ -24,12 +24,15 @@ import {
   Typography,
 } from '@mui/material'
 import type { Resource } from '../../../api/resource.api'
-import type { StockMovementType } from '../../../api/stockMovement.api'
-import { useCreateStockMovement, useStockMovements } from '../../../hooks/useStockMovements'
+import { stockMovementsApi, type StockMovementType } from '../../../api/stockMovement.api'
+import { STOCK_MOVEMENTS_KEY, useCreateStockMovement } from '../../../hooks/useStockMovements'
 import { useFieldCrops } from '../../../hooks/useCrops'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
 import { formatDateTime } from '../../../utils/dateFormat'
+import { usePagedQuery } from '../../../hooks/usePagedQuery'
+import { usePagination } from '../../../hooks/usePagination'
+import TablePaginationBar from '../../../components/TablePaginationBar'
 
 type StockMovementsDialogProps = {
   open: boolean
@@ -83,11 +86,19 @@ export default function StockMovementsDialog({
 }: StockMovementsDialogProps) {
   const show = useNotificationStore((state) => state.show)
   const resourceId = resource?.id ?? 0
+  // istoricul e paginat în API; la altă resursă revine la prima pagină
+  const pagination = usePagination(resourceId, 10)
   const {
-    data: movements,
+    data: movementsPage,
     isPending,
     isError,
-  } = useStockMovements({ resource_id: resourceId }, open && resourceId > 0)
+  } = usePagedQuery(
+    STOCK_MOVEMENTS_KEY,
+    stockMovementsApi.listPage,
+    { resource_id: resourceId, ...pagination.params },
+    open && resourceId > 0
+  )
+  const movements = movementsPage?.items
   const createMovement = useCreateStockMovement()
   const [type, setType] = useState<StockMovementType>('in')
   const [quantity, setQuantity] = useState('')
@@ -404,6 +415,7 @@ export default function StockMovementsDialog({
                 </Table>
               </Box>
             )}
+            <TablePaginationBar pagination={pagination} total={movementsPage?.total} />
           </Box>
         </Stack>
       </DialogContent>

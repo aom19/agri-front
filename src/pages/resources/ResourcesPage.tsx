@@ -39,14 +39,14 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import type { Resource } from '../../api/resource.api'
+import { resourceApi, type Resource } from '../../api/resource.api'
 import { ModalConfirmAction } from '../../components'
 import { useHasPermission } from '../../hooks/usePermissions'
 import {
   useCreateResource,
   useDeleteResource,
   useResourceCategoryCounts,
-  useResources,
+  RESOURCES_KEY,
   useResourceTypes,
   useUpdateResource,
 } from '../../hooks/useResources'
@@ -58,6 +58,9 @@ import {
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import StockMovementsDialog from './components/StockMovementsDialog'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -110,10 +113,14 @@ export default function ResourcesPage() {
   // filtrarea (categorie + text) se face în API; textul e trimis cu întârziere, ca să nu facă
   // câte o cerere la fiecare tastă
   const debouncedSearch = useDebouncedValue(search.trim(), 300)
-  const { data: resourcesData, isPending: resourcesLoading } = useResources({
-    category: categoryFilter,
-    q: debouncedSearch,
-  })
+  // filtrele și paginarea se fac în API; la un filtru nou tabelul revine la prima pagină
+  const pagination = usePagination({ categoryFilter, debouncedSearch })
+  const { data: resourcesPage, isPending: resourcesLoading } = usePagedQuery(
+    RESOURCES_KEY,
+    resourceApi.getResourcesPage,
+    { category: categoryFilter, q: debouncedSearch, ...pagination.params }
+  )
+  const resourcesData = resourcesPage?.items
   const { data: categoryCounts } = useResourceCategoryCounts()
   const { data: resourceTypesData, isPending: resourceTypesLoading } = useResourceTypes()
 
@@ -421,6 +428,7 @@ export default function ResourcesPage() {
                 )}
               </TableBody>
             </Table>
+            <TablePaginationBar pagination={pagination} total={resourcesPage?.total} />
           </CardContent>
         </Card>
       )}

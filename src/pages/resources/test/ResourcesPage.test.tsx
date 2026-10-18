@@ -47,7 +47,12 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     vi.mocked(permissionsApi.getMyPermissions).mockResolvedValue(
       permissions('resources:read', 'resources:write')
     )
-    vi.mocked(resourceApi.getAllResources).mockResolvedValue([diesel, harvest])
+    vi.mocked(resourceApi.getResourcesPage).mockResolvedValue({
+      items: [diesel, harvest],
+      total: 2,
+      page: 1,
+      page_size: 25,
+    })
     vi.mocked(resourceApi.getAllResourceTypes).mockResolvedValue([fuel])
     vi.mocked(resourceApi.getResourceCategoryCounts).mockResolvedValue({
       total: 2,
@@ -56,7 +61,12 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     vi.mocked(cropsApi.getFieldCrops).mockResolvedValue([])
     vi.mocked(resourceApi.createResource).mockResolvedValue(diesel)
     vi.mocked(resourceApi.updateResource).mockResolvedValue(diesel)
-    vi.mocked(stockMovementsApi.list).mockResolvedValue([])
+    vi.mocked(stockMovementsApi.listPage).mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      page_size: 10,
+    })
     vi.mocked(stockMovementsApi.create).mockResolvedValue({ id: 1 } as StockMovement)
   })
 
@@ -129,7 +139,13 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     await userEvent.click(within(dieselRow).getByRole('button', { name: 'Mișcări de stoc' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText(/Stoc curent: 5 l/)).toBeInTheDocument()
-    await waitFor(() => expect(stockMovementsApi.list).toHaveBeenCalledWith({ resource_id: 4 }))
+    await waitFor(() =>
+      expect(stockMovementsApi.listPage).toHaveBeenCalledWith({
+        resource_id: 4,
+        page: 1,
+        page_size: 10,
+      })
+    )
 
     await userEvent.type(within(dialog).getByRole('textbox', { name: 'Cantitate (l)' }), '50')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Salvează' }))
@@ -180,5 +196,37 @@ describe('ResourcesPage – resurse cu stoc', { timeout: 20000 }, () => {
     expect(within(dialog).getAllByText(/Ieșirea depășește stocul curent/).length).toBeGreaterThan(0)
     expect(within(dialog).getByRole('button', { name: 'Salvează' })).toBeDisabled()
     expect(stockMovementsApi.create).not.toHaveBeenCalled()
+  })
+
+  it('paginarea și filtrele se trimit la API; un filtru nou revine la prima pagină', async () => {
+    vi.mocked(resourceApi.getResourcesPage).mockResolvedValue({
+      items: [diesel, harvest],
+      total: 60,
+      page: 1,
+      page_size: 25,
+    })
+    renderWithProviders(<ResourcesPage />)
+
+    expect(await screen.findByText('1–25 din 60')).toBeInTheDocument()
+    expect(resourceApi.getResourcesPage).toHaveBeenLastCalledWith({
+      category: '',
+      q: '',
+      page: 1,
+      page_size: 25,
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pagina următoare' }))
+    await waitFor(() =>
+      expect(resourceApi.getResourcesPage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2, page_size: 25 })
+      )
+    )
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Caută resursă' }), 'mot')
+    await waitFor(() =>
+      expect(resourceApi.getResourcesPage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ q: 'mot', page: 1 })
+      )
+    )
   })
 })

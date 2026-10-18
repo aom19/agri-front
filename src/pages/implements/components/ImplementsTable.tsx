@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   DeleteOutlined,
   EditOutlined,
@@ -36,6 +37,8 @@ type ImplementsTableProps = {
   onEdit: (implementData: Implement) => void
   onDelete: (implementData: Implement) => void
   onToggleActive: (implementData: Implement) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 function statusColor(status: string): 'success' | 'warning' | 'default' {
@@ -60,6 +63,7 @@ export default function ImplementsTable({
   onEdit,
   onDelete,
   onToggleActive,
+  footer,
 }: ImplementsTableProps) {
   return (
     <Card>
@@ -199,6 +203,7 @@ export default function ImplementsTable({
             )}
           </TableBody>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

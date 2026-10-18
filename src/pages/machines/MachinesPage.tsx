@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { SearchOutlined } from '@mui/icons-material'
 import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
@@ -6,8 +6,8 @@ import { useHasPermission } from '../../hooks/usePermissions'
 import {
   useCreateMachine,
   useDeleteMachine,
-  useMachines,
   useUpdateMachine,
+  MACHINE_KEY,
 } from '../../hooks/useMachines'
 import type { Machine } from '../../api/machine.api'
 import { useNotificationStore } from '../../store/notification.store'
@@ -21,6 +21,11 @@ import {
   type MachineFormValues,
 } from '../../schemas/machine.schema'
 import { MachineFormModal, MachinesPageHeader, MachinesTable } from './components'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../components/TablePaginationBar'
+import { machineApi } from '../../api/machine.api'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -81,7 +86,13 @@ export default function MachinesPage() {
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('machines:write')
 
-  const { data: machines, isPending } = useMachines()
+  // căutarea și paginarea se fac în API; la o căutare nouă tabelul revine la prima pagină
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const pagination = usePagination(debouncedSearch)
+  const { data: machinesPage, isPending } = usePagedQuery(MACHINE_KEY, machineApi.getMachinesPage, {
+    q: debouncedSearch,
+    ...pagination.params,
+  })
   const createMachine = useCreateMachine()
   const updateMachine = useUpdateMachine()
   const deleteMachine = useDeleteMachine()
@@ -89,22 +100,7 @@ export default function MachinesPage() {
   const submitting = createMachine.isPending || updateMachine.isPending
   const deleting = deleteMachine.isPending
 
-  const filteredMachines = useMemo(() => {
-    const value = search.trim().toLowerCase()
-    return [...(machines ?? [])]
-      .filter((machine) => {
-        if (!value) return true
-        return (
-          machine.name.toLowerCase().includes(value) ||
-          machine.code.toLowerCase().includes(value) ||
-          machine.type.toLowerCase().includes(value) ||
-          machine.brand?.toLowerCase().includes(value) ||
-          machine.model?.toLowerCase().includes(value) ||
-          machine.registration_number?.toLowerCase().includes(value)
-        )
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, 'ro'))
-  }, [machines, search])
+  const filteredMachines = machinesPage?.items ?? []
 
   const openCreateDialog = () => {
     setSelectedMachine(null)
@@ -245,6 +241,7 @@ export default function MachinesPage() {
         <MachinesTable
           machines={filteredMachines}
           isLoading={isPending}
+          footer={<TablePaginationBar pagination={pagination} total={machinesPage?.total} />}
           canWrite={canWrite}
           canDelete={canWrite}
           onView={openViewDialog}

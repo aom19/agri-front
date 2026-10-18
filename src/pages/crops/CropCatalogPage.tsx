@@ -14,20 +14,29 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import type { Crop } from '../../api/crops.api'
+import { cropsApi, type Crop } from '../../api/crops.api'
 import { ModalConfirmAction } from '../../components'
-import { useCrops, useDeleteCrop } from '../../hooks/useCrops'
+import { CROPS_KEY, useDeleteCrop } from '../../hooks/useCrops'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import CropDialog from './components/CropDialog'
 import Section from './components/Section'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 /** Catalogul de culturi: nomenclatorul din care se atribuie culturi pe terenuri. */
 export default function CropCatalogPage() {
   const show = useNotificationStore((state) => state.show)
   const canWrite = useHasPermission('crops:write')
-  const { data: crops, isPending: cropsPending } = useCrops()
+  const pagination = usePagination()
+  const { data: cropsPage, isPending: cropsPending } = usePagedQuery(
+    CROPS_KEY,
+    cropsApi.getCropsPage,
+    pagination.params
+  )
+  const crops = cropsPage?.items
   const deleteCrop = useDeleteCrop()
   const [cropDialog, setCropDialog] = useState<{ open: boolean; crop: Crop | null }>({
     open: false,
@@ -127,6 +136,7 @@ export default function CropCatalogPage() {
             </TableBody>
           </Table>
         )}
+        <TablePaginationBar pagination={pagination} total={cropsPage?.total} />
       </Section>
 
       <CropDialog

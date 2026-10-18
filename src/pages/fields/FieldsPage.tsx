@@ -5,8 +5,19 @@ import type { LatLngBoundsExpression, LatLngTuple } from 'leaflet'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import { ModalConfirmAction } from '../../components'
 import { useNotificationStore } from '../../store/notification.store'
-import { useCreateField, useDeleteField, useFields, useUpdateField } from '../../hooks/useFields'
-import type { Field, GeoJSONPolygon, UpsertFieldRequest } from '../../api/fields.api'
+import {
+  FIELDS_KEY,
+  useCreateField,
+  useDeleteField,
+  useFields,
+  useUpdateField,
+} from '../../hooks/useFields'
+import {
+  fieldsApi,
+  type Field,
+  type GeoJSONPolygon,
+  type UpsertFieldRequest,
+} from '../../api/fields.api'
 import {
   FieldFiltersModal,
   FieldFormModal,
@@ -15,6 +26,10 @@ import {
   FieldsTable,
   type EditableField,
 } from './components'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import { useDebouncedValue } from '../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 const DEFAULT_CENTER: LatLngTuple = [46.2297953, 28.3231304]
 
@@ -95,6 +110,13 @@ function estimateAreaHa(points: LatLngTuple[]): number {
   return areaM2 / 10000
 }
 
+/** Filtrul de suprafață din formular: gol sau invalid = fără filtru. */
+function parseAreaFilter(value: string): number | undefined {
+  if (value.trim() === '') return undefined
+  const parsed = Number(value.replace(',', '.'))
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined
+}
+
 export default function FieldsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<'edit' | 'view'>('edit')
@@ -119,7 +141,8 @@ export default function FieldsPage() {
   })
 
   const { show } = useNotificationStore()
-  const { data: fields, isLoading } = useFields()
+  // lista completă, pentru hartă
+  const { data: fields } = useFields()
   const createField = useCreateField()
   const updateField = useUpdateField()
   const deleteField = useDeleteField()
@@ -127,42 +150,24 @@ export default function FieldsPage() {
   const pending = createField.isPending || updateField.isPending || deleteField.isPending
   const estimatedArea = useMemo(() => estimateAreaHa(draft.points), [draft.points])
 
-  const filteredSortedFields = useMemo(() => {
-    const minArea = minAreaFilter.trim() === '' ? null : Number(minAreaFilter)
-    const maxArea = maxAreaFilter.trim() === '' ? null : Number(maxAreaFilter)
-
-    return [...(fields ?? [])]
-      .filter((field) => {
-        const matchesName = field.name.toLowerCase().includes(nameFilter.trim().toLowerCase())
-        if (!matchesName) return false
-
-        const area = field.area_ha
-        if (minArea != null && Number.isFinite(minArea)) {
-          if (area == null || area < minArea) return false
-        }
-        if (maxArea != null && Number.isFinite(maxArea)) {
-          if (area == null || area > maxArea) return false
-        }
-
-        return true
-      })
-      .sort((a, b) => {
-        const direction = sortOrder === 'asc' ? 1 : -1
-
-        if (sortBy === 'name') {
-          return a.name.localeCompare(b.name, 'ro') * direction
-        }
-
-        const aArea = a.area_ha ?? -1
-        const bArea = b.area_ha ?? -1
-        return (aArea - bArea) * direction
-      })
-  }, [fields, nameFilter, minAreaFilter, maxAreaFilter, sortBy, sortOrder])
-
-  const totalFilteredArea = useMemo(
-    () => filteredSortedFields.reduce((sum, field) => sum + (field.area_ha ?? 0), 0),
-    [filteredSortedFields]
+  // Tabelul: căutarea, filtrele de suprafață, ordinea și paginarea se fac în API, iar suprafața
+  // totală e a tuturor terenurilor filtrate, nu doar a paginii. Harta folosește lista completă.
+  const debouncedName = useDebouncedValue(nameFilter.trim(), 300)
+  const fieldFilter = {
+    q: debouncedName || undefined,
+    min_area: parseAreaFilter(minAreaFilter),
+    max_area: parseAreaFilter(maxAreaFilter),
+    sort: sortBy,
+    order: sortOrder,
+  }
+  const pagination = usePagination(fieldFilter)
+  const { data: fieldsPage, isLoading: fieldsPageLoading } = usePagedQuery(
+    FIELDS_KEY,
+    fieldsApi.getPage,
+    { ...fieldFilter, ...pagination.params }
   )
+  const filteredSortedFields = fieldsPage?.items ?? []
+  const totalFilteredArea = fieldsPage?.total_area_ha ?? 0
 
   const allFieldsBounds = useMemo(() => getMapBounds(fields ?? []), [fields])
 
@@ -357,7 +362,7 @@ export default function FieldsPage() {
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
       <FieldsPageHeader
-        totalResults={filteredSortedFields.length}
+        totalResults={fieldsPage?.total ?? 0}
         totalFilteredArea={totalFilteredArea}
         activeFilterCount={activeFilterCount}
         onOpenMap={openMapView}
@@ -383,14 +388,15 @@ export default function FieldsPage() {
         />
       </Box>
 
-      {isLoading ? (
+      {fieldsPageLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress size={28} />
         </Box>
       ) : (
         <FieldsTable
           fields={filteredSortedFields}
-          isLoading={isLoading}
+          isLoading={fieldsPageLoading}
+          footer={<TablePaginationBar pagination={pagination} total={fieldsPage?.total} />}
           totalFilteredArea={totalFilteredArea}
           sortBy={sortBy}
           sortOrder={sortOrder}

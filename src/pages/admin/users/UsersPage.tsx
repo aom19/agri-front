@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { SearchOutlined } from '@mui/icons-material'
 import { Box, CircularProgress, InputAdornment, TextField } from '@mui/material'
 import ModalConfirmAction from '../../../components/ModalConfirmAction'
@@ -9,13 +9,18 @@ import {
   useDisableUsers,
   useEnableUsers,
   useUpdateUser,
-  useUsers,
+  USERS_KEY,
 } from '../../../hooks/useUsers'
 import { authApi } from '../../../api/auth.api'
 import { useNotificationStore } from '../../../store/notification.store'
 import { getApiErrorMessage } from '../../../utils/getApiErrorMessage'
 import type { User } from '../../../api/users.api'
 import { UserFormModal, UsersPageHeader, UsersTable } from './components'
+import { usePagedQuery } from '../../../hooks/usePagedQuery'
+import { usePagination } from '../../../hooks/usePagination'
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue'
+import TablePaginationBar from '../../../components/TablePaginationBar'
+import { usersApi } from '../../../api/users.api'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -46,7 +51,13 @@ export default function UsersPage() {
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('users:write')
 
-  const { data: users, isPending } = useUsers()
+  // căutarea și paginarea se fac în API; la o căutare nouă tabelul revine la prima pagină
+  const debouncedSearch = useDebouncedValue(search.trim(), 300)
+  const pagination = usePagination(debouncedSearch)
+  const { data: usersPage, isPending } = usePagedQuery(USERS_KEY, usersApi.getPage, {
+    q: debouncedSearch,
+    ...pagination.params,
+  })
   const { data: roles } = useRoles()
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
@@ -57,20 +68,7 @@ export default function UsersPage() {
   const disabling = disableUser.isPending
   const enabling = enableUser.isPending
 
-  const filteredUsers = useMemo(() => {
-    const value = search.trim().toLowerCase()
-
-    return [...(users ?? [])]
-      .filter((user) => {
-        if (!value) return true
-        return (
-          user.email.toLowerCase().includes(value) ||
-          user.role.toLowerCase().includes(value) ||
-          user.role_code.toLowerCase().includes(value)
-        )
-      })
-      .sort((a, b) => a.email.localeCompare(b.email, 'ro'))
-  }, [users, search])
+  const filteredUsers = usersPage?.items ?? []
 
   const openCreateDialog = () => {
     setSelectedUser(null)
@@ -244,6 +242,7 @@ export default function UsersPage() {
         <UsersTable
           users={filteredUsers}
           isLoading={isPending}
+          footer={<TablePaginationBar pagination={pagination} total={usersPage?.total} />}
           canWrite={canWrite}
           canDisable={canWrite}
           canEnable={canWrite}

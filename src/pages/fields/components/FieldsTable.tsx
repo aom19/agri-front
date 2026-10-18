@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   DeleteOutlined,
   EditOutlined,
@@ -34,6 +35,8 @@ type FieldsTableProps = {
   onView: (field: Field) => void
   onEdit: (field: Field) => void
   onDelete: (id: string) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 export default function FieldsTable({
@@ -47,6 +50,7 @@ export default function FieldsTable({
   onView,
   onEdit,
   onDelete,
+  footer,
 }: FieldsTableProps) {
   return (
     <Card>
@@ -152,6 +156,7 @@ export default function FieldsTable({
             </TableRow>
           </TableFooter>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

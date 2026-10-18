@@ -63,11 +63,9 @@ describe('client axios', () => {
   it('reîmprospătează token-ul la 401 și reia cererea cu noul token', async () => {
     useAuthStore.getState().setTokens('vechi', 'refresh-vechi')
     const adapter = installAdapter((_config, attempt) => (attempt === 1 ? 401 : 200))
-    const post = vi
-      .spyOn(axios, 'post')
-      .mockResolvedValue({
-        data: { access_token: 'nou', refresh_token: 'refresh-nou' },
-      } as AxiosResponse)
+    const post = vi.spyOn(axios, 'post').mockResolvedValue({
+      data: { access_token: 'nou', refresh_token: 'refresh-nou' },
+    } as AxiosResponse)
 
     const response = await api.get('/machines')
 

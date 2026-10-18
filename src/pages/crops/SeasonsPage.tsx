@@ -18,13 +18,17 @@ import {
 } from '@mui/material'
 import type { Season } from '../../api/crops.api'
 import { ModalConfirmAction } from '../../components'
-import { useDeleteSeason, useSeasons } from '../../hooks/useCrops'
+import { SEASONS_KEY, useDeleteSeason } from '../../hooks/useCrops'
 import { useHasPermission } from '../../hooks/usePermissions'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
 import { formatIsoDay } from '../../utils/dateFormat'
 import SeasonDialog from './components/SeasonDialog'
 import Section from './components/Section'
+import { cropsApi } from '../../api/crops.api'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 /** Sezoanele agricole: etichete de raportare; nu decid de ce cultură se leagă o lucrare. */
 export default function SeasonsPage() {
@@ -33,7 +37,13 @@ export default function SeasonsPage() {
   // click pe rând: culturile pe terenuri din acel sezon
   const openCrops = (seasonId: number) => navigate(`/crops?season_id=${seasonId}`)
   const canWrite = useHasPermission('crops:write')
-  const { data: seasons, isPending: seasonsPending } = useSeasons()
+  const pagination = usePagination()
+  const { data: seasonsPage, isPending: seasonsPending } = usePagedQuery(
+    SEASONS_KEY,
+    cropsApi.getSeasonsPage,
+    pagination.params
+  )
+  const seasons = seasonsPage?.items
   const deleteSeason = useDeleteSeason()
   const [seasonDialog, setSeasonDialog] = useState<{ open: boolean; season: Season | null }>({
     open: false,
@@ -172,6 +182,7 @@ export default function SeasonsPage() {
             </TableBody>
           </Table>
         )}
+        <TablePaginationBar pagination={pagination} total={seasonsPage?.total} />
       </Section>
 
       <SeasonDialog

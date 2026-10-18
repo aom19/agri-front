@@ -1,4 +1,5 @@
 import { api } from './axios'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 export type Season = {
   id: number
@@ -110,6 +111,14 @@ export type FieldCropFilter = {
 }
 
 export const cropsApi = {
+  getSeasonsPage: (params: PageParams) =>
+    api.get<Paginated<Season>>('/seasons', { params }).then((r) => r.data),
+  getCropsPage: (params: PageParams) =>
+    api.get<Paginated<Crop>>('/crops', { params }).then((r) => r.data),
+  getFieldCropsPage: (params: FieldCropFilter & PageParams & { q?: string }) =>
+    api
+      .get<Paginated<FieldCrop>>('/field-crops', { params: listParams(params) })
+      .then((r) => r.data),
   getSeasons: () => api.get<Season[]>('/seasons').then((r) => r.data),
   createSeason: (payload: SeasonPayload) =>
     api.post<Season>('/seasons', payload).then((r) => r.data),

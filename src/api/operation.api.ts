@@ -1,5 +1,6 @@
 import { api } from './axios'
 import type { OperationTypeValue } from '../schemas/operation.schema'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 export type TemplateResource = {
   id: number
@@ -53,6 +54,11 @@ export type OperationTemplatePayload = {
 }
 
 export const operationApi = {
+  /** O pagină de template-uri; căutarea `q` e în nume, unitate și tipul operațiunii. */
+  getTemplatesPage: (params: PageParams & { q?: string }) =>
+    api
+      .get<Paginated<OperationTemplate>>('/operation-templates', { params: listParams(params) })
+      .then((r) => r.data),
   getAllTemplates: () => api.get<OperationTemplate[]>('/operation-templates').then((r) => r.data),
 
   getTemplateById: (id: number) =>

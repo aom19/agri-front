@@ -3,18 +3,27 @@ import { useNavigate } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { ModalConfirmAction } from '../../components'
 import { useHasPermission } from '../../hooks/usePermissions'
-import { useDeleteFieldOperation, useFieldOperations } from '../../hooks/useFieldOperations'
+import { FIELD_OPERATIONS_KEY, useDeleteFieldOperation } from '../../hooks/useFieldOperations'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
-import type { FieldOperation } from '../../api/fieldOperation.api'
+import { fieldOperationsApi, type FieldOperation } from '../../api/fieldOperation.api'
 import { FieldOperationsPageHeader, FieldOperationsTable } from './components'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 export default function FieldOperationsPage() {
   const navigate = useNavigate()
   const show = useNotificationStore((s) => s.show)
   const canWrite = useHasPermission('field_operations:write')
 
-  const { data: items, isPending } = useFieldOperations()
+  const pagination = usePagination()
+  const { data: itemsPage, isPending } = usePagedQuery(
+    FIELD_OPERATIONS_KEY,
+    fieldOperationsApi.getPage,
+    pagination.params
+  )
+  const items = itemsPage?.items
   const deleteMutation = useDeleteFieldOperation()
 
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -65,6 +74,7 @@ export default function FieldOperationsPage() {
           onView={openView}
           onEdit={openEdit}
           onDelete={openDeleteDialog}
+          footer={<TablePaginationBar pagination={pagination} total={itemsPage?.total} />}
         />
       )}
 

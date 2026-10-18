@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { DeleteOutlined, EditOutlined, VisibilityOutlined } from '@mui/icons-material'
 import {
   Box,
@@ -31,6 +32,8 @@ type MachinesTableProps = {
   onView: (machine: Machine) => void
   onEdit: (machine: Machine) => void
   onDelete: (machine: Machine) => void
+  /** Sub tabel, în același card (ex. paginarea). */
+  footer?: ReactNode
 }
 
 function statusColor(status: string): 'success' | 'warning' | 'default' {
@@ -39,9 +42,13 @@ function statusColor(status: string): 'success' | 'warning' | 'default' {
   return 'default'
 }
 
-const machineTypeLabelByValue = new Map(machineTypeOptions.map((option) => [option.value, option.label]))
+const machineTypeLabelByValue = new Map(
+  machineTypeOptions.map((option) => [option.value, option.label])
+)
 const fuelTypeLabelByValue = new Map(fuelTypeOptions.map((option) => [option.value, option.label]))
-const machineStatusLabelByValue = new Map(machineStatusOptions.map((option) => [option.value, option.label]))
+const machineStatusLabelByValue = new Map(
+  machineStatusOptions.map((option) => [option.value, option.label])
+)
 
 export default function MachinesTable({
   machines,
@@ -51,6 +58,7 @@ export default function MachinesTable({
   onView,
   onEdit,
   onDelete,
+  footer,
 }: MachinesTableProps) {
   return (
     <Card>
@@ -164,6 +172,7 @@ export default function MachinesTable({
             )}
           </TableBody>
         </Table>
+        {footer}
       </CardContent>
     </Card>
   )

@@ -1,4 +1,5 @@
 import { api } from './axios'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 export type StockMovementType = 'in' | 'out' | 'adjustment'
 
@@ -42,6 +43,11 @@ export type StockMovementPayload = {
 }
 
 export const stockMovementsApi = {
+  /** O pagină de mișcări, cele mai noi primele. */
+  listPage: (params: StockMovementFilter & PageParams) =>
+    api
+      .get<Paginated<StockMovement>>('/stock-movements', { params: listParams(params) })
+      .then((r) => r.data),
   list: (filter: StockMovementFilter = {}) =>
     api
       .get<StockMovement[]>('/stock-movements', {

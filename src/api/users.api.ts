@@ -1,4 +1,5 @@
 import { api } from './axios'
+import { listParams, type PageParams, type Paginated } from './pagination'
 
 export type User = {
   id: number
@@ -25,6 +26,9 @@ export type UpdateUserRequest = {
 }
 
 export const usersApi = {
+  /** O pagină de conturi; căutarea `q` e în e-mail și rol. */
+  getPage: (params: PageParams & { q?: string }) =>
+    api.get<Paginated<User>>('/users', { params: listParams(params) }).then((r) => r.data),
   getAll: () => api.get<User[]>('/users').then((r) => r.data),
   getById: (id: string) => api.get<User>(`/users/${id}`).then((r) => r.data),
   create: (payload: CreateUserRequest) => api.post<User>('/users', payload).then((r) => r.data),

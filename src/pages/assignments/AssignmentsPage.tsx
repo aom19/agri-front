@@ -17,10 +17,17 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import type { FieldOperation, FieldOperationStatus } from '../../api/fieldOperation.api'
-import { useFieldOperations } from '../../hooks/useFieldOperations'
+import {
+  fieldOperationsApi,
+  type FieldOperation,
+  type FieldOperationStatus,
+} from '../../api/fieldOperation.api'
+import { FIELD_OPERATIONS_KEY } from '../../hooks/useFieldOperations'
 import { formatDateTime } from '../../utils/dateFormat'
 import OperationConflictChip from '../field-operations/components/OperationConflictChip'
+import { usePagedQuery } from '../../hooks/usePagedQuery'
+import { usePagination } from '../../hooks/usePagination'
+import TablePaginationBar from '../../components/TablePaginationBar'
 
 const statusLabels: Record<FieldOperationStatus, string> = {
   planned: 'Planificată',
@@ -82,7 +89,14 @@ function useNow(intervalMs = 60_000) {
 
 export default function AssignmentsPage() {
   const navigate = useNavigate()
-  const { data: operations, isPending } = useFieldOperations()
+  // Alocările sunt lucrările planificate și cele în lucru; filtrul și paginarea se fac în API
+  const pagination = usePagination()
+  const { data: operationsPage, isPending } = usePagedQuery(
+    FIELD_OPERATIONS_KEY,
+    fieldOperationsApi.getPage,
+    { status: 'planned,in_progress', ...pagination.params }
+  )
+  const operations = operationsPage?.items
   const now = useNow()
 
   const openView = (operation: FieldOperation) => {
@@ -97,7 +111,7 @@ export default function AssignmentsPage() {
           <Typography sx={{ fontWeight: 800, fontSize: 22 }}>Alocări pe teren</Typography>
         </Stack>
         <Typography color="text.secondary">
-          Datele sunt preluate din operațiunile pe teren planificate.
+          Operațiunile pe teren planificate și cele în lucru.
         </Typography>
       </Stack>
 
@@ -213,6 +227,7 @@ export default function AssignmentsPage() {
                 )}
               </TableBody>
             </Table>
+            <TablePaginationBar pagination={pagination} total={operationsPage?.total} />
           </CardContent>
         </Card>
       )}
