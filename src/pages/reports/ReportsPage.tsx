@@ -188,7 +188,13 @@ export default function ReportsPage() {
           className="no-print"
           direction="row"
           spacing={1}
-          sx={{ flexShrink: 0, flexWrap: 'wrap', rowGap: 1 }}
+          useFlexGap
+          // pe telefon butoanele umplu rândul, fără margini rămase de la spacing la rândul nou
+          sx={{
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            '& > *': { flex: { xs: '1 1 auto', sm: '0 0 auto' } },
+          }}
         >
           <Tooltip
             describeChild

@@ -3,7 +3,7 @@ import { useFields } from '../../../hooks/useFields'
 import { useMachines } from '../../../hooks/useMachines'
 import { useOperators } from '../../../hooks/useOperators'
 import type { ReportFilterState } from '../reportFilterState'
-import ReportFilterBar from './ReportFilterBar'
+import ReportFilterBar, { WIDE } from './ReportFilterBar'
 
 type ReportFiltersProps = {
   value: ReportFilterState
@@ -24,7 +24,8 @@ export default function ReportFilters({ value, onChange, onReset }: ReportFilter
         label="Teren"
         value={value.fieldId}
         onChange={(event) => onChange({ fieldId: event.target.value })}
-        sx={{ minWidth: 180 }}
+        fullWidth
+        className={WIDE}
       >
         <MenuItem value="">Toate terenurile</MenuItem>
         {(fields ?? []).map((field) => (
@@ -39,7 +40,8 @@ export default function ReportFilters({ value, onChange, onReset }: ReportFilter
         label="Mașină"
         value={value.machineId}
         onChange={(event) => onChange({ machineId: event.target.value })}
-        sx={{ minWidth: 200 }}
+        fullWidth
+        className={WIDE}
       >
         <MenuItem value="">Toate mașinile</MenuItem>
         {(machines ?? []).map((machine) => (
@@ -54,7 +56,8 @@ export default function ReportFilters({ value, onChange, onReset }: ReportFilter
         label="Operator"
         value={value.operatorId}
         onChange={(event) => onChange({ operatorId: event.target.value })}
-        sx={{ minWidth: 180 }}
+        fullWidth
+        className={WIDE}
       >
         <MenuItem value="">Toți operatorii</MenuItem>
         {(operators ?? []).map((operator) => (

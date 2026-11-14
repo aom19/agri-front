@@ -1,236 +1,93 @@
-import { useEffect, useState } from 'react'
-import { TimerOffOutlined, VisibilityOutlined, WorkOutlineOutlined } from '@mui/icons-material'
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-} from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { WorkOutlineOutlined } from '@mui/icons-material'
+import { Box, Stack, Typography } from '@mui/material'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fieldOperationsApi,
   type FieldOperation,
-  type FieldOperationStatus,
+  type FieldOperationSort,
 } from '../../api/fieldOperation.api'
-import { FIELD_OPERATIONS_KEY } from '../../hooks/useFieldOperations'
-import { formatDateTime } from '../../utils/dateFormat'
-import OperationConflictChip from '../field-operations/components/OperationConflictChip'
+import TablePaginationBar from '../../components/TablePaginationBar'
+import { FIELD_OPERATIONS_KEY, useFieldOperationStatusCounts } from '../../hooks/useFieldOperations'
 import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
-import TablePaginationBar from '../../components/TablePaginationBar'
+import { useHasPermission } from '../../hooks/usePermissions'
+import { FieldOperationsTable } from '../field-operations/components'
+import { ACTIVE_STATUSES, parseSort } from '../field-operations/filters'
 
-const statusLabels: Record<FieldOperationStatus, string> = {
-  planned: 'Planificată',
-  in_progress: 'În lucru',
-  completed: 'Finalizată',
-  canceled: 'Anulată',
-}
-
-function statusColor(status: FieldOperationStatus): 'info' | 'warning' | 'success' | 'default' {
-  if (status === 'planned') return 'info'
-  if (status === 'in_progress') return 'warning'
-  if (status === 'completed') return 'success'
-  return 'default'
-}
-
-// Afișează o durată doar în ore și minute (fără zile), ex: "26 h 30 min".
-function formatHoursAndMinutes(durationMs: number) {
-  const totalMinutes = Math.round(durationMs / 60000)
-  if (totalMinutes <= 0) return '-'
-
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-  if (hours === 0) return `${minutes} min`
-  if (minutes === 0) return `${hours} h`
-  return `${hours} h ${minutes} min`
-}
-
-function formatEstimatedWorkTime(
-  startValue: string | null | undefined,
-  endValue: string | null | undefined
-) {
-  if (!startValue || !endValue) return '-'
-
-  const startDate = new Date(startValue)
-  const endDate = new Date(endValue)
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return '-'
-
-  return formatHoursAndMinutes(endDate.getTime() - startDate.getTime())
-}
-
-// Cu cât a fost depășit timpul estimat (ms) pentru o operațiune în lucru; 0 dacă nu este depășit.
-function getOverdueMs(operation: FieldOperation, now: number) {
-  if (operation.status !== 'in_progress' || !operation.planned_end_at) return 0
-  const end = new Date(operation.planned_end_at).getTime()
-  if (Number.isNaN(end)) return 0
-  return Math.max(0, now - end)
-}
-
-function useNow(intervalMs = 60_000) {
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), intervalMs)
-    return () => window.clearInterval(timer)
-  }, [intervalMs])
-
-  return now
-}
+// Alocările sunt lucrările de făcut: planificate și în lucru. Fără „Toate” sau „Finalizate”.
+const ASSIGNMENT_TABS = [ACTIVE_STATUSES, 'planned', 'in_progress']
+const NO_FILTERS = {}
 
 export default function AssignmentsPage() {
   const navigate = useNavigate()
-  // Alocările sunt lucrările planificate și cele în lucru; filtrul și paginarea se fac în API
-  const pagination = usePagination()
+  const canWrite = useHasPermission('field_operations:write')
+
+  // Tab-ul de status și ordonarea stau în URL; filtrul și paginarea se fac în API.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const statusParam = searchParams.get('status') ?? ''
+  const status = ASSIGNMENT_TABS.includes(statusParam) ? statusParam : ACTIVE_STATUSES
+  const sort = parseSort(searchParams.get('sort'))
+  const setParam = (name: string, value: string, fallback = '') =>
+    setSearchParams(
+      (previous) => {
+        const next = new URLSearchParams(previous)
+        if (value && value !== fallback) next.set(name, value)
+        else next.delete(name)
+        return next
+      },
+      { replace: true }
+    )
+
+  const { data: statusCounts } = useFieldOperationStatusCounts(NO_FILTERS)
+  const pagination = usePagination({ status, sort })
   const { data: operationsPage, isPending } = usePagedQuery(
     FIELD_OPERATIONS_KEY,
     fieldOperationsApi.getPage,
-    { status: 'planned,in_progress', ...pagination.params }
+    { status, sort: sort || undefined, ...pagination.params }
   )
-  const operations = operationsPage?.items
-  const now = useNow()
 
-  const openView = (operation: FieldOperation) => {
-    navigate(`/field-operations/${operation.id}`)
-  }
+  const openView = (operation: FieldOperation) => navigate(`/field-operations/${operation.id}`)
+  const openEdit = (operation: FieldOperation) => navigate(`/field-operations/${operation.id}/edit`)
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 } }}>
-      <Stack spacing={0.5} sx={{ mb: 3 }}>
+      <Stack spacing={0.5} sx={{ mb: 2.5 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <WorkOutlineOutlined color="primary" />
-          <Typography sx={{ fontWeight: 800, fontSize: 22 }}>Alocări pe teren</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '1.45rem', color: '#0d1f17' }}>
+            Alocări pe teren
+          </Typography>
+          {statusCounts && (
+            <Typography
+              component="span"
+              sx={{ fontSize: '1.45rem', fontWeight: 400, color: 'text.secondary' }}
+            >
+              · {statusCounts.planned + statusCounts.in_progress}
+            </Typography>
+          )}
         </Stack>
-        <Typography color="text.secondary">
-          Operațiunile pe teren planificate și cele în lucru.
+        <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
+          Lucrările planificate și cele în lucru: cine, cu ce și când.
         </Typography>
       </Stack>
 
-      {isPending ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={28} />
-        </Box>
-      ) : (
-        <Card>
-          <CardContent>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Teren</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Operator</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Mașină</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Echipament</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Data</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Timp estimat de lucru</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 700 }}>Status operațiune</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography sx={{ fontWeight: 700 }}>Acțiuni</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {(operations ?? []).map((operation) => {
-                  const overdueMs = getOverdueMs(operation, now)
-                  const overdueLabel =
-                    overdueMs >= 60_000
-                      ? `Depășit cu ${formatHoursAndMinutes(overdueMs)}`
-                      : 'Depășit'
-
-                  return (
-                    <TableRow key={operation.id} hover>
-                      <TableCell>{operation.field_name}</TableCell>
-                      <TableCell>{operation.operator_name ?? 'Operator neatribuit'}</TableCell>
-                      <TableCell>{operation.machine_name ?? 'Mașină neatribuită'}</TableCell>
-                      <TableCell>{operation.implement_name ?? 'Echipament neatribuit'}</TableCell>
-                      <TableCell>
-                        {formatDateTime(operation.planned_start_at, 'Data neplanificată')}
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
-                          <span>
-                            {formatEstimatedWorkTime(
-                              operation.planned_start_at,
-                              operation.planned_end_at
-                            )}
-                          </span>
-                          {overdueMs > 0 && (
-                            <Tooltip title="Timpul estimat de lucru a fost depășit">
-                              <Chip
-                                icon={<TimerOffOutlined />}
-                                label={overdueLabel}
-                                size="small"
-                                color="error"
-                                variant="outlined"
-                                sx={{ fontWeight: 700 }}
-                              />
-                            </Tooltip>
-                          )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
-                          <Chip
-                            label={statusLabels[operation.status]}
-                            size="small"
-                            color={statusColor(operation.status)}
-                          />
-                          <OperationConflictChip conflicts={operation.conflicts} />
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Tooltip title="Vezi operațiunea">
-                          <IconButton
-                            size="small"
-                            onClick={() => openView(operation)}
-                            aria-label="Vezi operațiunea"
-                          >
-                            <VisibilityOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-
-                {(operations ?? []).length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8}>
-                      <Box sx={{ py: 3, textAlign: 'center', color: 'text.secondary' }}>
-                        Nu există operațiuni pe teren pentru alocări.
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <TablePaginationBar pagination={pagination} total={operationsPage?.total} />
-          </CardContent>
-        </Card>
-      )}
+      <FieldOperationsTable
+        items={operationsPage?.items ?? []}
+        isLoading={isPending}
+        canWrite={canWrite}
+        canDelete={false}
+        onView={openView}
+        onEdit={openEdit}
+        onDelete={() => undefined}
+        footer={<TablePaginationBar pagination={pagination} total={operationsPage?.total} />}
+        emptyText="Nu există lucrări planificate sau în lucru."
+        status={status}
+        onStatusChange={(next) => setParam('status', next, ACTIVE_STATUSES)}
+        statusCounts={statusCounts}
+        statusTabs={ASSIGNMENT_TABS}
+        sort={sort}
+        onSortChange={(next: FieldOperationSort | '') => setParam('sort', next)}
+      />
     </Box>
   )
 }

@@ -1,10 +1,12 @@
 import { useState, type MouseEvent, type ReactNode } from 'react'
 import {
   AgricultureOutlined,
+  BuildOutlined,
   DeleteOutlined,
   EditOutlined,
   MoreVertOutlined,
   PersonOutlined,
+  TimerOffOutlined,
   VisibilityOutlined,
 } from '@mui/icons-material'
 import {
@@ -13,6 +15,9 @@ import {
   Chip,
   CircularProgress,
   IconButton,
+  List,
+  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -27,7 +32,11 @@ import {
   TableRow,
   TableSortLabel,
   Tabs,
+  TextField,
+  Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import type {
   FieldOperation,
@@ -35,8 +44,10 @@ import type {
   FieldOperationStatus,
   FieldOperationStatusCounts,
 } from '../../../api/fieldOperation.api'
+import { useNow } from '../../../hooks/useNow'
 import { formatDateTime } from '../../../utils/dateFormat'
 import { ACTIVE_STATUSES } from '../filters'
+import { estimatedWorkTime, formatHoursAndMinutes, getOverdueMs } from '../schedule'
 import { statusLabels } from '../status'
 import OperationConflictChip from './OperationConflictChip'
 
@@ -58,6 +69,8 @@ type Props = {
   statusCounts?: FieldOperationStatusCounts
   sort: FieldOperationSort | ''
   onSortChange: (sort: FieldOperationSort | '') => void
+  /** Tab-urile de status afișate (valorile din STATUS_TABS); implicit toate. */
+  statusTabs?: string[]
 }
 
 type StatusTab = { value: string; label: string; count: (c: FieldOperationStatusCounts) => number }
@@ -72,6 +85,16 @@ const STATUS_TABS: StatusTab[] = [
 ]
 
 type SortColumn = 'planned' | 'area' | 'field'
+
+// Pe telefon nu există cap de tabel: ordonarea se alege dintr-o listă.
+const MOBILE_SORTS: { value: FieldOperationSort; label: string }[] = [
+  { value: 'planned_desc', label: 'Cele mai recente' },
+  { value: 'planned_asc', label: 'Cele mai vechi' },
+  { value: 'area_desc', label: 'Suprafață descrescătoare' },
+  { value: 'area_asc', label: 'Suprafață crescătoare' },
+  { value: 'field_asc', label: 'Teren A–Z' },
+  { value: 'field_desc', label: 'Teren Z–A' },
+]
 
 // Fără sortare explicită, lista e „cele mai recente primele”, adică planificat descrescător.
 function sortState(sort: FieldOperationSort | '', column: SortColumn) {
@@ -127,6 +150,59 @@ function ResourceLine({ icon, text }: { icon: ReactNode; text?: string | null })
   )
 }
 
+/** Mașina și operatorul; echipamentul doar când lucrarea are unul. */
+function Resources({
+  item,
+  direction = 'column',
+}: {
+  item: FieldOperation
+  direction?: 'row' | 'column'
+}) {
+  return (
+    <Stack
+      direction={direction}
+      spacing={direction === 'row' ? 2 : 0}
+      sx={{ minWidth: 0, flexWrap: 'wrap' }}
+    >
+      <ResourceLine icon={<AgricultureOutlined />} text={item.machine_name} />
+      <ResourceLine icon={<PersonOutlined />} text={item.operator_name} />
+      {item.implement_name && <ResourceLine icon={<BuildOutlined />} text={item.implement_name} />}
+    </Stack>
+  )
+}
+
+/** Data planificată, timpul estimat de lucru și, pentru o lucrare în lucru, cât e depășit. */
+function Schedule({ item, now }: { item: FieldOperation; now: number }) {
+  const estimate = estimatedWorkTime(item)
+  const overdueMs = getOverdueMs(item, now)
+  return (
+    <Stack spacing={0.25} sx={{ alignItems: 'flex-start' }}>
+      <Typography sx={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+        {formatDateTime(item.planned_start_at, 'neplanificată')}
+      </Typography>
+      {estimate && (
+        <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          ≈ {estimate} de lucru
+        </Typography>
+      )}
+      {overdueMs > 0 && (
+        <Tooltip title="Timpul estimat de lucru a fost depășit">
+          <Chip
+            icon={<TimerOffOutlined />}
+            label={
+              overdueMs >= 60_000 ? `Depășit cu ${formatHoursAndMinutes(overdueMs)}` : 'Depășit'
+            }
+            size="small"
+            color="error"
+            variant="outlined"
+            sx={{ fontWeight: 700, mt: 0.25 }}
+          />
+        </Tooltip>
+      )}
+    </Stack>
+  )
+}
+
 function CountBadge({ value, active }: { value: number; active: boolean }) {
   return (
     <Box
@@ -160,9 +236,15 @@ export default function FieldOperationsTable({
   statusCounts,
   sort,
   onSortChange,
+  statusTabs,
 }: Props) {
+  const theme = useTheme()
+  const now = useNow()
+  const tabs = statusTabs ? STATUS_TABS.filter((t) => statusTabs.includes(t.value)) : STATUS_TABS
+  // pe telefon, cardurile înlocuiesc tabelul: 7 coloane nu încap fără scroll orizontal
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [menu, setMenu] = useState<{ anchor: HTMLElement; item: FieldOperation } | null>(null)
-  const activeTab = STATUS_TABS.some((t) => t.value === status) ? status : ''
+  const activeTab = tabs.some((t) => t.value === status) ? status : (tabs[0]?.value ?? '')
 
   const openMenu = (event: MouseEvent<HTMLElement>, item: FieldOperation) => {
     event.stopPropagation()
@@ -200,7 +282,7 @@ export default function FieldOperationsTable({
         aria-label="Status operațiuni"
         sx={{ px: 1, borderBottom: '1px solid #e0e6e2', minHeight: 48 }}
       >
-        {STATUS_TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Tab
             key={tab.value || 'all'}
             value={tab.value}
@@ -217,61 +299,36 @@ export default function FieldOperationsTable({
         ))}
       </Tabs>
 
-      <TableContainer sx={{ maxHeight: { md: 'calc(100vh - 360px)' }, minHeight: 200 }}>
-        <Table stickyHeader size="small" aria-label="Operațiuni pe teren">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={headCellSx}>Lucrare</TableCell>
-              {sortableHead('field', 'Teren')}
-              <TableCell sx={headCellSx}>Resurse</TableCell>
-              {sortableHead('planned', 'Planificat')}
-              {sortableHead('area', 'Suprafață', 'right')}
-              <TableCell sx={headCellSx}>Status</TableCell>
-              <TableCell sx={{ ...headCellSx, width: 48 }} aria-label="Acțiuni" />
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
+      {isMobile ? (
+        <Box>
+          <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+            <TextField
+              select
+              size="small"
+              fullWidth
+              label="Ordonează"
+              value={sort || 'planned_desc'}
+              onChange={(e) => {
+                const next = e.target.value as FieldOperationSort
+                onSortChange(next === 'planned_desc' ? '' : next)
+              }}
+            >
+              {MOBILE_SORTS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+          <List disablePadding aria-label="Operațiuni pe teren">
             {items.map((item) => (
-              <TableRow
+              <ListItem
                 key={item.id}
-                hover
-                onClick={() => onView(item)}
-                sx={{ cursor: 'pointer', '& td': { py: 1.25 } }}
-              >
-                <TableCell>
-                  <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                    {item.operation_type_name}
-                  </Typography>
-                  {item.operation_template_name && (
-                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                      {item.operation_template_name}
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell sx={{ fontSize: '0.875rem' }}>{item.field_name}</TableCell>
-                <TableCell sx={{ maxWidth: 220 }}>
-                  <ResourceLine icon={<AgricultureOutlined />} text={item.machine_name} />
-                  <ResourceLine icon={<PersonOutlined />} text={item.operator_name} />
-                </TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                  {formatDateTime(item.planned_start_at)}
-                </TableCell>
-                <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                  {formatArea(item.area_planned_ha)}
-                </TableCell>
-                <TableCell>
-                  <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
-                    <Chip
-                      label={statusLabels[item.status]}
-                      size="small"
-                      color={statusColor(item.status)}
-                    />
-                    <OperationConflictChip conflicts={item.conflicts} />
-                  </Stack>
-                </TableCell>
-                <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                disablePadding
+                divider
+                secondaryAction={
                   <IconButton
+                    edge="end"
                     size="small"
                     onClick={(event) => openMenu(event, item)}
                     aria-label={`Acțiuni pentru lucrarea de pe ${item.field_name}`}
@@ -279,30 +336,133 @@ export default function FieldOperationsTable({
                   >
                     <MoreVertOutlined fontSize="small" />
                   </IconButton>
-                </TableCell>
-              </TableRow>
+                }
+              >
+                <ListItemButton onClick={() => onView(item)} sx={{ py: 1.5, pr: 6 }}>
+                  <Stack spacing={0.5} sx={{ minWidth: 0, width: '100%' }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                    >
+                      <Typography noWrap sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                        {item.operation_type_name}
+                      </Typography>
+                      <Chip
+                        label={statusLabels[item.status]}
+                        size="small"
+                        color={statusColor(item.status)}
+                        sx={{ flexShrink: 0 }}
+                      />
+                    </Stack>
+                    <Typography noWrap sx={{ fontSize: '0.82rem' }}>
+                      {item.field_name} · {formatArea(item.area_planned_ha)}
+                    </Typography>
+                    <Schedule item={item} now={now} />
+                    <Resources item={item} direction="row" />
+                    <OperationConflictChip conflicts={item.conflicts} />
+                  </Stack>
+                </ListItemButton>
+              </ListItem>
             ))}
-
-            {items.length === 0 && isLoading && (
-              <TableRow>
-                <TableCell colSpan={7} sx={{ py: 5, textAlign: 'center' }}>
+            {items.length === 0 && (
+              <Box sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>
+                {isLoading ? (
                   <CircularProgress size={28} aria-label="Se încarcă operațiunile" />
-                </TableCell>
-              </TableRow>
+                ) : (
+                  emptyText
+                )}
+              </Box>
             )}
-
-            {items.length === 0 && !isLoading && (
+          </List>
+        </Box>
+      ) : (
+        <TableContainer sx={{ maxHeight: { md: 'calc(100vh - 360px)' }, minHeight: 200 }}>
+          <Table stickyHeader size="small" aria-label="Operațiuni pe teren">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7}>
-                  <Box sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>
-                    {emptyText}
-                  </Box>
-                </TableCell>
+                <TableCell sx={headCellSx}>Lucrare</TableCell>
+                {sortableHead('field', 'Teren')}
+                <TableCell sx={headCellSx}>Resurse</TableCell>
+                {sortableHead('planned', 'Planificat')}
+                {sortableHead('area', 'Suprafață', 'right')}
+                <TableCell sx={headCellSx}>Status</TableCell>
+                <TableCell sx={{ ...headCellSx, width: 48 }} aria-label="Acțiuni" />
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+
+            <TableBody>
+              {items.map((item) => (
+                <TableRow
+                  key={item.id}
+                  hover
+                  onClick={() => onView(item)}
+                  sx={{ cursor: 'pointer', '& td': { py: 1.25 } }}
+                >
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                      {item.operation_type_name}
+                    </Typography>
+                    {item.operation_template_name && (
+                      <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                        {item.operation_template_name}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '0.875rem' }}>{item.field_name}</TableCell>
+                  <TableCell sx={{ maxWidth: 220 }}>
+                    <Resources item={item} />
+                  </TableCell>
+                  <TableCell>
+                    <Schedule item={item} now={now} />
+                  </TableCell>
+                  <TableCell align="right" sx={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+                    {formatArea(item.area_planned_ha)}
+                  </TableCell>
+                  <TableCell>
+                    <Stack spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                      <Chip
+                        label={statusLabels[item.status]}
+                        size="small"
+                        color={statusColor(item.status)}
+                      />
+                      <OperationConflictChip conflicts={item.conflicts} />
+                    </Stack>
+                  </TableCell>
+                  <TableCell align="right" onClick={(event) => event.stopPropagation()}>
+                    <IconButton
+                      size="small"
+                      onClick={(event) => openMenu(event, item)}
+                      aria-label={`Acțiuni pentru lucrarea de pe ${item.field_name}`}
+                      aria-haspopup="menu"
+                    >
+                      <MoreVertOutlined fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {items.length === 0 && isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ py: 5, textAlign: 'center' }}>
+                    <CircularProgress size={28} aria-label="Se încarcă operațiunile" />
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {items.length === 0 && !isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <Box sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>
+                      {emptyText}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Menu
         anchorEl={menu?.anchor}

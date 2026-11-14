@@ -308,7 +308,8 @@ function ActiveFilterChips({ value, onChange, onReset }: Props) {
     <Stack
       direction="row"
       spacing={1}
-      sx={{ flexWrap: 'wrap', rowGap: 1, alignItems: 'center', mt: 1.5 }}
+      useFlexGap
+      sx={{ flexWrap: 'wrap', alignItems: 'center', mt: 1.5 }}
       aria-label="Filtre active"
     >
       {chips}

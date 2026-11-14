@@ -12,15 +12,18 @@ export default defineConfig(({ mode }) => {
     '/uploads': apiTarget,
     '/ws': { target: apiTarget, ws: true },
   }
+  const allowedHosts = ['.ngrok-free.app', '.ngrok-free.dev', '.ngrok.app', '.ngrok.dev']
 
   return {
     plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
     server: {
       port: Number(env.VITE_APP_PORT) || 3000,
       host: true,
+      // Vite refuză host-urile necunoscute; tunelul ngrok (make tunnel) vine pe domeniile lui.
+      allowedHosts,
       proxy,
     },
-    preview: { host: true, proxy },
+    preview: { host: true, allowedHosts, proxy },
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],

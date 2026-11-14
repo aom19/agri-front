@@ -66,7 +66,7 @@ export default function ReportTable<T>({
         spacing={1}
         sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}
       >
-        <Box>
+        <Box sx={{ minWidth: 0 }}>
           <Typography sx={{ fontWeight: 600, fontSize: '1rem', color: '#0d1f17' }}>
             {title}
           </Typography>
@@ -83,8 +83,20 @@ export default function ReportTable<T>({
           startIcon={<DownloadOutlined />}
           onClick={handleExport}
           disabled={rows.length === 0}
+          aria-label="Export CSV"
+          // pe telefon: compact și pe un singur rând, ca să nu crească lângă titlu
+          sx={{
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+            px: { xs: 1, sm: 1.25 },
+            '& .MuiButton-startIcon': { mr: { xs: 0.5, sm: 1 } },
+          }}
         >
-          Export CSV
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            Export&nbsp;
+          </Box>
+          CSV
         </Button>
       </Stack>
       <Box className="report-table-scroll" sx={{ overflow: 'auto', maxHeight }}>
