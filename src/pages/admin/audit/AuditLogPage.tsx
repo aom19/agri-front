@@ -6,7 +6,6 @@ import {
   CircularProgress,
   MenuItem,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableContainer,
@@ -22,6 +21,7 @@ import { auditApi } from '../../../api/audit.api'
 import { usePagedQuery } from '../../../hooks/usePagedQuery'
 import { usePagination } from '../../../hooks/usePagination'
 import TablePaginationBar from '../../../components/TablePaginationBar'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 function formatTime(value: string) {
   const d = new Date(value)
@@ -147,8 +147,8 @@ export default function AuditLogPage() {
           }}
         >
           <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-            <TableContainer sx={{ maxHeight: 'calc(100vh - 260px)', minHeight: 220 }}>
-              <Table stickyHeader size="small" sx={{ minWidth: 920 }}>
+            <TableContainer sx={{ maxHeight: { sm: 'calc(100vh - 260px)' }, minHeight: 220 }}>
+              <ResponsiveTable stickyHeader size="small" sx={{ minWidth: { sm: 920 } }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ bgcolor: 'grey.100', py: 1.5 }}>
@@ -197,7 +197,9 @@ export default function AuditLogPage() {
                             sx={{ fontWeight: 700, bgcolor: 'background.paper' }}
                           />
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>{entityName}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, minWidth: { sm: 180 } }}>
+                          {entityName}
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={e.action}
@@ -215,7 +217,7 @@ export default function AuditLogPage() {
                             sx={{ fontWeight: 700 }}
                           />
                         </TableCell>
-                        <TableCell sx={{ minWidth: 280, maxWidth: 520 }}>
+                        <TableCell sx={{ minWidth: { sm: 280 }, maxWidth: { sm: 520 } }}>
                           {changesText !== '-' ? (
                             <Box
                               component="span"
@@ -256,7 +258,7 @@ export default function AuditLogPage() {
                     </TableRow>
                   )}
                 </TableBody>
-              </Table>
+              </ResponsiveTable>
             </TableContainer>
             <TablePaginationBar pagination={pagination} total={entriesPage?.total} />
           </CardContent>

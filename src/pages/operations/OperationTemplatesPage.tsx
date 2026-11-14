@@ -28,7 +28,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -63,6 +62,7 @@ import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import TablePaginationBar from '../../components/TablePaginationBar'
+import ResponsiveTable from '../../components/ResponsiveTable'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -333,7 +333,7 @@ export default function OperationTemplatesPage() {
       ) : (
         <Card>
           <CardContent>
-            <Table>
+            <ResponsiveTable>
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -435,7 +435,7 @@ export default function OperationTemplatesPage() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
             <TablePaginationBar pagination={pagination} total={templatesPage?.total} />
           </CardContent>
         </Card>

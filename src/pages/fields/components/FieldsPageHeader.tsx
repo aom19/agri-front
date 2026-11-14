@@ -17,7 +17,10 @@ export default function FieldsPageHeader({
   onCreate,
 }: FieldsPageHeaderProps) {
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 2, gap: 1 }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      sx={{ justifyContent: 'space-between', mb: 2, gap: 1.5 }}
+    >
       <Box>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Terenuri
@@ -25,7 +28,12 @@ export default function FieldsPageHeader({
         <Typography variant="body2" color="text.secondary">
           CRUD complet cu desenare poligon direct pe hartă (Leaflet).
         </Typography>
-        <Stack direction="row" spacing={1} sx={{ mt: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          sx={{ mt: 1, alignItems: 'center', flexWrap: 'wrap' }}
+        >
           <Chip label={`${totalResults} rezultate`} size="small" />
           <Chip
             label={`${totalFilteredArea.toFixed(2)} ha total`}
@@ -37,7 +45,17 @@ export default function FieldsPageHeader({
           )}
         </Stack>
       </Box>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* pe telefon, butoanele împart rândul de sub titlu */}
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          '& > *': { flex: { xs: '1 1 auto', sm: '0 0 auto' } },
+        }}
+      >
         <Button variant="outlined" startIcon={<MapOutlined />} onClick={onOpenMap}>
           Vezi toate terenurile
         </Button>

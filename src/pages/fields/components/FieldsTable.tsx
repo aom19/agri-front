@@ -13,7 +13,6 @@ import {
   CardContent,
   IconButton,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableFooter,
@@ -23,6 +22,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { Field } from '../../../api/fields.api'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 type FieldsTableProps = {
   fields: Field[]
@@ -55,7 +55,7 @@ export default function FieldsTable({
   return (
     <Card>
       <CardContent sx={{ p: 0 }}>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -155,7 +155,7 @@ export default function FieldsTable({
               <TableCell />
             </TableRow>
           </TableFooter>
-        </Table>
+        </ResponsiveTable>
         {footer}
       </CardContent>
     </Card>

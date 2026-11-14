@@ -6,7 +6,6 @@ import {
   CircularProgress,
   IconButton,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -25,6 +24,7 @@ import Section from './components/Section'
 import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
 import TablePaginationBar from '../../components/TablePaginationBar'
+import ResponsiveTable from '../../components/ResponsiveTable'
 
 /** Catalogul de culturi: nomenclatorul din care se atribuie culturi pe terenuri. */
 export default function CropCatalogPage() {
@@ -91,7 +91,7 @@ export default function CropCatalogPage() {
             <CircularProgress size={24} />
           </Box>
         ) : (
-          <Table size="small">
+          <ResponsiveTable size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Nume</TableCell>
@@ -134,7 +134,7 @@ export default function CropCatalogPage() {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </ResponsiveTable>
         )}
         <TablePaginationBar pagination={pagination} total={cropsPage?.total} />
       </Section>

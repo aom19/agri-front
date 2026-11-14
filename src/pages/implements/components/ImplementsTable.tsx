@@ -12,7 +12,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -27,6 +26,7 @@ import {
   type ImplementStatusValue,
   type ImplementTypeValue,
 } from '../../../schemas/implement.schema'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 type ImplementsTableProps = {
   implementsData: Implement[]
@@ -68,7 +68,7 @@ export default function ImplementsTable({
   return (
     <Card>
       <CardContent>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -202,7 +202,7 @@ export default function ImplementsTable({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
         {footer}
       </CardContent>
     </Card>

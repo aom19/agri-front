@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -13,6 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { Role } from '../../../../api/roles.api'
+import ResponsiveTable from '../../../../components/ResponsiveTable'
 
 type RolesTableProps = {
   roles: Role[]
@@ -24,7 +24,7 @@ export default function RolesTable({ roles, isLoading, onView }: RolesTableProps
   return (
     <Card>
       <CardContent>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -71,7 +71,7 @@ export default function RolesTable({ roles, isLoading, onView }: RolesTableProps
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
       </CardContent>
     </Card>
   )

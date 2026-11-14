@@ -11,7 +11,6 @@ import {
   CircularProgress,
   IconButton,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -19,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import ResponsiveTable from '../../../../components/ResponsiveTable'
 
 export type Permission = {
   id: number
@@ -53,7 +53,7 @@ export default function PermissionTable({
             <CircularProgress size={28} />
           </Box>
         ) : (
-          <Table>
+          <ResponsiveTable>
             <TableHead>
               <TableRow>
                 <TableCell>
@@ -119,7 +119,7 @@ export default function PermissionTable({
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </ResponsiveTable>
         )}
       </CardContent>
     </Card>

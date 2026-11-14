@@ -6,7 +6,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -23,6 +22,7 @@ import {
   type MachineStatusValue,
   type MachineTypeValue,
 } from '../../../schemas/machine.schema'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 type MachinesTableProps = {
   machines: Machine[]
@@ -63,7 +63,7 @@ export default function MachinesTable({
   return (
     <Card>
       <CardContent>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -171,7 +171,7 @@ export default function MachinesTable({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
         {footer}
       </CardContent>
     </Card>

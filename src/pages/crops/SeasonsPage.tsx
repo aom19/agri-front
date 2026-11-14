@@ -8,7 +8,6 @@ import {
   CircularProgress,
   IconButton,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -29,6 +28,7 @@ import { cropsApi } from '../../api/crops.api'
 import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
 import TablePaginationBar from '../../components/TablePaginationBar'
+import ResponsiveTable from '../../components/ResponsiveTable'
 
 /** Sezoanele agricole: etichete de raportare; nu decid de ce cultură se leagă o lucrare. */
 export default function SeasonsPage() {
@@ -102,7 +102,7 @@ export default function SeasonsPage() {
             Nu există sezoane. Creează primul sezon pentru a putea atribui culturi terenurilor.
           </Typography>
         ) : (
-          <Table size="small">
+          <ResponsiveTable size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Nume</TableCell>
@@ -180,7 +180,7 @@ export default function SeasonsPage() {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </ResponsiveTable>
         )}
         <TablePaginationBar pagination={pagination} total={seasonsPage?.total} />
       </Section>

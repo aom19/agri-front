@@ -16,7 +16,6 @@ import {
   IconButton,
   MenuItem,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -50,6 +49,7 @@ import { formatNumber } from './components/cropFormat'
 import { usePagedQuery } from '../../hooks/usePagedQuery'
 import { usePagination } from '../../hooks/usePagination'
 import TablePaginationBar from '../../components/TablePaginationBar'
+import ResponsiveTable from '../../components/ResponsiveTable'
 
 /**
  * Culturile pe terenuri: ce crește pe fiecare teren, în ce stare, cu producția și recolta.
@@ -222,7 +222,7 @@ export default function FieldCropsPage() {
               label="Sezon"
               value={seasonFilter || (activeSeason ? String(activeSeason.id) : '')}
               onChange={(event) => setSeasonFilter(event.target.value)}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: { xs: 0, sm: 180 }, flex: { xs: 1, sm: 'none' } }}
               disabled={(seasons ?? []).length === 0}
             >
               {(seasons ?? []).map((season) => (
@@ -238,6 +238,7 @@ export default function FieldCropsPage() {
                 startIcon={<AddOutlined />}
                 disabled={!canAssign}
                 onClick={() => setFieldCropDialog({ open: true, item: null })}
+                sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               >
                 Atribuie cultură
               </Button>
@@ -255,7 +256,7 @@ export default function FieldCropsPage() {
           </Typography>
         ) : (
           <Box sx={{ overflow: 'auto' }}>
-            <Table size="small">
+            <ResponsiveTable size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>Teren</TableCell>
@@ -395,7 +396,7 @@ export default function FieldCropsPage() {
                   />
                 ))}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
           </Box>
         )}
         <TablePaginationBar pagination={pagination} total={fieldCropsPage?.total} />

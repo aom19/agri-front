@@ -12,7 +12,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -21,6 +20,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { User } from '../../../../api/users.api'
+import ResponsiveTable from '../../../../components/ResponsiveTable'
 
 type UsersTableProps = {
   users: User[]
@@ -55,7 +55,7 @@ export default function UsersTable({
   return (
     <Card>
       <CardContent>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -187,7 +187,7 @@ export default function UsersTable({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
         {footer}
       </CardContent>
     </Card>

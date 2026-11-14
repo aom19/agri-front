@@ -161,8 +161,7 @@ function Resources({
   return (
     <Stack
       direction={direction}
-      spacing={direction === 'row' ? 2 : 0}
-      sx={{ minWidth: 0, flexWrap: 'wrap' }}
+      sx={{ minWidth: 0, flexWrap: 'wrap', columnGap: direction === 'row' ? 2 : 0, rowGap: 0.25 }}
     >
       <ResourceLine icon={<AgricultureOutlined />} text={item.machine_name} />
       <ResourceLine icon={<PersonOutlined />} text={item.operator_name} />

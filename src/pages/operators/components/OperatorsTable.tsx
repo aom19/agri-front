@@ -12,7 +12,6 @@ import {
   CardContent,
   Chip,
   IconButton,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -21,6 +20,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { Operator } from '../../../api/operator.api'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 type OperatorsTableProps = {
   operators: Operator[]
@@ -61,7 +61,7 @@ export default function OperatorsTable({
   return (
     <Card>
       <CardContent>
-        <Table>
+        <ResponsiveTable>
           <TableHead>
             <TableRow>
               <TableCell>
@@ -170,7 +170,7 @@ export default function OperatorsTable({
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </ResponsiveTable>
         {footer}
       </CardContent>
     </Card>

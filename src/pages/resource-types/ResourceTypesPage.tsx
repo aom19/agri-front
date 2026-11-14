@@ -25,7 +25,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -51,6 +50,7 @@ import {
 } from '../../schemas/resourceType.schema'
 import { useNotificationStore } from '../../store/notification.store'
 import { getApiErrorMessage } from '../../utils/getApiErrorMessage'
+import ResponsiveTable from '../../components/ResponsiveTable'
 
 type FormMode = 'create' | 'edit' | 'view'
 
@@ -255,7 +255,7 @@ export default function ResourceTypesPage() {
       ) : (
         <Card>
           <CardContent>
-            <Table>
+            <ResponsiveTable>
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -332,7 +332,7 @@ export default function ResourceTypesPage() {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>
+            </ResponsiveTable>
           </CardContent>
         </Card>
       )}

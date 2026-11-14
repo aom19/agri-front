@@ -13,7 +13,6 @@ import {
   ListSubheader,
   MenuItem,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -33,6 +32,7 @@ import { formatDateTime } from '../../../utils/dateFormat'
 import { usePagedQuery } from '../../../hooks/usePagedQuery'
 import { usePagination } from '../../../hooks/usePagination'
 import TablePaginationBar from '../../../components/TablePaginationBar'
+import ResponsiveTable from '../../../components/ResponsiveTable'
 
 type StockMovementsDialogProps = {
   open: boolean
@@ -362,7 +362,7 @@ export default function StockMovementsDialog({
               </Typography>
             ) : (
               <Box sx={{ overflow: 'auto', maxHeight: 360 }}>
-                <Table size="small" stickyHeader>
+                <ResponsiveTable size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell>Data</TableCell>
@@ -412,7 +412,7 @@ export default function StockMovementsDialog({
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
+                </ResponsiveTable>
               </Box>
             )}
             <TablePaginationBar pagination={pagination} total={movementsPage?.total} />
